@@ -2,13 +2,13 @@ package main
 
 import (
 	"bufio"
-	"chat/server"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+	"github.com/chat/server"
 )
 
 const Exit = "exit"
