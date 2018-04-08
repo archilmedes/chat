@@ -13,6 +13,25 @@ import (
 
 const Exit = "exit"
 
+// Listen to standard in for messages to be sent
+func listen(program *server.Server) {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		message := scanner.Text()
+		if message == Exit {
+			return
+		}
+		stringSlice := strings.Fields(message)
+		if err := program.Send(stringSlice[0], strings.Join(stringSlice[1:], " ")); err != nil {
+			fmt.Printf("input: %s\n", err.Error())
+		}
+	}
+	if scanner.Err() != nil {
+		fmt.Printf(scanner.Err().Error())
+		return
+	}
+}
+
 func main() {
 	var program server.Server
 	if err := program.Start("Archil"); err != nil {
@@ -25,19 +44,5 @@ func main() {
 		<-sig
 		os.Exit(0)
 	}()
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		message := scanner.Text()
-		if message == Exit {
-			os.Exit(0)
-		}
-		stringSlice := strings.Fields(message)
-		if err := program.Send(stringSlice[0], strings.Join(stringSlice[1:], " ")); err != nil {
-			fmt.Printf("input: %s", err.Error())
-		}
-	}
-	if scanner.Err() != nil {
-		fmt.Printf(scanner.Err().Error())
-		os.Exit(1)
-	}
+	listen(&program)
 }
