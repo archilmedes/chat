@@ -53,6 +53,7 @@ func handleConnection(conn *net.TCPConn) {
 	if err := decoder.Decode(&msg); err != nil {
 		log.Panicf("handleConnection: %s", err.Error())
 	}
+	fmt.Printf("%s: %s\n", msg.User, msg.Text)
 }
 
 // Function that continuously polls for new messages being sent to the server
@@ -97,7 +98,6 @@ func initDialer(address string) (*net.TCPConn, error) {
 
 // Send a message to another Server
 func (s *Server) Send(address string, message string) error  {
-	fmt.Printf("%s %s\n", address, message)
 	dialer, err := initDialer(address)
 	if err != nil {
 		return err
