@@ -8,22 +8,29 @@ import (
 
 type OTRProtocol struct {
 	Protocol
-	converse *otr.Conversation
+	conv *otr.Conversation
+	sess OTRSession
 }
 
-func NewOTRProtocol() *OTRProtocol {
-	reader := rand.Reader
+type OTRSession struct {
+	SSID [8]byte
+	fingerprint, privKey []byte
+}
+
+// Create a new OTR session, with new keys and a new Conversation
+func NewOTRProtocol() OTRProtocol {
 	privKey := new(otr.PrivateKey)
-	privKey.Generate(reader)
-	pubKey := new(otr.PublicKey)
-	privKey.PublicKey = *pubKey
-	converse := new(otr.Conversation)
-	converse.PrivateKey = privKey
-	return &OTRProtocol{converse: converse}
+	privKey.Generate(rand.Reader)
+	// TODO send byte array to DB to save (Use privKey.serialize(nil))
+	conv := new(otr.Conversation)
+	conv.PrivateKey = privKey
+	conv.FragmentSize = 1000
+	return OTRProtocol{conv: conv}
 }
 
+// Encrypt the message
 func (o OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
-	cipherText, err := o.converse.Send(in)
+	cipherText, err := o.conv.Send(in)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,20 +38,55 @@ func (o OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
 }
 
 func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
-	out, encrypted, _, _, err := o.converse.Receive(in)
-	if !encrypted {
-		log.Fatalf("Message received was not encrypted")
-	}
+	out, encrypted, secChange, msgToPeer, err := o.conv.Receive(in)
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Respond to handshake if handshake is established
+	if len(msgToPeer) > 0 {
+		log.Println("<OTR> Handshaking")
+		for _, msg := range msgToPeer {
+			// TODO server.sendMessage(destIp, msg), refactor to get a connection object here
+			n := len(msg)
+			if n < len(msg) {
+				log.Panicln("<OTR> Handshake could not be established")
+			}
+			return msg, err
+		}
+	}
+	switch secChange {
+	case otr.NoChange:
+		// If it's encrypted, just return the decrypted message out
+		if encrypted && o.IsEncrypted() {
+			return out, nil
+		}
+	case otr.NewKeys:
+		log.Printf("<OTR> Key exchange completed.\nFingerprint:%x\nSSID:%x\n",
+			o.conv.TheirPublicKey.Fingerprint(),
+			o.conv.SSID,
+		)
+		// TODO Send OTRSession object to DB to save
+		sess := new(OTRSession)
+		sess.fingerprint = o.conv.TheirPublicKey.Fingerprint()
+		sess.SSID = o.conv.SSID
+		sess.privKey = o.conv.PrivateKey.Serialize(nil)
+		o.sess = *sess
+		return out, nil
+	case otr.ConversationEnded:
+		log.Println("<OTR> Conversation ended")
+		o.EndSession()
+		return out, nil
+	default:
+		log.Fatal("<OTR> SMP not implemented")
+	}
+
 	return out, nil
 }
 
 func (o OTRProtocol) IsEncrypted() bool {
-	return o.converse.IsEncrypted()
+	return o.conv.IsEncrypted()
 }
 
 func (o OTRProtocol) EndSession() {
-	o.converse.End()
+	o.conv.End()
 }

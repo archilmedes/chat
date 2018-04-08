@@ -7,6 +7,14 @@ import (
 	"log"
 )
 
+type Session struct {
+	SSID        int
+	userId      int
+	friendId    int
+	privateKey  string
+	fingerprint string
+}
+
 // Creates the sessions table
 func SetupSessionsTable(db *sql.DB) {
 	var createTableCommand bytes.Buffer
@@ -27,37 +35,33 @@ func InsertIntoSessions(db *sql.DB, SSID int, userId int, friendId int, privateK
 	ExecuteDatabaseCommand(db, insertCommand)
 }
 
-func QuerySessions(db *sql.DB) (int, int, int, string, string){
+func QuerySessions(db *sql.DB) [] Session{
 	query := "SELECT * FROM " + sessionsTableName;
 	return ExecuteSessionsQuery(db, query)
 }
 
 // Executes the specified database command
-func ExecuteSessionsQuery(db *sql.DB, query string) (int, int, int, string, string) {
+func ExecuteSessionsQuery(db *sql.DB, query string) [] Session {
 	results, err := db.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)
 		panic(err)
 	}
-	var (
-		SSID int
-		userId int
-		friendId int
-		privateKey string
-		fingerprint string
-	)
+	var sessions [] Session
+	session := Session{}
 	for results.Next(){
-		err = results.Scan(&SSID, &userId, &friendId, &privateKey, &fingerprint)
+		err = results.Scan(&session.SSID, &session.userId, &session.friendId, &session.privateKey, &session.fingerprint)
 		if err!= nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
 		}
-		fmt.Printf("SSID: %d, User: %d, Friend: %d, Private Key: %s, Fingerprint: %s\n", SSID, userId, friendId, privateKey, fingerprint)
+		sessions = append(sessions, session)
+		fmt.Printf("SSID: %d, User: %d, Friend: %d, Private Key: %s, Fingerprint: %s\n", session.SSID, session.userId, session.friendId, session.privateKey, session.fingerprint)
 	}
 	err = results.Err()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return SSID, userId, friendId, privateKey, fingerprint
+	return sessions
 }
 

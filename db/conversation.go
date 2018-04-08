@@ -7,6 +7,13 @@ import (
 	"log"
 )
 
+type Conversation struct {
+	SSID int
+	message string
+	timestamp string
+	sentOrReceived int
+}
+
 // Creates the conversations table
 func SetupConversationTable(db *sql.DB) {
 	var createTableCommand bytes.Buffer
@@ -29,35 +36,34 @@ func InsertIntoConversations(db *sql.DB, SSID int, message string, timestamp str
 	ExecuteDatabaseCommand(db, insertCommand)
 }
 
-func QueryConversations(db *sql.DB) (int, string, string, int){
+
+func QueryConversations(db *sql.DB) [] Conversation{
 	query := "SELECT * FROM " + conversationTableName;
 	return ExecuteConversationQuery(db, query)
 }
 
 // Executes the specified database command
-func ExecuteConversationQuery(db *sql.DB, query string) (int, string, string, int) {
+func ExecuteConversationQuery(db *sql.DB, query string) [] Conversation {
 	results, err := db.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)
 		panic(err)
 	}
-	var (
-		SSID int
-		message string
-		timestamp string
-		sentOrReceived int
-	)
+	var conversations [] Conversation
+	conv := Conversation{}
 	for results.Next(){
-		err = results.Scan(&SSID, &message, &timestamp, &sentOrReceived)
+		//err = results.Scan(&SSID, &message, &timestamp, &sentOrReceived)
+		err = results.Scan(&conv.SSID, &conv.message, &conv.timestamp, &conv.sentOrReceived)
 		if err!= nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
 		}
-		fmt.Printf("SSID: %d, Message: %s, Timestamp: %s, Sent? %d\n", SSID, message, timestamp, sentOrReceived)
+		conversations = append(conversations, conv)
+		fmt.Printf("SSID: %d, Message: %s, Timestamp: %s, Sent? %d\n", conv.SSID, conv.message, conv.timestamp, conv.sentOrReceived)
 	}
 	err = results.Err()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return SSID, message, timestamp, sentOrReceived
+	return conversations
 }

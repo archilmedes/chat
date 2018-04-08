@@ -95,18 +95,20 @@ func FormConnectionString(Name string) string {
 	return connectionString.String()
 }
 
-func ShowTables(db *sql.DB) {
+func ShowTables(db *sql.DB) []string {
 	results, err := db.Query("SHOW TABLES")
 	if err != nil {
 		fmt.Println("Failed to display tables.")
 		panic(err)
 	}
+	var tables []string
 	var str string
 	for results.Next() {
 		err = results.Scan(&str)
+		tables = append(tables, str)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("Show tables: %s\n", str)
 	}
+	return tables
 }
