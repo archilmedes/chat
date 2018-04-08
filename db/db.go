@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
-	"log"
 )
 
 const (
@@ -96,96 +95,6 @@ func FormConnectionString(Name string) string {
 	return connectionString.String()
 }
 
-// Creates the sessions table
-func SetupSessionsTable(db *sql.DB) {
-	var createTableCommand bytes.Buffer
-	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
-	createTableCommand.WriteString(sessionsTableName)
-	createTableCommand.WriteString(" (\n")
-	createTableCommand.WriteString("SSID INT NOT NULL PRIMARY KEY, \n")
-	createTableCommand.WriteString("user_id INT NOT NULL, \n")
-	createTableCommand.WriteString("friend_id INT NOT NULL, \n")
-	createTableCommand.WriteString("private_key varchar(10000) NOT NULL, \n")
-	createTableCommand.WriteString("fingerprint varchar(10000) NOT NULL \n")
-	createTableCommand.WriteString(" );")
-	ExecuteDatabaseCommand(db, createTableCommand.String())
-}
-
-// Creates the users table
-func SetupUsersTable(db *sql.DB) {
-	var createTableCommand bytes.Buffer
-	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
-	createTableCommand.WriteString(userTableName)
-	createTableCommand.WriteString(" (\n")
-	createTableCommand.WriteString("id INT NOT NULL, \n")
-	createTableCommand.WriteString("login varchar(10000) NOT NULL, \n")
-	createTableCommand.WriteString("password varchar(10000) NOT NULL \n")
-	createTableCommand.WriteString(" );")
-	ExecuteDatabaseCommand(db, createTableCommand.String())
-}
-
-// Creates the conversations table
-func SetupConversationTable(db *sql.DB) {
-	var createTableCommand bytes.Buffer
-	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
-	createTableCommand.WriteString(conversationTableName)
-	createTableCommand.WriteString(" (\n")
-	createTableCommand.WriteString("SSID INT NOT NULL, \n")
-	createTableCommand.WriteString("message varchar(10000) NOT NULL, \n")
-	createTableCommand.WriteString("timestamp varchar(30) NOT NULL, \n")
-	createTableCommand.WriteString("sent_or_received BIT NOT NULL")
-	createTableCommand.WriteString(" );")
-	ExecuteDatabaseCommand(db, createTableCommand.String())
-}
-
-func InsertIntoConversations(db *sql.DB, SSID int, message string, timestamp string, sentOrReceived int) {
-	if sentOrReceived != 0 && sentOrReceived != 1 {
-		fmt.Println("Invalid entry for sent/received - msut be 0 or 1. Instead, received a %d", sentOrReceived)
-	}
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", %d)", conversationTableName, SSID, message, timestamp, sentOrReceived)
-	ExecuteDatabaseCommand(db, insertCommand)
-}
-func InsertIntoSessions(db *sql.DB, SSID int, userId int, friendId int, privateKey string, fingerprint string) {
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, %d, %d, \"%s\", \"%s\")", sessionsTableName, SSID, userId, friendId, privateKey, fingerprint)
-	ExecuteDatabaseCommand(db, insertCommand)
-}
-func InsertIntoUsers(db *sql.DB, id int, login string, password string) {
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\")", userTableName, id, login, password)
-	ExecuteDatabaseCommand(db, insertCommand)
-}
-
-/*
-func QueryDatabase(db *sql.DB) {
-	query := "SELECT username, friendName FROM " + tableName;
-	ExecuteQuery(db, query)
-}
-*/
-
-// Executes the specified database command
-func ExecuteQuery(db *sql.DB, query string) {
-	results, err := db.Query(query)
-	if err != nil {
-		fmt.Printf("Failed to execute query %s: %s", query, err)
-		panic(err)
-	}
-	var (
-		username string
-		friendName string
-	)
-	for results.Next(){
-		err = results.Scan(&username, &friendName)
-		if err!= nil {
-			fmt.Printf("Failed to execute query %s: %s", query, err)
-			panic(err)
-		}
-		fmt.Printf("User: %s, Friend: %s\n", username, friendName)
-	}
-	err = results.Err()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-}
 func ShowTables(db *sql.DB) {
 	results, err := db.Query("SHOW TABLES")
 	if err != nil {
