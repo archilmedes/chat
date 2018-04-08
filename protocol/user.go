@@ -23,8 +23,7 @@ func UserLogin(login string, password string) *User {
 }
 
 func (u *User) NewSession(destIp string) (bool, error) {
-	// TODO send otr.QueryMessage to initiate
-	// server.sendMessage(destIp, otr.queryMessage)
+	// TODO send otr.QueryMessage to initiate OTR handshake
 	return true, nil
 }
 

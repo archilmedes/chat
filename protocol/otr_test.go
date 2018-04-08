@@ -2,17 +2,9 @@ package protocol
 
 import (
 	"testing"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/otr"
 )
-
-func TestOTRProtocol_Encrypt(t *testing.T) {
-	proto := NewOTRProtocol()
-	// TODO mock or something
-	cipherText, _ := proto.Encrypt([]byte("message"))
-	fmt.Println(cipherText)
-}
 
 func TestOTRProtocol_EndSession(t *testing.T) {
 	o := NewOTRProtocol()
@@ -20,36 +12,51 @@ func TestOTRProtocol_EndSession(t *testing.T) {
 	assert.False(t, o.conv.IsEncrypted())
 }
 
-// Inspired by official OTR tests in Golang here: https://github.com/keybase/go-crypto
+
 func TestOTRProtocol_Handshake(t *testing.T) {
 	alice, bob := NewOTRProtocol(), NewOTRProtocol()
+	createOTRLink(t, alice, bob)
+}
 
+// Inspired by official OTR tests in Golang here: https://github.com/keybase/go-crypto
+func createOTRLink(t *testing.T, alice OTRProtocol, bob OTRProtocol) {
 	var aMsg, bMsg [][]byte
-	var out []byte
-	var err error
+	var initKeyExchange = true
 	aMsg = append(aMsg, []byte(otr.QueryMessage))
-	var aSecChange, bSecChange otr.SecurityChange
-
 	// Simulate a handshake by just sending messages between two users
-	for ; len(aMsg) > 0 || len(bMsg) > 0; {
-		bMsg = nil
+	for ; initKeyExchange || len(aMsg[0]) > 0 || len(bMsg[0]) > 0; {
+		initKeyExchange = false
+		bMsg = [][]byte{}
 		for _, msg := range aMsg {
-			out, _, bSecChange, bMsg, err = bob.conv.Receive(msg)
-			assert.Len(t, out, 0, "Should not generate output during key exchange")
+			out, err := bob.Decrypt(msg)
+			bMsg = append(bMsg, out)
 			assert.Nil(t, err, "Error message not nil: %s", err)
 		}
 
-		aMsg = nil
+		aMsg = [][]byte{}
 		for _, msg := range bMsg {
-			out, _, aSecChange, aMsg, err = alice.conv.Receive(msg)
-			assert.Len(t, out, 0, "Should not generate output during key exchange")
+			out, err := alice.Decrypt(msg)
+			aMsg = append(aMsg, out)
 			assert.Nil(t, err, "Error message not nil: %s", err)
 		}
 	}
-
-	assert.Equal(t, otr.NewKeys, aSecChange, "Alice should have signaled NewKeys")
-	assert.Equal(t, otr.NewKeys, bSecChange, "Bob should have signaled NewKeys")
-
 	assert.True(t, alice.IsEncrypted(), "Alice should be encrypted")
-	assert.True(t, bob.IsEncrypted(), "Alice should be encrypted")
+	assert.True(t, bob.IsEncrypted(), "Bob should be encrypted")
+	assert.Equal(t, alice.sess.SSID, bob.sess.SSID, "Session IDs should be equal")
+	assert.Equal(t, alice.sess.fingerprint, bob.sess.fingerprint, "Fingerprints should be equal")
+}
+
+func TestOTRProtocol_SendAndReceiveMessages(t *testing.T) {
+	andrew, sameet := NewOTRProtocol(), NewOTRProtocol()
+	createOTRLink(t, andrew, sameet)
+
+	var testMessage = "Want to play fortnite?"
+	cyp, err := andrew.Encrypt([]byte(testMessage))
+	assert.Nil(t, err)
+
+	for _, msg := range cyp {
+		out, err := sameet.Decrypt(msg)
+		assert.Nil(t, err)
+		assert.Equal(t, testMessage, string(out), "Strings should be equivalent")
+	}
 }

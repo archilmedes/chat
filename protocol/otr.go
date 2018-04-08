@@ -21,7 +21,7 @@ type OTRSession struct {
 func NewOTRProtocol() OTRProtocol {
 	privKey := new(otr.PrivateKey)
 	privKey.Generate(rand.Reader)
-	// keyBytes := privKey.Serialize(nil) // TODO send byte array to DB to save
+	// TODO send byte array to DB to save (Use privKey.serialize(nil))
 	conv := new(otr.Conversation)
 	conv.PrivateKey = privKey
 	conv.FragmentSize = 1000
@@ -51,6 +51,7 @@ func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
 			if n < len(msg) {
 				log.Panicln("<OTR> Handshake could not be established")
 			}
+			return msg, err
 		}
 	}
 	switch secChange {
@@ -58,23 +59,18 @@ func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
 		// If it's encrypted, just return the decrypted message out
 		if encrypted && o.IsEncrypted() {
 			return out, nil
-		} else {
-			return out, err
 		}
 	case otr.NewKeys:
 		log.Printf("<OTR> Key exchange completed.\nFingerprint:%x\nSSID:%x\n",
 			o.conv.TheirPublicKey.Fingerprint(),
 			o.conv.SSID,
 		)
-		// TODO send fingerPrint and SSID to DB to save
+		// TODO Send OTRSession object to DB to save
 		sess := new(OTRSession)
 		sess.fingerprint = o.conv.TheirPublicKey.Fingerprint()
 		sess.SSID = o.conv.SSID
 		sess.privKey = o.conv.PrivateKey.Serialize(nil)
 		o.sess = *sess
-		if !encrypted {
-			log.Fatal("<OTR> Message should be encrypted")
-		}
 		return out, nil
 	case otr.ConversationEnded:
 		log.Println("<OTR> Conversation ended")
