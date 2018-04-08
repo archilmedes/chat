@@ -1,12 +1,16 @@
 package protocol
 
+import "log"
+
 type User struct {
 	proto Protocol // protocol used for encrypting messages
 	login string // unique identifier for the user
 }
 
 func NewSecureUser() *User {
-	login := "test" // TODO Week 2/3: create a unique login string of length n, that users can use to login and restore convo
+	// TODO Week 2/3: create a unique login string of length n
+	// that users can use to login and restore conversation
+	login := "test"
 	u := &User{login: login}
 	u.proto = NewOTRProtocol()
 	return u
@@ -18,8 +22,19 @@ func UserLogin(login string, password string) *User {
 	return nil
 }
 
-func (u *User) NewSession() {
-	u.proto = NewOTRProtocol()
+func (u *User) NewSession(destIp string) (bool, error) {
+	// TODO send otr.QueryMessage to initiate
+	// server.sendMessage(destIp, otr.queryMessage)
+	return true, nil
+}
+
+func (u *User) ReceiveMessage(enc []byte) ([]byte, error) {
+	msg, err := u.proto.Decrypt(enc)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	return msg, nil
 }
 
 func (u *User) SendMessage(msg[] byte) (bool, error) {
