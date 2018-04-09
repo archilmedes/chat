@@ -15,6 +15,7 @@ type User struct {
 
 // Creates the users table
 func SetupUsersTable(db *sql.DB) {
+	log.Println("Creating the users table...")
 	var createTableCommand bytes.Buffer
 	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
 	createTableCommand.WriteString(userTableName)
@@ -27,11 +28,13 @@ func SetupUsersTable(db *sql.DB) {
 }
 
 func InsertIntoUsers(db *sql.DB, id int, login string, password string) {
+	log.Println("Inserting data into users...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\")", userTableName, id, login, password)
 	ExecuteDatabaseCommand(db, insertCommand)
 }
 
 func QueryUsers(db *sql.DB) [] User{
+	log.Println("Retrieving data from users...")
 	query := "SELECT * FROM " + userTableName;
 	return ExecuteUsersQuery(db, query)
 }

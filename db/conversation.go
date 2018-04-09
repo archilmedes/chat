@@ -14,6 +14,7 @@ type Conversation struct {
 
 // Creates the conversations table
 func SetupConversationTable(db *sql.DB) {
+	log.Println("Creating the conversations table...")
 	var createTableCommand bytes.Buffer
 	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
 	createTableCommand.WriteString(conversationTableName)
@@ -27,6 +28,7 @@ func SetupConversationTable(db *sql.DB) {
 }
 
 func InsertIntoConversations(db *sql.DB, SSID int, message string, timestamp string, sentOrReceived int) {
+	log.Println("Inserting data into conversations...")
 	if sentOrReceived != 0 && sentOrReceived != 1 {
 		fmt.Println("Invalid entry for sent/received - msut be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
@@ -36,6 +38,7 @@ func InsertIntoConversations(db *sql.DB, SSID int, message string, timestamp str
 
 
 func QueryConversations(db *sql.DB) [] Conversation{
+	log.Println("Retrieving data from conversations...")
 	query := "SELECT * FROM " + conversationTableName;
 	return ExecuteConversationQuery(db, query)
 }

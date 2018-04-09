@@ -15,7 +15,6 @@ const (
 	sessionsTableName = "sessions"
 	userTableName = "users"
 	conversationTableName = "conversation"
-	// tableName = "Messages" // Constant in execution, can change
 )
 
 // Function to be called to set everything up
@@ -49,6 +48,7 @@ func InitializeDatabase() *sql.DB {
 	DropDatabase(db);
 
 	// Creates the database if it doesn't exist
+	log.Println("Creating database...")
 	createDatabaseCommand := "CREATE DATABASE IF NOT EXISTS " + databaseName;
 	ExecuteDatabaseCommand(db, createDatabaseCommand)
 	db.Close()
@@ -57,6 +57,7 @@ func InitializeDatabase() *sql.DB {
 	connectionString = FormConnectionString(databaseName)
 	db, _ = ConnectToDatabase(connectionString)
 
+	log.Println("Switching to OTRMessenger database")
 	useDatabaseCommand := "USE " + databaseName;
 	ExecuteDatabaseCommand(db, useDatabaseCommand)
 
@@ -97,6 +98,7 @@ func FormConnectionString(Name string) string {
 }
 
 func ShowTables(db *sql.DB) []string {
+	log.Println("Fetching all tables for database")
 	results, err := db.Query("SHOW TABLES")
 	if err != nil {
 		log.Panic("Failed to display tables")

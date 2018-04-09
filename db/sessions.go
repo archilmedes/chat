@@ -14,6 +14,7 @@ type Session struct {
 
 // Creates the sessions table
 func SetupSessionsTable(db *sql.DB) {
+	log.Println("Creating the sessions table...")
 	var createTableCommand bytes.Buffer
 	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
 	createTableCommand.WriteString(sessionsTableName)
@@ -28,11 +29,13 @@ func SetupSessionsTable(db *sql.DB) {
 }
 
 func InsertIntoSessions(db *sql.DB, SSID int, userId int, friendId int, privateKey string, fingerprint string) {
+	log.Println("Inserting data into conversations...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, %d, %d, \"%s\", \"%s\")", sessionsTableName, SSID, userId, friendId, privateKey, fingerprint)
 	ExecuteDatabaseCommand(db, insertCommand)
 }
 
 func QuerySessions(db *sql.DB) [] Session{
+	log.Println("Retrieving data from sessions...")
 	query := "SELECT * FROM " + sessionsTableName;
 	return ExecuteSessionsQuery(db, query)
 }
