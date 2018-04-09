@@ -8,11 +8,8 @@ import (
 )
 
 type Session struct {
-	SSID        int
-	userId      int
-	friendId    int
-	privateKey  string
-	fingerprint string
+	SSID, userId, friendId int
+	privateKey, fingerprint  string
 }
 
 // Creates the sessions table

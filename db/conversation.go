@@ -8,10 +8,8 @@ import (
 )
 
 type Conversation struct {
-	SSID int
-	message string
-	timestamp string
-	sentOrReceived int
+	SSID, sentOrReceived int
+	message, timestamp string
 }
 
 // Creates the conversations table
@@ -52,7 +50,6 @@ func ExecuteConversationQuery(db *sql.DB, query string) [] Conversation {
 	var conversations [] Conversation
 	conv := Conversation{}
 	for results.Next(){
-		//err = results.Scan(&SSID, &message, &timestamp, &sentOrReceived)
 		err = results.Scan(&conv.SSID, &conv.message, &conv.timestamp, &conv.sentOrReceived)
 		if err!= nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)

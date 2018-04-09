@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"log"
 )
 
 const (
@@ -98,8 +99,7 @@ func FormConnectionString(Name string) string {
 func ShowTables(db *sql.DB) []string {
 	results, err := db.Query("SHOW TABLES")
 	if err != nil {
-		fmt.Println("Failed to display tables.")
-		panic(err)
+		log.Panic("Failed to display tables")
 	}
 	var tables []string
 	var str string
