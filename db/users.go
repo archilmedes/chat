@@ -52,7 +52,6 @@ func ExecuteUsersQuery(db *sql.DB, query string) [] User {
 			panic(err)
 		}
 		users = append(users, user)
-		fmt.Printf("Id: %d, Login: %s, Password: %s\n", user.id, user.login, user.password)
 	}
 	err = results.Err()
 	if err != nil {

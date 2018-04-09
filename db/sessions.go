@@ -56,7 +56,6 @@ func ExecuteSessionsQuery(db *sql.DB, query string) [] Session {
 			panic(err)
 		}
 		sessions = append(sessions, session)
-		fmt.Printf("SSID: %d, User: %d, Friend: %d, Private Key: %s, Fingerprint: %s\n", session.SSID, session.userId, session.friendId, session.privateKey, session.fingerprint)
 	}
 	err = results.Err()
 	if err != nil {

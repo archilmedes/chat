@@ -59,7 +59,6 @@ func ExecuteConversationQuery(db *sql.DB, query string) [] Conversation {
 			panic(err)
 		}
 		conversations = append(conversations, conv)
-		fmt.Printf("SSID: %d, Message: %s, Timestamp: %s, Sent? %d\n", conv.SSID, conv.message, conv.timestamp, conv.sentOrReceived)
 	}
 	err = results.Err()
 	if err != nil {
