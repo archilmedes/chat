@@ -2,12 +2,11 @@ package db
 
 import (
 	"testing"
-	"database/sql"
 	"github.com/stretchr/testify/assert"
 )
 
-func SessionsTest (t *testing.T, db *sql.DB){
-	sessions := QuerySessions(db)
+func SessionsTest (t *testing.T){
+	sessions := QuerySessions()
 	assert.Equal(t, 7, len(sessions))
 	assert.Equal(t, "CBDEABD347ABDC392", sessions[1].fingerprint)
 	assert.Equal(t, "bcd8763728749378ab8347839847328492ae897638903478b834743898c834738423e9786f9ff7657843cb3874383b8973487ef3864727384a8783647873", sessions[2].privateKey)

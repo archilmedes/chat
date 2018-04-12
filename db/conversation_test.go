@@ -2,12 +2,11 @@ package db
 
 import (
 	"testing"
-	"database/sql"
 	"github.com/stretchr/testify/assert"
 )
 
-func ConversationTest (t *testing.T, db *sql.DB){
-	conversations := QueryConversations(db)
+func ConversationTest (t *testing.T){
+	conversations := QueryConversations()
 	assert.Equal(t, 8, len(conversations))
 	assert.Equal(t, 52, conversations[3].SSID)
 	assert.Equal(t, 0, conversations[3].sentOrReceived)

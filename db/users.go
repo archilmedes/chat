@@ -1,46 +1,54 @@
 package db
 
 import (
-	"database/sql"
 	"bytes"
 	"fmt"
 	"log"
 )
 
 type User struct {
-	id int
 	login string
+	displayName string
 	password string
 }
 
 // Creates the users table
-func SetupUsersTable(db *sql.DB) {
+func SetupUsersTable() {
 	log.Println("Creating the users table...")
 	var createTableCommand bytes.Buffer
 	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
 	createTableCommand.WriteString(userTableName)
 	createTableCommand.WriteString(" (\n")
-	createTableCommand.WriteString("id INT NOT NULL, \n")
-	createTableCommand.WriteString("login varchar(10000) NOT NULL, \n")
-	createTableCommand.WriteString("password varchar(10000) NOT NULL \n")
+	createTableCommand.WriteString("login varchar(1000) NOT NULL, \n")
+	createTableCommand.WriteString("displayName varchar(1000) NOT NULL, \n")
+	createTableCommand.WriteString("password varchar(1000) NOT NULL \n")
 	createTableCommand.WriteString(" );")
-	ExecuteDatabaseCommand(db, createTableCommand.String())
+	ExecuteDatabaseCommand(createTableCommand.String())
 }
 
-func InsertIntoUsers(db *sql.DB, id int, login string, password string) {
+
+func user_exists(username string) bool{
+	query := "SELECT COUNT(*) FROM " + userTableName + "WHERE username=" + username;
+	users := ExecuteUsersQuery(query)
+	if len(users) > 0{
+		return true
+	}
+	return false
+}
+func InsertIntoUsers(login string, displayName string, password string) {
 	log.Println("Inserting data into users...")
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\")", userTableName, id, login, password)
-	ExecuteDatabaseCommand(db, insertCommand)
+	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%s, \"%s\", \"%s\")", userTableName, login, displayName, password)
+	ExecuteDatabaseCommand(insertCommand)
 }
 
-func QueryUsers(db *sql.DB) [] User{
+func QueryUsers() [] User{
 	log.Println("Retrieving data from users...")
 	query := "SELECT * FROM " + userTableName;
-	return ExecuteUsersQuery(db, query)
+	return ExecuteUsersQuery(query)
 }
 
 // Executes the specified database command
-func ExecuteUsersQuery(db *sql.DB, query string) [] User {
+func ExecuteUsersQuery(query string) [] User {
 	results, err := db.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)

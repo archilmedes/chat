@@ -16,25 +16,25 @@ const (
 	userTableName = "users"
 	conversationTableName = "conversation"
 )
+var db *sql.DB
 
 // Function to be called to set everything up
-func SetupDatabase() *sql.DB {
-	db := InitializeDatabase()
-	SetupTables(db)
-	SetupSessionsTable(db)
-	return db
+func SetupDatabase(){
+	db = InitializeDatabase()
+	SetupTables()
+	SetupSessionsTable()
 }
-func SetupTables(db *sql.DB) {
-	SetupSessionsTable(db)
-	SetupUsersTable(db)
-	SetupConversationTable(db)
+func SetupTables() {
+	SetupSessionsTable()
+	SetupUsersTable()
+	SetupConversationTable()
 
 }
 
 // Drops the database if it exists
-func DropDatabase(db *sql.DB) {
+func DropDatabase() {
 	dropDatabaseCommand := "DROP DATABASE IF EXISTS " + databaseName;
-	ExecuteDatabaseCommand(db, dropDatabaseCommand)
+	ExecuteDatabaseCommand(dropDatabaseCommand)
 }
 
 // Creates the initial connection to the database
@@ -42,15 +42,15 @@ func InitializeDatabase() *sql.DB {
 	connectionString := FormConnectionString("")
 
 	// Initial connection to MySql - will work even if no databases created
-	db, _ := ConnectToDatabase(connectionString)
+	db, _ = ConnectToDatabase(connectionString)
 
 	// FOR TESTING ONLY - CLEARS DATABASE EVERY RUN
-	DropDatabase(db);
+	DropDatabase();
 
 	// Creates the database if it doesn't exist
 	log.Println("Creating database...")
 	createDatabaseCommand := "CREATE DATABASE IF NOT EXISTS " + databaseName;
-	ExecuteDatabaseCommand(db, createDatabaseCommand)
+	ExecuteDatabaseCommand(createDatabaseCommand)
 	db.Close()
 
 	// Connects to the OTRMessenger database
@@ -59,13 +59,13 @@ func InitializeDatabase() *sql.DB {
 
 	log.Println("Switching to OTRMessenger database")
 	useDatabaseCommand := "USE " + databaseName;
-	ExecuteDatabaseCommand(db, useDatabaseCommand)
+	ExecuteDatabaseCommand(useDatabaseCommand)
 
 	return db
 }
 
 // Executes the specified database command
-func ExecuteDatabaseCommand(db *sql.DB, command string){
+func ExecuteDatabaseCommand(command string){
 	_, err := db.Exec(command)
 	if err != nil {
 		fmt.Printf("Failed to execute command %s: %s", command, err)
@@ -75,12 +75,12 @@ func ExecuteDatabaseCommand(db *sql.DB, command string){
 
 // Connects to a database - quits if it encounters errors
 func ConnectToDatabase(connectionString string) (*sql.DB, error) {
-	db, err := sql.Open("mysql", connectionString)
+	database, err := sql.Open("mysql", connectionString)
 	if err != nil {
 		fmt.Printf("Could not connect to db: %s", err)
 		panic(err)
 	}
-	return db, err
+	return database, err
 }
 
 // Creates the connection string using username, password, hostname, and port
@@ -97,7 +97,7 @@ func FormConnectionString(Name string) string {
 	return connectionString.String()
 }
 
-func ShowTables(db *sql.DB) []string {
+func ShowTables() []string {
 	log.Println("Fetching all tables for database")
 	results, err := db.Query("SHOW TABLES")
 	if err != nil {

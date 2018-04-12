@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"bytes"
 	"fmt"
 	"log"
@@ -13,7 +12,7 @@ type Conversation struct {
 }
 
 // Creates the conversations table
-func SetupConversationTable(db *sql.DB) {
+func SetupConversationTable() {
 	log.Println("Creating the conversations table...")
 	var createTableCommand bytes.Buffer
 	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
@@ -24,27 +23,27 @@ func SetupConversationTable(db *sql.DB) {
 	createTableCommand.WriteString("timestamp varchar(30) NOT NULL, \n")
 	createTableCommand.WriteString("sent_or_received TINYINT NOT NULL")
 	createTableCommand.WriteString(" );")
-	ExecuteDatabaseCommand(db, createTableCommand.String())
+	ExecuteDatabaseCommand(createTableCommand.String())
 }
 
-func InsertIntoConversations(db *sql.DB, SSID int, message string, timestamp string, sentOrReceived int) {
+func InsertIntoConversations(SSID int, message string, timestamp string, sentOrReceived int) {
 	log.Println("Inserting data into conversations...")
 	if sentOrReceived != 0 && sentOrReceived != 1 {
-		fmt.Println("Invalid entry for sent/received - msut be 0 or 1. Instead, received a %d", sentOrReceived)
+		fmt.Printf("Invalid entry for sent/received - msut be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", %d)", conversationTableName, SSID, message, timestamp, sentOrReceived)
-	ExecuteDatabaseCommand(db, insertCommand)
+	ExecuteDatabaseCommand(insertCommand)
 }
 
 
-func QueryConversations(db *sql.DB) [] Conversation{
+func QueryConversations() [] Conversation{
 	log.Println("Retrieving data from conversations...")
 	query := "SELECT * FROM " + conversationTableName;
-	return ExecuteConversationQuery(db, query)
+	return ExecuteConversationQuery(query)
 }
 
 // Executes the specified database command
-func ExecuteConversationQuery(db *sql.DB, query string) [] Conversation {
+func ExecuteConversationQuery(query string) [] Conversation {
 	results, err := db.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)

@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"bytes"
 	"fmt"
 	"log"
@@ -13,7 +12,7 @@ type Session struct {
 }
 
 // Creates the sessions table
-func SetupSessionsTable(db *sql.DB) {
+func SetupSessionsTable() {
 	log.Println("Creating the sessions table...")
 	var createTableCommand bytes.Buffer
 	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
@@ -25,23 +24,23 @@ func SetupSessionsTable(db *sql.DB) {
 	createTableCommand.WriteString("private_key varchar(10000) NOT NULL, \n")
 	createTableCommand.WriteString("fingerprint varchar(10000) NOT NULL \n")
 	createTableCommand.WriteString(" );")
-	ExecuteDatabaseCommand(db, createTableCommand.String())
+	ExecuteDatabaseCommand(createTableCommand.String())
 }
 
-func InsertIntoSessions(db *sql.DB, SSID int, userId int, friendId int, privateKey string, fingerprint string) {
+func InsertIntoSessions(SSID int, userId int, friendId int, privateKey string, fingerprint string) {
 	log.Println("Inserting data into conversations...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, %d, %d, \"%s\", \"%s\")", sessionsTableName, SSID, userId, friendId, privateKey, fingerprint)
-	ExecuteDatabaseCommand(db, insertCommand)
+	ExecuteDatabaseCommand(insertCommand)
 }
 
-func QuerySessions(db *sql.DB) [] Session{
+func QuerySessions() [] Session{
 	log.Println("Retrieving data from sessions...")
 	query := "SELECT * FROM " + sessionsTableName;
-	return ExecuteSessionsQuery(db, query)
+	return ExecuteSessionsQuery(query)
 }
 
 // Executes the specified database command
-func ExecuteSessionsQuery(db *sql.DB, query string) [] Session {
+func ExecuteSessionsQuery(query string) [] Session {
 	results, err := db.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)
