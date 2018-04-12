@@ -26,22 +26,19 @@ func SetupUsersTable() {
 	ExecuteDatabaseCommand(createTableCommand.String())
 }
 
-
-func user_exists(username string) bool{
+func UserExists(username string) bool {
 	query := "SELECT COUNT(*) FROM " + userTableName + "WHERE username=" + username;
 	users := ExecuteUsersQuery(query)
-	if len(users) > 0{
-		return true
-	}
-	return false
+	return len(users) > 0
 }
+
 func InsertIntoUsers(login string, displayName string, password string) {
 	log.Println("Inserting data into users...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%s, \"%s\", \"%s\")", userTableName, login, displayName, password)
 	ExecuteDatabaseCommand(insertCommand)
 }
 
-func QueryUsers() [] User{
+func QueryUsers() [] User {
 	log.Println("Retrieving data from users...")
 	query := "SELECT * FROM " + userTableName;
 	return ExecuteUsersQuery(query)
@@ -56,8 +53,9 @@ func ExecuteUsersQuery(query string) [] User {
 	}
 	var users [] User
 	user := User{}
-	for results.Next(){
-		err = results.Scan(&user.id, &user.login, &user.password)
+
+	for results.Next() {
+		err = results.Scan(&user.displayName, &user.login, &user.password)
 		if err!= nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
