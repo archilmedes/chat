@@ -1,3 +1,4 @@
+// Contains base packages to implement the OTR protocol and encrypt messagse
 package protocol
 
 import (
