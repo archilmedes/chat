@@ -17,14 +17,26 @@ type OTRSession struct {
 	fingerprint, privKey []byte
 }
 
+const (
+	fragmentSize = 1000
+)
+
 // Create a new OTR session, with new keys and a new Conversation
 func NewOTRProtocol() OTRProtocol {
 	privKey := new(otr.PrivateKey)
 	privKey.Generate(rand.Reader)
-	// TODO send byte array to DB to save (Use privKey.serialize(nil))
 	conv := new(otr.Conversation)
 	conv.PrivateKey = privKey
-	conv.FragmentSize = 1000
+	conv.FragmentSize = fragmentSize
+	return OTRProtocol{conv: conv}
+}
+
+func NewOTRProtocolFromKeys(privKeyBytes[]byte) OTRProtocol {
+	privKey := new(otr.PrivateKey)
+	privKey.Parse(privKeyBytes)
+	conv := new(otr.Conversation)
+	conv.PrivateKey = privKey
+	conv.FragmentSize = fragmentSize
 	return OTRProtocol{conv: conv}
 }
 
@@ -89,4 +101,8 @@ func (o OTRProtocol) IsEncrypted() bool {
 
 func (o OTRProtocol) EndSession() {
 	o.conv.End()
+}
+
+func (o OTRProtocol) serialize() []byte {
+	return o.conv.PrivateKey.Serialize(nil)
 }
