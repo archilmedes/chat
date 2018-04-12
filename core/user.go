@@ -3,7 +3,7 @@ package core
 import (
 	"log"
 	"fmt"
-	secure "github.com/chat/protocol"
+	secure "chat/protocol"
 )
 
 type User struct {

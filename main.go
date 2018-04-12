@@ -2,13 +2,13 @@ package main
 
 import (
 	"bufio"
+	"chat/server"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
-	"github.com/chat/server"
 )
 
 const Exit = "exit"
@@ -38,7 +38,7 @@ func main() {
 		log.Fatalf("main: %s", err.Error())
 	}
 	defer program.Shutdown()
-	sig := make (chan os.Signal, 1)
+	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		<-sig
