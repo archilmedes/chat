@@ -1,24 +1,37 @@
-package protocol
+package core
 
-import "log"
+import (
+	"log"
+	"fmt"
+	secure "github.com/chat/protocol"
+)
 
 type User struct {
-	proto Protocol // protocol used for encrypting messages
+	proto secure.Protocol // protocol used for encrypting messages
 	login string // unique identifier for the user
 }
 
-func NewSecureUser() *User {
-	// TODO Week 2/3: create a unique login string of length n
-	// that users can use to login and restore conversation
-	login := "test"
-	u := &User{login: login}
-	u.proto = NewOTRProtocol()
+func NewSecureUser(login string) *User {
+	u := new(User)
+	u.login = login
+	u.proto = secure.NewOTRProtocol()
 	return u
+}
+
+func (u *User) Persist() {
+	protoBytes := u.proto.Serialize()
+	login := u.login
+	// TODO put method to save to DB, remove print
+	fmt.Println("Saving " + string(protoBytes) + " login " + login)
+}
+
+func (u *User) Delete() {
+	// TODO invoke delete by user login to DB
 }
 
 // Log in the user or return null. Return the user with the private key
 func UserLogin(login string, password string) *User {
-	// TODO Implement in Week 3
+	// TODO Invoke DB
 	return nil
 }
 

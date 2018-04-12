@@ -5,6 +5,7 @@ type Protocol interface {
 	Decrypt(cypher []byte) ([]byte, error)
 	IsEncrypted() bool
 	EndSession()
+	Serialize() []byte
 }
 
 type PlainProtocol struct {
@@ -27,4 +28,8 @@ func (p PlainProtocol) IsEncrypted() bool {
 
 func (p PlainProtocol) EndSession() {
 	// no-op
+}
+
+func (p PlainProtocol) Serialize() []byte {
+	return []byte(nil)
 }

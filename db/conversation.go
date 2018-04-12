@@ -30,7 +30,7 @@ func SetupConversationTable(db *sql.DB) {
 func InsertIntoConversations(db *sql.DB, SSID int, message string, timestamp string, sentOrReceived int) {
 	log.Println("Inserting data into conversations...")
 	if sentOrReceived != 0 && sentOrReceived != 1 {
-		fmt.Println("Invalid entry for sent/received - msut be 0 or 1. Instead, received a %d", sentOrReceived)
+		fmt.Printf("Invalid entry for sent/received - msut be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", %d)", conversationTableName, SSID, message, timestamp, sentOrReceived)
 	ExecuteDatabaseCommand(db, insertCommand)
