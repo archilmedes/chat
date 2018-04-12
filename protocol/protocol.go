@@ -1,3 +1,4 @@
+// Contains protocol definition and plain protocol implementation
 package protocol
 
 type Protocol interface {

@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>db - The Go Programming Language</title>
+
+<link type="text/css" rel="stylesheet" href="../../../lib/godoc/style.css">
+
+<link rel="stylesheet" href="../../../lib/godoc/jquery.treeview.css">
+<script type="text/javascript">window.initFuncs = [];</script>
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="http://localhost:6060/">The Go Programming Language</a></div>
+<div class="top-heading" id="heading-narrow"><a href="http://localhost:6060/">Go</a></div>
+<a href="index.html#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
+<form method="GET" action="http://localhost:6060/search">
+<div id="menu">
+<a href="http://localhost:6060/doc/">Documents</a>
+<a href="http://localhost:6060/pkg/">Packages</a>
+<a href="http://localhost:6060/project/">The Project</a>
+<a href="http://localhost:6060/help/">Help</a>
+
+<a href="http://localhost:6060/blog/">Blog</a>
+
+
+<span class="search-box"><input type="search" id="search" name="q" placeholder="Search" aria-label="Search" required><button type="submit"><span><!-- magnifying glass: --><svg width="24" height="24" viewBox="0 0 24 24"><title>submit search</title><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/><path d="M0 0h24v24H0z" fill="none"/></svg></span></button></span>
+</div>
+</form>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package db
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script type='text/javascript'>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "chat/db"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="index.html#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="index.html#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				
+			</div>
+		</div>
+		
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+			
+				
+				<dd><a href="index.html#ConnectToDatabase">func ConnectToDatabase(connectionString string) (*sql.DB, error)</a></dd>
+			
+				
+				<dd><a href="index.html#DropDatabase">func DropDatabase()</a></dd>
+			
+				
+				<dd><a href="index.html#ExecuteDatabaseCommand">func ExecuteDatabaseCommand(command string)</a></dd>
+			
+				
+				<dd><a href="index.html#FormConnectionString">func FormConnectionString(Name string) string</a></dd>
+			
+				
+				<dd><a href="index.html#InitializeDatabase">func InitializeDatabase() *sql.DB</a></dd>
+			
+				
+				<dd><a href="index.html#InsertIntoConversations">func InsertIntoConversations(SSID int, message string, timestamp string, sentOrReceived int)</a></dd>
+			
+				
+				<dd><a href="index.html#InsertIntoSessions">func InsertIntoSessions(SSID int, userId int, friendId int, privateKey string, fingerprint string)</a></dd>
+			
+				
+				<dd><a href="index.html#InsertIntoUsers">func InsertIntoUsers(login string, displayName string, password string)</a></dd>
+			
+				
+				<dd><a href="index.html#SetupConversationTable">func SetupConversationTable()</a></dd>
+			
+				
+				<dd><a href="index.html#SetupDatabase">func SetupDatabase()</a></dd>
+			
+				
+				<dd><a href="index.html#SetupSessionsTable">func SetupSessionsTable()</a></dd>
+			
+				
+				<dd><a href="index.html#SetupTables">func SetupTables()</a></dd>
+			
+				
+				<dd><a href="index.html#SetupUsersTable">func SetupUsersTable()</a></dd>
+			
+				
+				<dd><a href="index.html#ShowTables">func ShowTables() []string</a></dd>
+			
+				
+				<dd><a href="index.html#UserExists">func UserExists(username string) bool</a></dd>
+			
+			
+				
+				<dd><a href="index.html#Conversation">type Conversation</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="index.html#ExecuteConversationQuery">func ExecuteConversationQuery(query string) []Conversation</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="index.html#QueryConversations">func QueryConversations() []Conversation</a></dd>
+				
+				
+			
+				
+				<dd><a href="index.html#Session">type Session</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="index.html#ExecuteSessionsQuery">func ExecuteSessionsQuery(query string) []Session</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="index.html#QuerySessions">func QuerySessions() []Session</a></dd>
+				
+				
+			
+				
+				<dd><a href="index.html#User">type User</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="index.html#ExecuteUsersQuery">func ExecuteUsersQuery(query string) []User</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="index.html#QueryUsers">func QueryUsers() []User</a></dd>
+				
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="http://localhost:6060/src/chat/db/constants.go">constants.go</a>
+			
+				<a href="http://localhost:6060/src/chat/db/conversation.go">conversation.go</a>
+			
+				<a href="http://localhost:6060/src/chat/db/db.go">db.go</a>
+			
+				<a href="http://localhost:6060/src/chat/db/sessions.go">sessions.go</a>
+			
+				<a href="http://localhost:6060/src/chat/db/users.go">users.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		<div id="pkg-callgraph" class="toggle" style="display: none">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Internal Call Graph section">Internal call graph ▹</h2>
+		</div> <!-- .expanded -->
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Internal Call Graph section">Internal call graph ▾</h2>
+			<p>
+			  In the call graph viewer below, each node
+			  is a function belonging to this package
+			  and its children are the functions it
+			  calls&mdash;perhaps dynamically.
+			</p>
+			<p>
+			  The root nodes are the entry points of the
+			  package: functions that may be called from
+			  outside the package.
+			  There may be non-exported or anonymous
+			  functions among them if they are called
+			  dynamically from another package.
+			</p>
+			<p>
+			  Click a node to visit that function's source code.
+			  From there you can visit its callers by
+			  clicking its declaring <code>func</code>
+			  token.
+			</p>
+			<p>
+			  Functions may be omitted if they were
+			  determined to be unreachable in the
+			  particular programs or tests that were
+			  analyzed.
+			</p>
+			<!-- Zero means show all package entry points. -->
+			<ul style="margin-left: 0.5in" id="callgraph-0" class="treeview"></ul>
+		</div>
+		</div> <!-- #pkg-callgraph -->
+
+		
+		
+		
+			
+			
+			<h2 id="ConnectToDatabase">func <a href="http://localhost:6060/src/chat/db/db.go?s=1873:1937#L67">ConnectToDatabase</a>
+				<a class="permalink" href="index.html#ConnectToDatabase">&#xb6;</a>
+			</h2>
+			<pre>func ConnectToDatabase(connectionString <a href="../../builtin/index.html#string">string</a>) (*<a href="../../database/sql/index.html">sql</a>.<a href="../../database/sql/index.html#DB">DB</a>, <a href="../../builtin/index.html#error">error</a>)</pre>
+			<p>
+Connects to a database - quits if it encounters errors
+</p>
+
+			
+			
+
+		
+			
+			
+			<h2 id="DropDatabase">func <a href="http://localhost:6060/src/chat/db/db.go?s=628:647#L25">DropDatabase</a>
+				<a class="permalink" href="index.html#DropDatabase">&#xb6;</a>
+			</h2>
+			<pre>func DropDatabase()</pre>
+			<p>
+Drops the database if it exists
+</p>
+
+			
+			
+
+		
+			
+			
+			<h2 id="ExecuteDatabaseCommand">func <a href="http://localhost:6060/src/chat/db/db.go?s=1643:1686#L58">ExecuteDatabaseCommand</a>
+				<a class="permalink" href="index.html#ExecuteDatabaseCommand">&#xb6;</a>
+			</h2>
+			<pre>func ExecuteDatabaseCommand(command <a href="../../builtin/index.html#string">string</a>)</pre>
+			<p>
+Executes the specified database command
+</p>
+
+			
+			
+
+		
+			
+			
+			<h2 id="FormConnectionString">func <a href="http://localhost:6060/src/chat/db/db.go?s=2179:2224#L77">FormConnectionString</a>
+				<a class="permalink" href="index.html#FormConnectionString">&#xb6;</a>
+			</h2>
+			<pre>func FormConnectionString(Name <a href="../../builtin/index.html#string">string</a>) <a href="../../builtin/index.html#string">string</a></pre>
+			<p>
+Creates the connection string using username, password, hostname, and port
+</p>
+
+			
+			
+
+		
+			
+			
+			<h2 id="InitializeDatabase">func <a href="http://localhost:6060/src/chat/db/db.go?s=815:848#L31">InitializeDatabase</a>
+				<a class="permalink" href="index.html#InitializeDatabase">&#xb6;</a>
+			</h2>
+			<pre>func InitializeDatabase() *<a href="../../database/sql/index.html">sql</a>.<a href="../../database/sql/index.html#DB">DB</a></pre>
+			<p>
+Creates the initial connection to the database
+</p>
+
+			
+			
+
+		
+			
+			
+			<h2 id="InsertIntoConversations">func <a href="http://localhost:6060/src/chat/db/conversation.go?s=806:898#L19">InsertIntoConversations</a>
+				<a class="permalink" href="index.html#InsertIntoConversations">&#xb6;</a>
+			</h2>
+			<pre>func InsertIntoConversations(SSID <a href="../../builtin/index.html#int">int</a>, message <a href="../../builtin/index.html#string">string</a>, timestamp <a href="../../builtin/index.html#string">string</a>, sentOrReceived <a href="../../builtin/index.html#int">int</a>)</pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="InsertIntoSessions">func <a href="http://localhost:6060/src/chat/db/sessions.go?s=864:962#L20">InsertIntoSessions</a>
+				<a class="permalink" href="index.html#InsertIntoSessions">&#xb6;</a>
+			</h2>
+			<pre>func InsertIntoSessions(SSID <a href="../../builtin/index.html#int">int</a>, userId <a href="../../builtin/index.html#int">int</a>, friendId <a href="../../builtin/index.html#int">int</a>, privateKey <a href="../../builtin/index.html#string">string</a>, fingerprint <a href="../../builtin/index.html#string">string</a>)</pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="InsertIntoUsers">func <a href="http://localhost:6060/src/chat/db/users.go?s=893:964#L25">InsertIntoUsers</a>
+				<a class="permalink" href="index.html#InsertIntoUsers">&#xb6;</a>
+			</h2>
+			<pre>func InsertIntoUsers(login <a href="../../builtin/index.html#string">string</a>, displayName <a href="../../builtin/index.html#string">string</a>, password <a href="../../builtin/index.html#string">string</a>)</pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="SetupConversationTable">func <a href="http://localhost:6060/src/chat/db/conversation.go?s=165:194#L5">SetupConversationTable</a>
+				<a class="permalink" href="index.html#SetupConversationTable">&#xb6;</a>
+			</h2>
+			<pre>func SetupConversationTable()</pre>
+			<p>
+Creates the conversations table
+</p>
+
+			
+			
+
+		
+			
+			
+			<h2 id="SetupDatabase">func <a href="http://localhost:6060/src/chat/db/db.go?s=413:433#L12">SetupDatabase</a>
+				<a class="permalink" href="index.html#SetupDatabase">&#xb6;</a>
+			</h2>
+			<pre>func SetupDatabase()</pre>
+			<p>
+Function to be called to set everything up
+</p>
+
+			
+			
+
+		
+			
+			
+			<h2 id="SetupSessionsTable">func <a href="http://localhost:6060/src/chat/db/sessions.go?s=163:188#L5">SetupSessionsTable</a>
+				<a class="permalink" href="index.html#SetupSessionsTable">&#xb6;</a>
+			</h2>
+			<pre>func SetupSessionsTable()</pre>
+			<p>
+Creates the sessions table
+</p>
+
+			
+			
+
+		
+			
+			
+			<h2 id="SetupTables">func <a href="http://localhost:6060/src/chat/db/db.go?s=501:519#L17">SetupTables</a>
+				<a class="permalink" href="index.html#SetupTables">&#xb6;</a>
+			</h2>
+			<pre>func SetupTables()</pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="SetupUsersTable">func <a href="http://localhost:6060/src/chat/db/users.go?s=147:169#L6">SetupUsersTable</a>
+				<a class="permalink" href="index.html#SetupUsersTable">&#xb6;</a>
+			</h2>
+			<pre>func SetupUsersTable()</pre>
+			<p>
+Creates the users table
+</p>
+
+			
+			
+
+		
+			
+			
+			<h2 id="ShowTables">func <a href="http://localhost:6060/src/chat/db/db.go?s=2609:2635#L90">ShowTables</a>
+				<a class="permalink" href="index.html#ShowTables">&#xb6;</a>
+			</h2>
+			<pre>func ShowTables() []<a href="../../builtin/index.html#string">string</a></pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="UserExists">func <a href="http://localhost:6060/src/chat/db/users.go?s=710:747#L19">UserExists</a>
+				<a class="permalink" href="index.html#UserExists">&#xb6;</a>
+			</h2>
+			<pre>func UserExists(username <a href="../../builtin/index.html#string">string</a>) <a href="../../builtin/index.html#bool">bool</a></pre>
+			
+			
+			
+
+		
+		
+			
+			
+			<h2 id="Conversation">type <a href="http://localhost:6060/src/chat/db/conversation.go?s=47:128#L1">Conversation</a>
+				<a class="permalink" href="index.html#Conversation">&#xb6;</a>
+			</h2>
+			
+			<pre>type Conversation struct {
+<span id="Conversation.SSID"></span>    SSID <a href="../../builtin/index.html#int">int</a>
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="ExecuteConversationQuery">func <a href="http://localhost:6060/src/chat/db/conversation.go?s=1534:1593#L36">ExecuteConversationQuery</a>
+					<a class="permalink" href="index.html#ExecuteConversationQuery">&#xb6;</a>
+				</h3>
+				<pre>func ExecuteConversationQuery(query <a href="../../builtin/index.html#string">string</a>) []<a href="index.html#Conversation">Conversation</a></pre>
+				<p>
+Executes the specified database command
+</p>
+
+				
+				
+			
+				
+				<h3 id="QueryConversations">func <a href="http://localhost:6060/src/chat/db/conversation.go?s=1299:1340#L29">QueryConversations</a>
+					<a class="permalink" href="index.html#QueryConversations">&#xb6;</a>
+				</h3>
+				<pre>func QueryConversations() []<a href="index.html#Conversation">Conversation</a></pre>
+				
+				
+				
+			
+
+			
+		
+			
+			
+			<h2 id="Session">type <a href="http://localhost:6060/src/chat/db/sessions.go?s=47:131#L1">Session</a>
+				<a class="permalink" href="index.html#Session">&#xb6;</a>
+			</h2>
+			
+			<pre>type Session struct {
+<span id="Session.SSID"></span>    SSID <a href="../../builtin/index.html#int">int</a>
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="ExecuteSessionsQuery">func <a href="http://localhost:6060/src/chat/db/sessions.go?s=1424:1474#L33">ExecuteSessionsQuery</a>
+					<a class="permalink" href="index.html#ExecuteSessionsQuery">&#xb6;</a>
+				</h3>
+				<pre>func ExecuteSessionsQuery(query <a href="../../builtin/index.html#string">string</a>) []<a href="index.html#Session">Session</a></pre>
+				<p>
+Executes the specified database command
+</p>
+
+				
+				
+			
+				
+				<h3 id="QuerySessions">func <a href="http://localhost:6060/src/chat/db/sessions.go?s=1212:1243#L26">QuerySessions</a>
+					<a class="permalink" href="index.html#QuerySessions">&#xb6;</a>
+				</h3>
+				<pre>func QuerySessions() []<a href="index.html#Session">Session</a></pre>
+				
+				
+				
+			
+
+			
+		
+			
+			
+			<h2 id="User">type <a href="http://localhost:6060/src/chat/db/users.go?s=47:118#L1">User</a>
+				<a class="permalink" href="index.html#User">&#xb6;</a>
+			</h2>
+			
+			<pre>type User struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="ExecuteUsersQuery">func <a href="http://localhost:6060/src/chat/db/users.go?s=1372:1416#L38">ExecuteUsersQuery</a>
+					<a class="permalink" href="index.html#ExecuteUsersQuery">&#xb6;</a>
+				</h3>
+				<pre>func ExecuteUsersQuery(query <a href="../../builtin/index.html#string">string</a>) []<a href="index.html#User">User</a></pre>
+				<p>
+Executes the specified database command
+</p>
+
+				
+				
+			
+				
+				<h3 id="QueryUsers">func <a href="http://localhost:6060/src/chat/db/users.go?s=1175:1200#L31">QueryUsers</a>
+					<a class="permalink" href="index.html#QueryUsers">&#xb6;</a>
+				</h3>
+				<pre>func QueryUsers() []<a href="index.html#User">User</a></pre>
+				
+				
+				
+			
+
+			
+		
+	
+
+	
+
+
+
+
+
+
+
+<div id="footer">
+Build version go1.10.<br>
+Except as <a href="https://developers.google.com/site-policies#restrictions">noted</a>,
+the content of this page is licensed under the
+Creative Commons Attribution 3.0 License,
+and code is licensed under a <a href="http://localhost:6060/LICENSE">BSD license</a>.<br>
+<a href="http://localhost:6060/doc/tos.html">Terms of Service</a> |
+<a href="http://www.google.com/intl/en/policies/privacy/">Privacy Policy</a>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+<!-- TODO(adonovan): load these from <head> using "defer" attribute? -->
+<script type="text/javascript" src="../../../lib/godoc/jquery.js"></script>
+<script type="text/javascript" src="../../../lib/godoc/jquery.treeview.js"></script>
+<script type="text/javascript" src="../../../lib/godoc/jquery.treeview.edit.js"></script>
+
+
+<script>var goVersion = "go1.10";</script>
+<script type="text/javascript" src="../../../lib/godoc/godocs.js"></script>
+
+</body>
+</html>
+
