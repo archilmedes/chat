@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 	"chat/db"
+	"runtime"
+	"chat/core"
 )
 
 const (
@@ -36,7 +38,20 @@ func handleConnection(conn *net.TCPConn) {
 	if err := decoder.Decode(&msg); err != nil {
 		log.Panicf("handleConnection: %s", err.Error())
 	}
-	fmt.Printf("%s: %s\n", msg.MAC, msg.Text)
+
+	//fromUser := new(core.User)
+	//fromUser.IP = conn.RemoteAddr().(*net.TCPAddr).IP.String()
+	//dec, err := activeUser.ReceiveMessage(fromUser, msg.Text)
+	//switch errorType := err.(type) {
+	//default:
+	//	log.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
+	//case protocol.OTRHandshakeStep:
+	//	// If it's part of the OTR handshake, send a message back directly, and return
+	//	sendMessage(fromUser, dec)
+	//	return
+	//}
+	//
+	//fmt.Printf("%s: %s\n", msg.User, dec)
 }
 
 // Function that continuously polls for new messages being sent to the server
@@ -90,3 +105,20 @@ func (s *Server) Send(address string, MAC string, message []byte) error  {
 	}
 	return nil
 }
+
+func sendMessage(user *core.User, msg []byte) error {
+	dialer, err := initDialer(fmt.Sprintf("%s:%d", (*user).IP, Port))
+	if err != nil {
+		return err
+	}
+	encoder := json.NewEncoder(dialer)
+	message := Message{(*user).Login, msg}
+	if err = encoder.Encode(&message); err != nil {
+		return err
+	}
+	return nil
+}
+
+//func (s *Server) NewSecureSession(to *core.User) {
+//	s.Send(to.IP, otr.QueryMessage)
+//}

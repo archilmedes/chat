@@ -9,13 +9,17 @@ import (
 
 type OTRProtocol struct {
 	Protocol
-	conv *otr.Conversation
-	sess OTRSession
+	Conv    *otr.Conversation
+	Session OTRSession
 }
 
 type OTRSession struct {
-	SSID [8]byte
-	fingerprint, privKey []byte
+	SSID                    [8]byte
+	Fingerprint, PrivateKey []byte
+}
+
+type OTRHandshakeStep struct {
+	error
 }
 
 const (
@@ -29,7 +33,7 @@ func NewOTRProtocol() OTRProtocol {
 	conv := new(otr.Conversation)
 	conv.PrivateKey = privKey
 	conv.FragmentSize = fragmentSize
-	return OTRProtocol{conv: conv}
+	return OTRProtocol{Conv: conv}
 }
 
 func NewOTRProtocolFromKeys(privKeyBytes[]byte) OTRProtocol {
@@ -38,12 +42,12 @@ func NewOTRProtocolFromKeys(privKeyBytes[]byte) OTRProtocol {
 	conv := new(otr.Conversation)
 	conv.PrivateKey = privKey
 	conv.FragmentSize = fragmentSize
-	return OTRProtocol{conv: conv}
+	return OTRProtocol{Conv: conv}
 }
 
 // Encrypt the message
 func (o OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
-	cipherText, err := o.conv.Send(in)
+	cipherText, err := o.Conv.Send(in)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,7 +55,7 @@ func (o OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
 }
 
 func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
-	out, encrypted, secChange, msgToPeer, err := o.conv.Receive(in)
+	out, encrypted, secChange, msgToPeer, err := o.Conv.Receive(in)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,12 +63,7 @@ func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
 	if len(msgToPeer) > 0 {
 		log.Println("<OTR> Handshaking")
 		for _, msg := range msgToPeer {
-			// TODO server.sendMessage(destIp, msg), refactor to get a connection object here
-			n := len(msg)
-			if n < len(msg) {
-				log.Panicln("<OTR> Handshake could not be established")
-			}
-			return msg, err
+			return msg, OTRHandshakeStep{}
 		}
 	}
 	switch secChange {
@@ -75,15 +74,15 @@ func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
 		}
 	case otr.NewKeys:
 		log.Printf("<OTR> Key exchange completed.\nFingerprint:%x\nSSID:%x\n",
-			o.conv.TheirPublicKey.Fingerprint(),
-			o.conv.SSID,
+			o.Conv.TheirPublicKey.Fingerprint(),
+			o.Conv.SSID,
 		)
 		// TODO Send OTRSession object to DB to save
 		sess := new(OTRSession)
-		sess.fingerprint = o.conv.TheirPublicKey.Fingerprint()
-		sess.SSID = o.conv.SSID
-		sess.privKey = o.conv.PrivateKey.Serialize(nil)
-		o.sess = *sess
+		sess.Fingerprint = o.Conv.TheirPublicKey.Fingerprint()
+		sess.SSID = o.Conv.SSID
+		sess.PrivateKey = o.Conv.PrivateKey.Serialize(nil)
+		o.Session = *sess
 		return out, nil
 	case otr.ConversationEnded:
 		log.Println("<OTR> Conversation ended")
@@ -97,13 +96,13 @@ func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
 }
 
 func (o OTRProtocol) IsEncrypted() bool {
-	return o.conv.IsEncrypted()
+	return o.Conv.IsEncrypted()
 }
 
 func (o OTRProtocol) EndSession() {
-	o.conv.End()
+	o.Conv.End()
 }
 
 func (o OTRProtocol) serialize() []byte {
-	return o.conv.PrivateKey.Serialize(nil)
+	return o.Conv.PrivateKey.Serialize(nil)
 }
