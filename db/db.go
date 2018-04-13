@@ -2,15 +2,13 @@ package db
 
 import (
 	_ "github.com/go-sql-driver/mysql"
-	"bytes"
 	"database/sql"
 	"fmt"
 	"log"
+	"chat/config"
 )
 
 const (
-	hostnameStart = "tcp(127.0.0.1:" // CONSTANT
-	hostnameEnd = ")/" //CONSTANT
 	databaseName = "otrmessenger" // Constant in execution, can change
 	sessionsTableName = "sessions"
 	userTableName = "users"
@@ -85,16 +83,8 @@ func ConnectToDatabase(connectionString string) (*sql.DB, error) {
 
 // Creates the connection string using username, password, hostname, and port
 func FormConnectionString(Name string) string {
-	var connectionString bytes.Buffer
-	connectionString.WriteString(username)
-	connectionString.WriteString(":")
-	connectionString.WriteString(password)
-	connectionString.WriteString("@")
-	connectionString.WriteString(hostnameStart)
-	connectionString.WriteString(port)
-	connectionString.WriteString(hostnameEnd)
-	connectionString.WriteString(Name)
-	return connectionString.String()
+	connectionString := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/", config.Username, config.Password, config.Port)
+	return connectionString
 }
 
 func ShowTables() []string {

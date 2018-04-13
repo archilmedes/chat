@@ -8,11 +8,11 @@ import (
 
 func InsertTestData() {
 	// Insert users
-	InsertIntoUsers("alice123", "Alice", "alicepassword")
-	InsertIntoUsers( "bob", "Bob", "password")
-	InsertIntoUsers("karateAMD", "Andrew", "pwd123")
-	InsertIntoUsers("sameetandpotatoes", "Sameet", "iLuvMacs")
-	InsertIntoUsers("archilmedes", "Archil", "linuxFTW")
+	AddUser("alice123", "alicepassword", "127.0.0.1")
+	AddUser( "bob", "password", "123.456.789")
+	AddUser("karateAMD", "pwd123", "192.168.10.123")
+	AddUser("sameetandpotatoes", "iLuvMacs", "10.192.345.987")
+	AddUser("archilmedes", "linuxFTW", "987.654.321")
 
 	//Insert sessions
 	InsertIntoSessions(12, 1, 2, "3478462413678237ab87846754785489329853e47237646718487980423f095874236784675889490543874123675478329056bc7823619560458372e956", "12D345678902F83AE")
