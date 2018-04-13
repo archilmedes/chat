@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"runtime"
 )
 
 const (
@@ -22,14 +23,22 @@ type Server struct {
 // Get public ip address
 // Help from: https://stackoverflow.com/questions/23558425/how-do-i-get-the-local-ip-address-in-go
 func getIp() (string, error) {
-	addresses, err := net.InterfaceAddrs()
+	list, err := net.Interfaces()
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	for _, addr := range addresses {
-		if ipInfo, ok := addr.(*net.IPNet); ok && !ipInfo.IP.IsLoopback() {
-			if ipInfo.IP.To4() != nil {
-				return ipInfo.IP.String(), nil
+
+	for _, iface := range list {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return "", err
+		}
+		for _, addr := range addrs {
+			if ipInfo, ok := addr.(*net.IPNet); ok && !ipInfo.IP.IsLoopback() {
+				if ((runtime.GOOS == "windows" && iface.Name == "Wi-Fi") ||
+					runtime.GOOS != "windows") && ipInfo.IP.To4() != nil {
+					return ipInfo.IP.String(), nil
+				}
 			}
 		}
 	}

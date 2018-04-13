@@ -10,7 +10,7 @@ func InsertTestData() {
 	// Insert users
 	InsertIntoUsers("alice123", "Alice", "alicepassword")
 	InsertIntoUsers( "bob", "Bob", "password")
-	InsertIntoUsers("karateAMD", "andrew", "pwd123")
+	InsertIntoUsers("karateAMD", "Andrew", "pwd123")
 	InsertIntoUsers("sameetandpotatoes", "Sameet", "iLuvMacs")
 	InsertIntoUsers("archilmedes", "Archil", "linuxFTW")
 

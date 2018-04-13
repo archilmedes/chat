@@ -12,8 +12,8 @@ func UsersTest (t *testing.T){
 	assert.Equal(t, "bob", users[1].login)
 	//assert.Equal(t, 3, users[2].id)
 	// assert.Equal(t, 4, users[3].id)
-	assert.Equal(t, "sameet", users[3].login)
+	assert.Equal(t, "sameetandpotatoes", users[3].login)
 	assert.Equal(t, "iLuvMacs", users[3].password)
-	UserExists("")
+	UserExists("sameetandpotatoes")
 }
 
