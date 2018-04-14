@@ -52,6 +52,7 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	var err error
 	log.Println("Launching Server...")
 	(*s).User = &User{username, mac, ip}
+	// TODO: Friends handling multi-cast and storing MAC address
 	ipAddr := fmt.Sprintf("%s:%d", ip, Port)
 	if (*s).Listener, err = setupServer(ipAddr); err != nil {
 		return err
