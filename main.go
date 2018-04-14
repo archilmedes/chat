@@ -61,12 +61,15 @@ func getUsername(scanner *bufio.Scanner) string {
 }
 
 // Returning user sign-in
-func signIn(scanner *bufio.Scanner, username string) bool {
+func signIn(username string) bool {
 	for counter := 0; counter < 3; counter++ {
 		fmt.Print("Password: ")
-		scanner.Scan()
-		password := strings.TrimSpace(scanner.Text())
-		if db.GetUser(username, password) != nil {
+		password, err := terminal.ReadPassword(int(syscall.Stdin))
+		if err != nil {
+			fmt.Println(err.Error())
+			continue
+		}
+		if db.GetUser(username, string(password)) != nil {
 			return true
 		}
 		fmt.Printf("signIn: invalid password!\n")
@@ -78,7 +81,7 @@ func signIn(scanner *bufio.Scanner, username string) bool {
 func createAccount(username string, ip string) bool {
 	for counter := 0; counter < 3; counter++ {
 		fmt.Print("Enter new password: ")
-		bytePassword, err := terminal.ReadPassword(syscall.Stdin)
+		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -86,15 +89,14 @@ func createAccount(username string, ip string) bool {
 		fmt.Println()
 		password := string(bytePassword)
 		fmt.Print("Confirm password: ")
-		bytePassword, err = terminal.ReadPassword(syscall.Stdin)
+		bytePassword, err = terminal.ReadPassword(int(syscall.Stdin))
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
 		}
 		fmt.Println()
 		if password == string(bytePassword) {
-			db.AddUser(username, password, ip)
-			return true
+			return db.AddUser(username, password, ip)
 		} else {
 			fmt.Println("Passwords do not match!")
 		}
@@ -106,7 +108,7 @@ func login(scanner *bufio.Scanner, ip string) string {
 	username := getUsername(scanner)
 	var successful bool
 	if db.UserExists(username) {
-		successful = signIn(scanner, username)
+		successful = signIn(username)
 	} else {
 		successful = createAccount(username, ip)
 	}
