@@ -1,2 +1,2 @@
 #!/bin/sh
-mysql -u root -p < "db_setup.sql"
+mysql -u "$1" -p"$2" < "db_setup.sql"

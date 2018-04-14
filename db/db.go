@@ -3,10 +3,11 @@ package db
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
-	config "chat/config"
+	"chat/config"
 	"fmt"
 	"log"
 	"os/exec"
+	"runtime"
 )
 
 const (
@@ -19,10 +20,17 @@ var DB *sql.DB
 
 // Function to be called to set everything up
 func SetupDatabase(){
-	cmd := exec.Command("sh", "db_setup.sh")
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows"{
+		cmd = exec.Command("sh", "db_setup.sh", config.Username, config.Password)
+	} else{
+		cmd = exec.Command("bash", "db_setup.sh", config.Username, config.Password)
+	}
 	err := cmd.Run()
-	fmt.Println(err)
+	if err != nil {
+		fmt.Printf("Error running script: %s", err)
 
+	}
 	connectionString := FormConnectionString(databaseName)
 	DB, _ = ConnectToDatabase(connectionString)
 	useDatabaseCommand := "USE " + databaseName
