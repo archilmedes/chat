@@ -25,13 +25,13 @@ func SetupUsersTable() {
 }
 
 func UserExists(username string) bool {
-	query := "SELECT * FROM " + userTableName + " WHERE username=\"" + username + "\"";
+	query := "SELECT * FROM " + userTableName + " WHERE username=\"" + username + "\""
 	users := ExecuteUsersQuery(query)
 	return len(users) > 0
 }
 
 func GetUser(username string, password string) (*DatabaseUser) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE username= \"%s\" and password= \"%s\"", userTableName, username, password);
+	query := fmt.Sprintf("SELECT * FROM %s WHERE username= \"%s\" and password= \"%s\"", userTableName, username, password)
 	users := ExecuteUsersQuery(query)
 	if len(users) == 0 {
 		return nil
@@ -42,7 +42,7 @@ func GetUser(username string, password string) (*DatabaseUser) {
 func AddUser(username string, password string, ipAddress string) bool {
 	log.Println("Inserting data into users...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", \"%s\", \"%s\")", userTableName, username, password, ipAddress)
-	//ExecuteDatabaseCommand(insertCommand)
+	// ExecuteDatabaseCommand(insertCommand)
 	_, err := DB.Exec(insertCommand)
 	if err != nil {
 		fmt.Printf("Failed to add user %s: %s", username, err)

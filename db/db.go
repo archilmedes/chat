@@ -43,7 +43,7 @@ func InitializeDatabase() *sql.DB {
 	DB, _ = ConnectToDatabase(connectionString)
 
 	// FOR TESTING ONLY - CLEARS DATABASE EVERY RUN
-	DropDatabase();
+	// DropDatabase();
 
 	// Creates the database if it doesn't exist
 	log.Println("Creating database...")
