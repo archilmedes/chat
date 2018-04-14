@@ -1,13 +1,20 @@
 package server
 
+import "chat/protocol"
+
 // Struct for messages being sent
 type Message struct {
-	MAC string
+	MAC, IP string
+	StartProto protocol.Protocol
 	Text []byte
 }
 
-// Create message
-func (m *Message) Init(mac string, text []byte) {
-	(*m).MAC = mac
-	(*m).Text = text
+// Create new message to send a message
+func NewMessage(mac string, ipAddress string, text []byte) (*Message) {
+	m := Message{MAC: mac, IP: ipAddress, Text: text}
+	return &m
+}
+
+func (m *Message) StartProtocol(proto protocol.Protocol) {
+	m.StartProto = proto
 }

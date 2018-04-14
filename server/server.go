@@ -7,7 +7,7 @@ import (
 	"net"
 	"chat/db"
 	"runtime"
-	"chat/core"
+	"chat/protocol"
 )
 
 const (
@@ -19,6 +19,7 @@ const (
 type Server struct {
 	User *db.User
 	Listener *net.TCPListener
+	Sessions []*Session
 }
 
 // Setup listener for server
@@ -31,7 +32,7 @@ func setupServer(address string) (*net.TCPListener, error) {
 }
 
 // Handle receiving messages from a TCPConn
-func handleConnection(conn *net.TCPConn) {
+func handleConnection(s *Server, conn *net.TCPConn) {
 	defer conn.Close()
 	decoder := json.NewDecoder(conn)
 	var msg Message
@@ -52,15 +53,28 @@ func handleConnection(conn *net.TCPConn) {
 	//}
 	//
 	//fmt.Printf("%s: %s\n", msg.User, dec)
+	if msg.StartProto != nil {
+		fmt.Printf("They want to start a new protocol of type %s", msg.StartProto)
+	}
+	s.CreateOrGetSession(msg)
+	fmt.Printf("%s: %s\n", msg.MAC, msg.Text)
 }
 
 // Function that continuously polls for new messages being sent to the server
-func receive(listener *net.TCPListener) {
+func receive(s *Server) {
 	for {
-		if conn, err := (*listener).AcceptTCP(); err == nil {
-			go handleConnection(conn)
+		if conn, err := (*(*s).Listener).AcceptTCP(); err == nil {
+			go handleConnection(s, conn)
 		}
 	}
+}
+
+func initDialer(address string) (*net.TCPConn, error) {
+	tcpAddr, err := net.ResolveTCPAddr(Network, address)
+	if err != nil {
+		return nil, err
+	}
+	return net.DialTCP(Network, nil, tcpAddr)
 }
 
 // Start up server
@@ -72,7 +86,7 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	if (*s).Listener, err = setupServer(ipAddr); err != nil {
 		return err
 	}
-	go receive((*s).Listener)
+	go receive(s)
 	log.Printf("Listening on: '%s:%d'", ip, Port)
 	return nil
 }
@@ -83,22 +97,13 @@ func (s *Server) Shutdown() error {
 	return (*s).Listener.Close()
 }
 
-func initDialer(address string) (*net.TCPConn, error) {
-	tcpAddr, err := net.ResolveTCPAddr(Network, address)
-	if err != nil {
-		return nil, err
-	}
-	return net.DialTCP(Network, nil, tcpAddr)
-}
-
 // Send a message to another Server
 func (s *Server) Send(address string, MAC string, message []byte) error  {
 	dialer, err := initDialer(fmt.Sprintf("%s:%d", address, Port))
 	if err != nil {
 		return err
 	}
-	var msg Message
-	msg.Init(MAC, message)
+	msg := NewMessage(MAC, address, message)
 	encoder := json.NewEncoder(dialer)
 	if err = encoder.Encode(&msg); err != nil {
 		return err
@@ -106,19 +111,14 @@ func (s *Server) Send(address string, MAC string, message []byte) error  {
 	return nil
 }
 
-func sendMessage(user *core.User, msg []byte) error {
-	dialer, err := initDialer(fmt.Sprintf("%s:%d", (*user).IP, Port))
-	if err != nil {
-		return err
+func (s *Server) CreateOrGetSession(msg Message) (*Session) {
+	for _, sess := range s.Sessions {
+		if (*sess).ConverseWith(msg.IP) {
+			return sess
+		}
 	}
-	encoder := json.NewEncoder(dialer)
-	message := Message{(*user).Login, msg}
-	if err = encoder.Encode(&message); err != nil {
-		return err
-	}
-	return nil
+	friend := new(User)
+	friend.IP = msg.IP
+	friend.MAC = msg.MAC
+	return NewSession(s.User, friend, protocol.PlainProtocol{})
 }
-
-//func (s *Server) NewSecureSession(to *core.User) {
-//	s.Send(to.IP, otr.QueryMessage)
-//}
