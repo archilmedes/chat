@@ -3,7 +3,7 @@ package db
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
-	"chat/config"
+	config "chat/config"
 	"fmt"
 	"log"
 	"os/exec"
