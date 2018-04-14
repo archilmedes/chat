@@ -16,7 +16,7 @@ import (
 const Exit = "exit"
 
 // Listen to standard in for messages to be sent
-func listen(program *server.Server, mac string) {
+func listen(program *server.Server) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		message := scanner.Text()
@@ -24,7 +24,7 @@ func listen(program *server.Server, mac string) {
 			return
 		}
 		stringSlice := strings.Fields(message)
-		if err := program.Send(stringSlice[0], mac, []byte(strings.Join(stringSlice[1:], " "))); err != nil {
+		if err := program.Send(stringSlice[0], []byte(strings.Join(stringSlice[1:], " "))); err != nil {
 			fmt.Printf("input: %s\n", err.Error())
 		}
 	}
@@ -52,5 +52,5 @@ func main() {
 		<-sig
 		os.Exit(0)
 	}()
-	listen(&program, mac)
+	listen(&program)
 }
