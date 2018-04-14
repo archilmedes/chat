@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"log"
 )
+const (
+	Sent = 0
+	Received = 1
+)
 
 type Conversation struct {
 	SSID, sentOrReceived int
@@ -12,7 +16,7 @@ type Conversation struct {
 
 func InsertIntoConversations(SSID int, message string, timestamp string, sentOrReceived int) {
 	log.Println("Inserting data into conversations...")
-	if sentOrReceived != 0 && sentOrReceived != 1 {
+	if sentOrReceived != Sent && sentOrReceived != Received {
 		fmt.Printf("Invalid entry for sent/received - msut be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", %d)", conversationTableName, SSID, message, timestamp, sentOrReceived)
@@ -47,5 +51,11 @@ func ExecuteConversationQuery(query string) [] Conversation {
 	if err != nil {
 		log.Fatal(err)
 	}
+	return conversations
+}
+
+func GetConversation(userId int, friendId int) [] Conversation{
+	query := fmt.Sprintf("SELECT * FROM conversations WHERE SSID IN (SELECT SSID FROM sessions WHERE (user_id=%d AND friend_id=%d) OR (friend_id=%d AND user_id=%d))", userId, friendId, userId, friendId)
+	conversations := ExecuteConversationQuery(query)
 	return conversations
 }

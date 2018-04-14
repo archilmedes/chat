@@ -3,7 +3,7 @@ package db
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
-	"chat/config"
+	conf "chat/config"
 	"fmt"
 	"log"
 	"os/exec"
@@ -22,9 +22,9 @@ var DB *sql.DB
 func SetupDatabase(){
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows"{
-		cmd = exec.Command("sh", "db_setup.sh", config.Username, config.Password)
+		cmd = exec.Command("sh", "db_setup.sh", conf.Username, conf.Password)
 	} else{
-		cmd = exec.Command("bash", "db_setup.sh", config.Username, config.Password)
+		cmd = exec.Command("bash", "db_setup.sh", conf.Username, conf.Password)
 	}
 	err := cmd.Run()
 	if err != nil {
@@ -58,7 +58,7 @@ func ConnectToDatabase(connectionString string) (*sql.DB, error) {
 
 // Creates the connection string using Username, Password, hostname, and port
 func FormConnectionString(Name string) string {
-	connectionString := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/", config.Username, config.Password, config.Port)
+	connectionString := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/", conf.Username, conf.Password, conf.Port)
 	return connectionString
 }
 
