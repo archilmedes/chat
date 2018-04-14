@@ -22,7 +22,7 @@ func listen(program *server.Server) {
 			return
 		}
 		stringSlice := strings.Fields(message)
-		if err := program.Send(stringSlice[0], strings.Join(stringSlice[1:], " ")); err != nil {
+		if err := program.Send(stringSlice[0], "", []byte(strings.Join(stringSlice[1:], " "))); err != nil {
 			fmt.Printf("input: %s\n", err.Error())
 		}
 	}
@@ -34,7 +34,7 @@ func listen(program *server.Server) {
 
 func main() {
 	var program server.Server
-	if err := program.Start("Archil"); err != nil {
+	if err := program.Start(); err != nil {
 		log.Fatalf("main: %s", err.Error())
 	}
 	defer program.Shutdown()

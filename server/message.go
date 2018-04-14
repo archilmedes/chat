@@ -2,11 +2,12 @@ package server
 
 // Struct for messages being sent
 type Message struct {
-	User, Text string
+	MAC string
+	Text []byte
 }
 
 // Create message
-func (m *Message) Init(user string, text string) {
-	(*m).User = user
+func (m *Message) Init(mac string, text []byte) {
+	(*m).MAC = mac
 	(*m).Text = text
 }

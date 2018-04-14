@@ -3,9 +3,9 @@ package db
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
+	config "chat/config"
 	"fmt"
 	"log"
-	"chat/config"
 )
 
 const (
@@ -14,11 +14,11 @@ const (
 	userTableName = "users"
 	conversationTableName = "conversation"
 )
-var db *sql.DB
+var DB *sql.DB
 
 // Function to be called to set everything up
 func SetupDatabase(){
-	db = InitializeDatabase()
+	DB = InitializeDatabase()
 	SetupTables()
 	SetupSessionsTable()
 }
@@ -40,31 +40,31 @@ func InitializeDatabase() *sql.DB {
 	connectionString := FormConnectionString("")
 
 	// Initial connection to MySql - will work even if no databases created
-	db, _ = ConnectToDatabase(connectionString)
+	DB, _ = ConnectToDatabase(connectionString)
 
 	// FOR TESTING ONLY - CLEARS DATABASE EVERY RUN
 	DropDatabase();
 
 	// Creates the database if it doesn't exist
 	log.Println("Creating database...")
-	createDatabaseCommand := "CREATE DATABASE IF NOT EXISTS " + databaseName;
+	createDatabaseCommand := "CREATE DATABASE IF NOT EXISTS " + databaseName
 	ExecuteDatabaseCommand(createDatabaseCommand)
-	db.Close()
+	DB.Close()
 
 	// Connects to the OTRMessenger database
 	connectionString = FormConnectionString(databaseName)
-	db, _ = ConnectToDatabase(connectionString)
+	DB, _ = ConnectToDatabase(connectionString)
 
 	log.Println("Switching to OTRMessenger database")
-	useDatabaseCommand := "USE " + databaseName;
+	useDatabaseCommand := "USE " + databaseName
 	ExecuteDatabaseCommand(useDatabaseCommand)
 
-	return db
+	return DB
 }
 
 // Executes the specified database command
 func ExecuteDatabaseCommand(command string){
-	_, err := db.Exec(command)
+	_, err := DB.Exec(command)
 	if err != nil {
 		fmt.Printf("Failed to execute command %s: %s", command, err)
 		panic(err)
@@ -75,13 +75,13 @@ func ExecuteDatabaseCommand(command string){
 func ConnectToDatabase(connectionString string) (*sql.DB, error) {
 	database, err := sql.Open("mysql", connectionString)
 	if err != nil {
-		fmt.Printf("Could not connect to db: %s", err)
+		fmt.Printf("Could not connect to DB: %s", err)
 		panic(err)
 	}
 	return database, err
 }
 
-// Creates the connection string using username, password, hostname, and port
+// Creates the connection string using Username, Password, hostname, and port
 func FormConnectionString(Name string) string {
 	connectionString := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/", config.Username, config.Password, config.Port)
 	return connectionString
@@ -89,7 +89,7 @@ func FormConnectionString(Name string) string {
 
 func ShowTables() []string {
 	log.Println("Fetching all tables for database")
-	results, err := db.Query("SHOW TABLES")
+	results, err := DB.Query("SHOW TABLES")
 	if err != nil {
 		log.Panic("Failed to display tables")
 	}

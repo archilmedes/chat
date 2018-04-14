@@ -41,7 +41,7 @@ func QuerySessions() [] Session{
 
 // Executes the specified database command
 func ExecuteSessionsQuery(query string) [] Session {
-	results, err := db.Query(query)
+	results, err := DB.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)
 		panic(err)

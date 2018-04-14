@@ -16,7 +16,7 @@ const (
 
 // Simple Server struct
 type Server struct {
-	IP, Username string
+	User *User
 	Listener *net.TCPListener
 }
 
@@ -62,7 +62,7 @@ func handleConnection(conn *net.TCPConn) {
 	if err := decoder.Decode(&msg); err != nil {
 		log.Panicf("handleConnection: %s", err.Error())
 	}
-	fmt.Printf("%s: %s\n", msg.User, msg.Text)
+	fmt.Printf("%s: %s\n", msg.MAC, msg.Text)
 }
 
 // Function that continuously polls for new messages being sent to the server
@@ -75,19 +75,22 @@ func receive(listener *net.TCPListener) {
 }
 
 // Start up server
-func (s *Server) Start(username string) error {
+func (s *Server) Start() error {
 	log.Println("Launching Server...")
-	(*s).Username = username
-	var err error
-	if (*s).IP, err = getIp(); err != nil {
-		return err
-	}
-	ipAddr := fmt.Sprintf("%s:%d", (*s).IP, Port)
-	if (*s).Listener, err = setupServer(ipAddr); err != nil {
-		return err
-	}
-	go receive((*s).Listener)
-	log.Printf("Listening on: '%s:%d'", (*s).IP, Port)
+	//var err error
+
+	(*s).User = new(User)
+	//ip, err := getIp()
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//ipAddr := fmt.Sprintf("%s:%d", (*s).IP, Port)
+	//if (*s).Listener, err = setupServer(ipAddr); err != nil {
+	//	return err
+	//}
+	//go receive((*s).Listener)
+	//log.Printf("Listening on: '%s:%d'", (*s).IP, Port)
 	return nil
 }
 
@@ -106,13 +109,13 @@ func initDialer(address string) (*net.TCPConn, error) {
 }
 
 // Send a message to another Server
-func (s *Server) Send(address string, message string) error  {
+func (s *Server) Send(address string, MAC string, message []byte) error  {
 	dialer, err := initDialer(fmt.Sprintf("%s:%d", address, Port))
 	if err != nil {
 		return err
 	}
 	var msg Message
-	msg.Init((*s).Username, message)
+	msg.Init(MAC, message)
 	encoder := json.NewEncoder(dialer)
 	if err = encoder.Encode(&msg); err != nil {
 		return err

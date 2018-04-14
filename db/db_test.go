@@ -9,7 +9,7 @@ import (
 func InsertTestData() {
 	// Insert users
 	AddUser("alice123", "alicepassword", "127.0.0.1")
-	AddUser( "bob", "password", "123.456.789")
+	AddUser( "bob", "Password", "123.456.789")
 	AddUser("karateAMD", "pwd123", "192.168.10.123")
 	AddUser("sameetandpotatoes", "iLuvMacs", "10.192.345.987")
 	AddUser("archilmedes", "linuxFTW", "987.654.321")
@@ -37,11 +37,11 @@ func InsertTestData() {
 
 }
 func SetupDatabaseTest (t *testing.T){
-	//db := SetupDatabase()
+	//DB := SetupDatabase()
 	SetupDatabase()
 	tables := ShowTables()
 	assert.Equal(t, 3, len(tables))
-	//return db
+	//return DB
 }
 
 func TestDatabase(t *testing.T){

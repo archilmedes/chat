@@ -6,10 +6,8 @@ import (
 	"log"
 )
 
-type User struct {
-	username string
-	password string
-	ipAddress string
+type DatabaseUser struct {
+	Username, Password, IP string
 }
 
 // Creates the users table
@@ -19,30 +17,33 @@ func SetupUsersTable() {
 	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
 	createTableCommand.WriteString(userTableName)
 	createTableCommand.WriteString(" (\n")
-	createTableCommand.WriteString("username varchar(1000) NOT NULL, \n")
-	createTableCommand.WriteString("password varchar(1000) NOT NULL, \n")
+	createTableCommand.WriteString("Username varchar(1000) NOT NULL, \n")
+	createTableCommand.WriteString("Password varchar(1000) NOT NULL, \n")
 	createTableCommand.WriteString("ipaddress varchar(18) NOT NULL \n")
 	createTableCommand.WriteString(" );")
 	ExecuteDatabaseCommand(createTableCommand.String())
 }
 
 func UserExists(username string) bool {
-	query := "SELECT * FROM " + userTableName + " WHERE username=\"" + username + "\"";
+	query := "SELECT * FROM " + userTableName + " WHERE Username=\"" + username + "\"";
 	users := ExecuteUsersQuery(query)
 	return len(users) > 0
 }
 
-func ValidateCredentials(username string, password string) bool{
-	query := fmt.Sprintf("SELECT * FROM %s WHERE username= \"%s\" and password= \"%s\"", userTableName, username, password);
+func GetUser(username string, password string) (*DatabaseUser) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE Username= \"%s\" and Password= \"%s\"", userTableName, username, password);
 	users := ExecuteUsersQuery(query)
-	return len(users) > 0
+	if len(users) == 0 {
+		return nil
+	}
+	return &users[0]
 }
 
 func AddUser(username string, password string, ipAddress string) bool {
 	log.Println("Inserting data into users...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", \"%s\", \"%s\")", userTableName, username, password, ipAddress)
 	//ExecuteDatabaseCommand(insertCommand)
-	_, err := db.Exec(insertCommand)
+	_, err := DB.Exec(insertCommand)
 	if err != nil {
 		fmt.Printf("Failed to add user %s: %s", username, err)
 		return false
@@ -51,8 +52,8 @@ func AddUser(username string, password string, ipAddress string) bool {
 }
 
 func DeleteUser(username string) bool {
-	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE username= \"%s\"", userTableName, username)
-	_, err := db.Exec(deleteCommand)
+	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE Username= \"%s\"", userTableName, username)
+	_, err := DB.Exec(deleteCommand)
 	if err != nil {
 		fmt.Printf("Failed to delete user %s: %s", username, err)
 		return false
@@ -60,24 +61,24 @@ func DeleteUser(username string) bool {
 	return true
 }
 
-func QueryUsers() [] User {
+func QueryUsers() [] DatabaseUser {
 	log.Println("Retrieving data from users...")
 	query := "SELECT * FROM " + userTableName;
 	return ExecuteUsersQuery(query)
 }
 
 // Executes the specified database command
-func ExecuteUsersQuery(query string) [] User {
-	results, err := db.Query(query)
+func ExecuteUsersQuery(query string) [] DatabaseUser {
+	results, err := DB.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)
 		panic(err)
 	}
-	var users [] User
-	user := User{}
+	var users [] DatabaseUser
+	user := DatabaseUser{}
 
 	for results.Next() {
-		err = results.Scan(&user.username, &user.password, &user.ipAddress)
+		err = results.Scan(&user.Username, &user.Password, &user.IP)
 		if err!= nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)

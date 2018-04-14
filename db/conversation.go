@@ -44,7 +44,7 @@ func QueryConversations() [] Conversation{
 
 // Executes the specified database command
 func ExecuteConversationQuery(query string) [] Conversation {
-	results, err := db.Query(query)
+	results, err := DB.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)
 		panic(err)

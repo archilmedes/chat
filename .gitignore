@@ -7,4 +7,8 @@ bin/*
 # Ignore Mac specific files
 .DS_Store
 
+# Ignore configuration files
 config/config.go
+
+# Ignore executable
+chat
