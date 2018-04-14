@@ -10,7 +10,7 @@ import (
 type OTRProtocol struct {
 	Protocol
 	Conv    *otr.Conversation
-	Session OTRSession
+	Session *OTRSession
 }
 
 type OTRSession struct {
@@ -36,6 +36,7 @@ func NewOTRProtocol() OTRProtocol {
 	return OTRProtocol{Conv: conv}
 }
 
+// Recreates an OTR protocol given its private key
 func NewOTRProtocolFromKeys(privKeyBytes[]byte) OTRProtocol {
 	privKey := new(otr.PrivateKey)
 	privKey.Parse(privKeyBytes)
@@ -82,7 +83,7 @@ func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
 		sess.Fingerprint = o.Conv.TheirPublicKey.Fingerprint()
 		sess.SSID = o.Conv.SSID
 		sess.PrivateKey = o.Conv.PrivateKey.Serialize(nil)
-		o.Session = *sess
+		o.Session = sess
 		return out, nil
 	case otr.ConversationEnded:
 		log.Println("<OTR> Conversation ended")
@@ -95,12 +96,20 @@ func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
 	return out, nil
 }
 
+// Returns true if an OTR conversation is now encrypted
 func (o OTRProtocol) IsEncrypted() bool {
 	return o.Conv.IsEncrypted()
 }
 
+// Returns true if an OTR session has been created
+func (o OTRProtocol) IsActive() bool {
+	return o.Session != nil
+}
+
+// Ends the OTR conversation
 func (o OTRProtocol) EndSession() {
 	o.Conv.End()
+	o.Session = nil
 }
 
 func (o OTRProtocol) serialize() []byte {
