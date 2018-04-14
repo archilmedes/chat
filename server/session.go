@@ -20,7 +20,7 @@ func NewSession(from *User, to *User, protocol protocol.Protocol) (*Session) {
 
 // Ends the current session
 func (s *Session) EndSession() {
-	(*s.Proto).EndSession()
+	s.Proto.EndSession()
 }
 
 // Returns true if the session is conversing with a use defined by their IP address

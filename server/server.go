@@ -111,6 +111,7 @@ func (s *Server) Send(address string, MAC string, message []byte) error  {
 	return nil
 }
 
+// Returns a session
 func (s *Server) CreateOrGetSession(msg Message) (*Session) {
 	for _, sess := range s.Sessions {
 		if (*sess).ConverseWith(msg.IP) {
@@ -121,4 +122,17 @@ func (s *Server) CreateOrGetSession(msg Message) (*Session) {
 	friend.IP = msg.IP
 	friend.MAC = msg.MAC
 	return NewSession(s.User, friend, protocol.PlainProtocol{})
+}
+
+// High-level function when you want to enable a session with a protocol with another user
+func (s *Server) StartSession(address string, proto protocol.Protocol) {
+	sess := s.CreateOrGetSession(address)
+	(*sess).Proto = proto
+
+	firstMessage, err := proto.NewSession()
+	if err != nil {
+		log.Panicf("StartSession: Error starting new session: %s", err)
+	}
+
+	s.Send(address, "", firstMessage)
 }
