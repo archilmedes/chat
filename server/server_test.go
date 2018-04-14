@@ -20,6 +20,7 @@ func TestServer_Send(t *testing.T) {
 	mac, ip, _ := core.GetAddresses()
 	assert.NoError(t, program.Start("Archil", mac, ip))
 	assert.NotNil(t, program.User)
-	assert.NoError(t, program.Send(program.User.IP, program.User.MAC, []byte("Hello World!")))
+	// Send a message to yourself
+	assert.NoError(t, program.Send(program.User.IP, []byte("Hello World!")))
 	program.Shutdown()
 }
