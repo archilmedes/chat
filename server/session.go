@@ -23,7 +23,7 @@ func (s *Session) EndSession() {
 	s.Proto.EndSession()
 }
 
-// Returns true if the session is conversing with a use defined by their IP address
-func (s *Session) ConverseWith(destIp string) bool {
-	return (*s.To).IP == destIp
+// Returns true if the session is conversing with a use defined by their SourceIP address
+func (s *Session) ConverseWith(sourceIp string) bool {
+	return (*s.To).IP == sourceIp
 }

@@ -10,7 +10,7 @@ import (
 type OTRProtocol struct {
 	Protocol
 	Conv    *otr.Conversation
-	Session *OTRSession
+	Session OTRSession
 }
 
 type OTRSession struct {
@@ -55,7 +55,7 @@ func (o OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
 	return cipherText, nil
 }
 
-func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
+func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 	out, encrypted, secChange, msgToPeer, err := o.Conv.Receive(in)
 	if err != nil {
 		log.Fatal(err)
@@ -63,15 +63,13 @@ func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
 	// Respond to handshake if handshake is established
 	if len(msgToPeer) > 0 {
 		log.Println("<OTR> Handshaking")
-		for _, msg := range msgToPeer {
-			return msg, OTRHandshakeStep{}
-		}
+		return msgToPeer, OTRHandshakeStep{}
 	}
 	switch secChange {
 	case otr.NoChange:
 		// If it's encrypted, just return the decrypted message out
 		if encrypted && o.IsEncrypted() {
-			return out, nil
+			return wrapMessage(out), nil
 		}
 	case otr.NewKeys:
 		log.Printf("<OTR> Key exchange completed.\nFingerprint:%x\nSSID:%x\n",
@@ -83,17 +81,17 @@ func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
 		sess.Fingerprint = o.Conv.TheirPublicKey.Fingerprint()
 		sess.SSID = o.Conv.SSID
 		sess.PrivateKey = o.Conv.PrivateKey.Serialize(nil)
-		o.Session = sess
-		return out, nil
+		o.Session = *sess
+		return wrapMessage(out), nil
 	case otr.ConversationEnded:
 		log.Println("<OTR> Conversation ended")
 		o.EndSession()
-		return out, nil
+		return wrapMessage(out), nil
 	default:
 		log.Fatal("<OTR> SMP not implemented")
 	}
 
-	return out, nil
+	return wrapMessage(out), nil
 }
 
 // Returns true if an OTR conversation is now encrypted
@@ -103,13 +101,12 @@ func (o OTRProtocol) IsEncrypted() bool {
 
 // Returns true if an OTR session has been created
 func (o OTRProtocol) IsActive() bool {
-	return o.Session != nil
+	return o.IsEncrypted()
 }
 
 // Ends the OTR conversation
 func (o OTRProtocol) EndSession() {
 	o.Conv.End()
-	o.Session = nil
 }
 
 func (o OTRProtocol) serialize() []byte {

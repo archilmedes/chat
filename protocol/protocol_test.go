@@ -20,7 +20,7 @@ func TestPlainProtocol_Decrypt(t *testing.T) {
 	cypher := []byte(message)
 	msg, err := p.Decrypt(cypher)
 	assert.Nil(t, err)
-	assert.Equal(t, msg, cypher)
+	assert.Equal(t, msg[0], cypher)
 }
 
 func TestPlainProtocol_IsEncrypted(t *testing.T) {

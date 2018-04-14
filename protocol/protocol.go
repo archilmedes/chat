@@ -3,7 +3,7 @@ package protocol
 
 type Protocol interface {
 	Encrypt(in []byte) ([][]byte, error)
-	Decrypt(cypher []byte) ([]byte, error)
+	Decrypt(cypher []byte) ([][]byte, error)
 	IsEncrypted() bool
 	IsActive() bool
 	NewSession() (string, error)
@@ -16,16 +16,19 @@ type PlainProtocol struct {
 	Protocol
 }
 
-// Encrypts the text by adding it into a 2D byte array
-func (p PlainProtocol) Encrypt(in []byte) ([][]byte, error) {
+func wrapMessage(in[] byte) ([][]byte) {
 	b := make([][]byte, 1)
 	b[0] = in
-	return b, nil
+	return b
 }
 
+// Encrypts the text by adding it into a 2D byte array
+func (p PlainProtocol) Encrypt(in []byte) ([][]byte, error) {
+	return wrapMessage(in), nil
+}
 // Decrypts the message by just returning it
-func (p PlainProtocol) Decrypt(cypher []byte) ([]byte, error) {
-	return cypher, nil
+func (p PlainProtocol) Decrypt(dec []byte) ([][]byte, error) {
+	return wrapMessage(dec), nil
 }
 
 // Always returns false as a plain protocol is never encrypted

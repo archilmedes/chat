@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"chat/db"
-	"runtime"
 	"chat/protocol"
 )
 
@@ -40,24 +39,28 @@ func handleConnection(s *Server, conn *net.TCPConn) {
 		log.Panicf("handleConnection: %s", err.Error())
 	}
 
-	//fromUser := new(core.User)
-	//fromUser.IP = conn.RemoteAddr().(*net.TCPAddr).IP.String()
-	//dec, err := activeUser.ReceiveMessage(fromUser, msg.Text)
-	//switch errorType := err.(type) {
-	//default:
-	//	log.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
-	//case protocol.OTRHandshakeStep:
-	//	// If it's part of the OTR handshake, send a message back directly, and return
-	//	sendMessage(fromUser, dec)
-	//	return
-	//}
-	//
-	//fmt.Printf("%s: %s\n", msg.User, dec)
 	if msg.StartProto != nil {
-		fmt.Printf("They want to start a new protocol of type %s", msg.StartProto)
+		log.Printf("They want to start a new protocol of type %s", msg.StartProto)
 	}
-	s.CreateOrGetSession(msg)
-	fmt.Printf("%s: %s\n", msg.MAC, msg.Text)
+	if s.User.IP != msg.DestIP {
+		log.Panicln("User received a message that was not meant for them")
+	}
+
+	sess := s.CreateOrGetSession(msg)
+	dec, err := sess.Proto.Decrypt(msg.Text)
+	switch errorType := err.(type) {
+	case protocol.OTRHandshakeStep:
+		// If it's part of the OTR handshake, send each part of the message back directly to the source,
+		// and immediately return
+		for _, stepMessage := range dec {
+			s.Send(msg.SourceIP, stepMessage)
+		}
+		return
+	default:
+		log.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
+	}
+	// Print the decoded MAC
+	fmt.Printf("%s: %s\n", msg.SourceMAC, dec[0])
 }
 
 // Function that continuously polls for new messages being sent to the server
@@ -97,42 +100,55 @@ func (s *Server) Shutdown() error {
 	return (*s).Listener.Close()
 }
 
-// Send a message to another Server
-func (s *Server) Send(address string, MAC string, message []byte) error  {
-	dialer, err := initDialer(fmt.Sprintf("%s:%d", address, Port))
+// Private-helper method that sends a formatted message object with the server
+func (s *Server) sendMessage(msg *Message) error {
+	dialer, err := initDialer(fmt.Sprintf("%s:%d", msg.SourceIP, Port))
 	if err != nil {
 		return err
 	}
-	msg := NewMessage(MAC, address, message)
 	encoder := json.NewEncoder(dialer)
-	if err = encoder.Encode(&msg); err != nil {
+	if err := encoder.Encode(msg); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Returns a session
+// Send a message to another Server
+func (s *Server) Send(destIp string, message []byte) error  {
+	return s.sendMessage(NewMessage(s.User, destIp, message))
+}
+
+// Returns a session based on the message received
 func (s *Server) CreateOrGetSession(msg Message) (*Session) {
 	for _, sess := range s.Sessions {
-		if (*sess).ConverseWith(msg.IP) {
+		if (*sess).ConverseWith(msg.SourceIP) {
 			return sess
 		}
 	}
+	// TODO: If we have to create a new session, do we update the protocol?
 	friend := new(User)
-	friend.IP = msg.IP
-	friend.MAC = msg.MAC
-	return NewSession(s.User, friend, protocol.PlainProtocol{})
+	friend.IP = msg.SourceIP
+	friend.MAC = msg.SourceMAC
+	// The From field of a session is always the server's user
+	sess := NewSession(s.User, friend, msg.StartProto)
+	s.Sessions = append(s.Sessions, sess)
+	return sess
 }
 
 // High-level function when you want to enable a session with a protocol with another user
-func (s *Server) StartSession(address string, proto protocol.Protocol) {
-	sess := s.CreateOrGetSession(address)
-	(*sess).Proto = proto
-
+func (s *Server) StartSession(destIp string, proto protocol.Protocol) (error) {
+	// When you first start a session, you don't know the SourceMAC, so just don't create a session for now, create it
+	// when the user gets a response
 	firstMessage, err := proto.NewSession()
 	if err != nil {
 		log.Panicf("StartSession: Error starting new session: %s", err)
+		return err
 	}
 
-	s.Send(address, "", firstMessage)
+	if len(firstMessage) > 0 {
+		return err
+	}
+	msg := NewMessage(s.User, destIp, []byte(firstMessage))
+	msg.StartProto = proto
+	return s.sendMessage(msg)
 }

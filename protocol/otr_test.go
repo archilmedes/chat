@@ -21,22 +21,19 @@ func TestOTRProtocol_Handshake(t *testing.T) {
 // Inspired by official OTR tests in Golang here: https://github.com/keybase/go-crypto
 func createOTRLink(t *testing.T, alice OTRProtocol, bob OTRProtocol) {
 	var aMsg, bMsg [][]byte
-	var initKeyExchange = true
 	aMsg = append(aMsg, []byte(otr.QueryMessage))
 	// Simulate a handshake by just sending messages between two users
-	for ; initKeyExchange || len(aMsg[0]) > 0 || len(bMsg[0]) > 0; {
-		initKeyExchange = false
+	for ; len(aMsg[0]) > 0 || len(bMsg[0]) > 0; {
+		var err error
 		bMsg = [][]byte{}
 		for _, msg := range aMsg {
-			out, err := bob.Decrypt(msg)
-			bMsg = append(bMsg, out)
+			bMsg, err = bob.Decrypt(msg)
 			assert.Error(t, OTRHandshakeStep{}, err)
 		}
 
 		aMsg = [][]byte{}
 		for _, msg := range bMsg {
-			out, err := alice.Decrypt(msg)
-			aMsg = append(aMsg, out)
+			aMsg, err = alice.Decrypt(msg)
 			assert.Error(t, OTRHandshakeStep{}, err)
 		}
 	}
@@ -57,6 +54,6 @@ func TestOTRProtocol_SendAndReceiveMessages(t *testing.T) {
 	for _, msg := range cyp {
 		out, err := sameet.Decrypt(msg)
 		assert.Nil(t, err)
-		assert.Equal(t, testMessage, string(out), "Strings should be equivalent")
+		assert.Equal(t, testMessage, string(out[0]), "Strings should be equivalent")
 	}
 }
