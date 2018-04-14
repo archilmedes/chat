@@ -7,7 +7,7 @@ import (
 
 func TestServer_Start(t *testing.T) {
 	var program Server
-	assert.NoError(t, program.Start())
+	assert.NoError(t, program.Start("Archil", "random", "192.168.86.22"))
 	assert.NotEqual(t, nil, program.Listener)
 	assert.NoError(t, program.Shutdown())
 }

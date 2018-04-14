@@ -5,7 +5,7 @@ import (
 )
 
 type User struct {
-	IP, Username string
+	Username, MAC, IP string
 }
 
 // Create a DatabaseUser to a core User object

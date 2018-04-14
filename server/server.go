@@ -2,11 +2,9 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net"
-	"runtime"
 )
 
 const (
@@ -18,31 +16,6 @@ const (
 type Server struct {
 	User *User
 	Listener *net.TCPListener
-}
-
-// Get public ip address
-// Help from: https://stackoverflow.com/questions/23558425/how-do-i-get-the-local-ip-address-in-go
-func getIp() (string, error) {
-	list, err := net.Interfaces()
-	if err != nil {
-		panic(err)
-	}
-
-	for _, iface := range list {
-		addrs, err := iface.Addrs()
-		if err != nil {
-			return "", err
-		}
-		for _, addr := range addrs {
-			if ipInfo, ok := addr.(*net.IPNet); ok && !ipInfo.IP.IsLoopback() {
-				if ((runtime.GOOS == "windows" && iface.Name == "Wi-Fi") ||
-					runtime.GOOS != "windows") && ipInfo.IP.To4() != nil {
-					return ipInfo.IP.String(), nil
-				}
-			}
-		}
-	}
-	return "", errors.New("getIp: cannot find public ip address")
 }
 
 // Setup listener for server
@@ -75,22 +48,16 @@ func receive(listener *net.TCPListener) {
 }
 
 // Start up server
-func (s *Server) Start() error {
+func (s *Server) Start(username string, mac string, ip string) error {
+	var err error
 	log.Println("Launching Server...")
-	//var err error
-
-	(*s).User = new(User)
-	//ip, err := getIp()
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//ipAddr := fmt.Sprintf("%s:%d", (*s).IP, Port)
-	//if (*s).Listener, err = setupServer(ipAddr); err != nil {
-	//	return err
-	//}
-	//go receive((*s).Listener)
-	//log.Printf("Listening on: '%s:%d'", (*s).IP, Port)
+	(*s).User = &User{username, mac, ip}
+	ipAddr := fmt.Sprintf("%s:%d", ip, Port)
+	if (*s).Listener, err = setupServer(ipAddr); err != nil {
+		return err
+	}
+	go receive((*s).Listener)
+	log.Printf("Listening on: '%s:%d'", ip, Port)
 	return nil
 }
 

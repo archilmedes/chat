@@ -34,7 +34,11 @@ func listen(program *server.Server) {
 
 func main() {
 	var program server.Server
-	if err := program.Start(); err != nil {
+	mac, ip, err := getAddresses()
+	if err != nil {
+		fmt.Printf("getAddresses: %s", err.Error())
+	}
+	if err := program.Start("Archil", mac, ip); err != nil {
 		log.Fatalf("main: %s", err.Error())
 	}
 	defer program.Shutdown()
