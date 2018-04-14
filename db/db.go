@@ -3,63 +3,30 @@ package db
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
-	config "chat/config"
+	"chat/config"
 	"fmt"
 	"log"
+	"os/exec"
 )
 
 const (
 	databaseName = "otrmessenger" // Constant in execution, can change
 	sessionsTableName = "sessions"
 	userTableName = "users"
-	conversationTableName = "conversation"
+	conversationTableName = "conversations"
 )
 var DB *sql.DB
 
 // Function to be called to set everything up
 func SetupDatabase(){
-	DB = InitializeDatabase()
-	SetupTables()
-	SetupSessionsTable()
-}
-func SetupTables() {
-	SetupSessionsTable()
-	SetupUsersTable()
-	SetupConversationTable()
+	cmd := exec.Command("sh", "db_setup.sh")
+	err := cmd.Run()
+	fmt.Println(err)
 
-}
-
-// Drops the database if it exists
-func DropDatabase() {
-	dropDatabaseCommand := "DROP DATABASE IF EXISTS " + databaseName;
-	ExecuteDatabaseCommand(dropDatabaseCommand)
-}
-
-// Creates the initial connection to the database
-func InitializeDatabase() *sql.DB {
-	connectionString := FormConnectionString("")
-
-	// Initial connection to MySql - will work even if no databases created
+	connectionString := FormConnectionString(databaseName)
 	DB, _ = ConnectToDatabase(connectionString)
-
-	// FOR TESTING ONLY - CLEARS DATABASE EVERY RUN
-	DropDatabase();
-
-	// Creates the database if it doesn't exist
-	log.Println("Creating database...")
-	createDatabaseCommand := "CREATE DATABASE IF NOT EXISTS " + databaseName
-	ExecuteDatabaseCommand(createDatabaseCommand)
-	DB.Close()
-
-	// Connects to the OTRMessenger database
-	connectionString = FormConnectionString(databaseName)
-	DB, _ = ConnectToDatabase(connectionString)
-
-	log.Println("Switching to OTRMessenger database")
 	useDatabaseCommand := "USE " + databaseName
 	ExecuteDatabaseCommand(useDatabaseCommand)
-
-	return DB
 }
 
 // Executes the specified database command

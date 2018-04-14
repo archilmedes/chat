@@ -1,7 +1,6 @@
 package db
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 )
@@ -9,22 +8,6 @@ import (
 type Session struct {
 	SSID, userId, friendId int
 	privateKey, fingerprint  string
-}
-
-// Creates the sessions table
-func SetupSessionsTable() {
-	log.Println("Creating the sessions table...")
-	var createTableCommand bytes.Buffer
-	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
-	createTableCommand.WriteString(sessionsTableName)
-	createTableCommand.WriteString(" (\n")
-	createTableCommand.WriteString("SSID INT NOT NULL PRIMARY KEY, \n")
-	createTableCommand.WriteString("user_id INT NOT NULL, \n")
-	createTableCommand.WriteString("friend_id INT NOT NULL, \n")
-	createTableCommand.WriteString("private_key varchar(10000) NOT NULL, \n")
-	createTableCommand.WriteString("fingerprint varchar(10000) NOT NULL \n")
-	createTableCommand.WriteString(" );")
-	ExecuteDatabaseCommand(createTableCommand.String())
 }
 
 func InsertIntoSessions(SSID int, userId int, friendId int, privateKey string, fingerprint string) {

@@ -1,27 +1,12 @@
 package db
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 )
 
 type DatabaseUser struct {
 	Username, Password, IP string
-}
-
-// Creates the users table
-func SetupUsersTable() {
-	log.Println("Creating the users table...")
-	var createTableCommand bytes.Buffer
-	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
-	createTableCommand.WriteString(userTableName)
-	createTableCommand.WriteString(" (\n")
-	createTableCommand.WriteString("username varchar(1000) NOT NULL, \n")
-	createTableCommand.WriteString("password varchar(1000) NOT NULL, \n")
-	createTableCommand.WriteString("ipaddress varchar(18) NOT NULL \n")
-	createTableCommand.WriteString(" );")
-	ExecuteDatabaseCommand(createTableCommand.String())
 }
 
 func UserExists(username string) bool {

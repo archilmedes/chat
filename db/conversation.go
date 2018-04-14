@@ -1,7 +1,6 @@
 package db
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 )
@@ -9,21 +8,6 @@ import (
 type Conversation struct {
 	SSID, sentOrReceived int
 	message, timestamp string
-}
-
-// Creates the conversations table
-func SetupConversationTable() {
-	log.Println("Creating the conversations table...")
-	var createTableCommand bytes.Buffer
-	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
-	createTableCommand.WriteString(conversationTableName)
-	createTableCommand.WriteString(" (\n")
-	createTableCommand.WriteString("SSID INT NOT NULL, \n")
-	createTableCommand.WriteString("message varchar(10000) NOT NULL, \n")
-	createTableCommand.WriteString("timestamp varchar(30) NOT NULL, \n")
-	createTableCommand.WriteString("sent_or_received TINYINT NOT NULL")
-	createTableCommand.WriteString(" );")
-	ExecuteDatabaseCommand(createTableCommand.String())
 }
 
 func InsertIntoConversations(SSID int, message string, timestamp string, sentOrReceived int) {
