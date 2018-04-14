@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"chat/server"
+	"chat/core"
 	"fmt"
 	"log"
 	"os"
@@ -34,7 +35,7 @@ func listen(program *server.Server) {
 
 func main() {
 	var program server.Server
-	mac, ip, err := getAddresses()
+	mac, ip, err := core.GetAddresses()
 	if err != nil {
 		fmt.Printf("getAddresses: %s", err.Error())
 	}

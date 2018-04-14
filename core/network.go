@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"net"
@@ -9,7 +9,7 @@ import (
 // Get public IPv4 and MAC address
 // Help from: https://stackoverflow.com/questions/23558425/how-do-i-get-the-local-ip-address-in-go
 // Help from: http://grokbase.com/t/gg/golang-nuts/13cf1dcxhs/go-nuts-getting-ip-address-and-hardware-address-in-golang
-func getAddresses() (string, string, error) { // MAC address, IPv4 address, error
+func GetAddresses() (string, string, error) { // MAC address, IPv4 address, error
 	var mac, ip string
 	list, err := net.Interfaces()
 	if err != nil {
