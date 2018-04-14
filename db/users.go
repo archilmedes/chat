@@ -17,21 +17,21 @@ func SetupUsersTable() {
 	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
 	createTableCommand.WriteString(userTableName)
 	createTableCommand.WriteString(" (\n")
-	createTableCommand.WriteString("Username varchar(1000) NOT NULL, \n")
-	createTableCommand.WriteString("Password varchar(1000) NOT NULL, \n")
+	createTableCommand.WriteString("username varchar(1000) NOT NULL, \n")
+	createTableCommand.WriteString("password varchar(1000) NOT NULL, \n")
 	createTableCommand.WriteString("ipaddress varchar(18) NOT NULL \n")
 	createTableCommand.WriteString(" );")
 	ExecuteDatabaseCommand(createTableCommand.String())
 }
 
 func UserExists(username string) bool {
-	query := "SELECT * FROM " + userTableName + " WHERE Username=\"" + username + "\"";
+	query := "SELECT * FROM " + userTableName + " WHERE username=\"" + username + "\"";
 	users := ExecuteUsersQuery(query)
 	return len(users) > 0
 }
 
 func GetUser(username string, password string) (*DatabaseUser) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE Username= \"%s\" and Password= \"%s\"", userTableName, username, password);
+	query := fmt.Sprintf("SELECT * FROM %s WHERE username= \"%s\" and password= \"%s\"", userTableName, username, password);
 	users := ExecuteUsersQuery(query)
 	if len(users) == 0 {
 		return nil
@@ -52,7 +52,7 @@ func AddUser(username string, password string, ipAddress string) bool {
 }
 
 func DeleteUser(username string) bool {
-	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE Username= \"%s\"", userTableName, username)
+	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE username= \"%s\"", userTableName, username)
 	_, err := DB.Exec(deleteCommand)
 	if err != nil {
 		fmt.Printf("Failed to delete user %s: %s", username, err)
