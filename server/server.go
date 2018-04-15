@@ -8,6 +8,7 @@ import (
 	"chat/db"
 	"chat/protocol"
 	"time"
+	"errors"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 type Server struct {
 	User *db.User
 	Listener *net.TCPListener
-	Sessions []*Session
+	Sessions *[]Session
 }
 
 // Setup listener for server
@@ -32,7 +33,7 @@ func setupServer(address string) (*net.TCPListener, error) {
 }
 
 // Handle receiving messages from a TCPConn
-func handleConnection(s *Server, conn *net.TCPConn) {
+func (s *Server) handleConnection(conn *net.TCPConn) {
 	defer conn.Close()
 	decoder := json.NewDecoder(conn)
 	var msg Message
@@ -44,14 +45,17 @@ func handleConnection(s *Server, conn *net.TCPConn) {
 		log.Panicln("User received a message that was not meant for them")
 	}
 
-	var sess *Session
-	oldNum := len(s.Sessions)
+	var sess Session
+	oldNum := len(*(*s).Sessions)
+
+	for i, s := range *(*s).Sessions {
+		fmt.Printf("%d: %s\n", i, s.StartTime)
+	}
 
 	// If part of the handshake
 	if msg.Handshake {
 		idx := msg.ID % 2
 		sessions := s.GetSessionsToIP(msg.DestIP) // One for normal cases, two for communicating to yourself
-		fmt.Printf("Getting Num Sessions: %d\n", len(sessions))
 		if len(sessions) != 2 {
 			// sess = s.CreateOrGetSession(msg)
 
@@ -61,9 +65,8 @@ func handleConnection(s *Server, conn *net.TCPConn) {
 				friend.IP = msg.SourceIP
 				friend.MAC = msg.SourceMAC
 				// The From field of a session is always the server's user
-				fmt.Println(msg.StartProto)
-				sess = NewSession(s.User, friend, protocol.CreateProtocolFromType(msg.StartProto), msg.StartProtoTimestamp)
-				s.Sessions = append(s.Sessions, sess)
+				sess = *NewSession(s.User, friend, protocol.CreateProtocolFromType(msg.StartProto), msg.StartProtoTimestamp)
+				*(*s).Sessions = append(*(*s).Sessions, sess)
 			}
 		} else {
 			sess = sessions[idx]
@@ -71,13 +74,8 @@ func handleConnection(s *Server, conn *net.TCPConn) {
 	} else {
 		sess = s.CreateOrGetSession(msg)
 	}
-	newNum := len(s.Sessions)
-
-	fmt.Println("Printing Sessions")
-	for i, sess := range s.Sessions {
-		fmt.Printf("Sess %d: %s\n", i, sess.StartTime)
-	}
-
+	newNum := len(*(*s).Sessions)
+	fmt.Printf("ACTUALLY: %s\n", msg.Text)
 	dec, err := sess.Proto.Decrypt([]byte(msg.Text))
 	switch errorType := err.(type) {
 	case protocol.OTRHandshakeStep:
@@ -88,7 +86,7 @@ func handleConnection(s *Server, conn *net.TCPConn) {
 			reply := NewMessage(s.User, msg.SourceIP, string(stepMessage))
 			reply.StartProtocol(sess.Proto)
 			if oldNum != newNum {
-				fmt.Println("created a session, so put new timestamp here")
+				fmt.Println("REPLY BACK LATER")
 				reply.StartProtoTimestamp = time.Now()
 			}
 			reply.ID = msg.ID + 1
@@ -100,15 +98,21 @@ func handleConnection(s *Server, conn *net.TCPConn) {
 			log.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
 		}
 	}
-	// Print the decoded MAC
-	fmt.Printf("%s: %s\n", msg.SourceMAC, dec[0])
+	if sess.Proto.IsActive() && dec[0] != nil {
+		// Print the decoded message and IP
+		fmt.Printf("%s: %s\n", msg.SourceIP, dec[0])
+	} else if sess.Proto.IsActive() {
+		fmt.Println("SEND BACK REPLY")
+		reply := NewMessage(s.User, msg.SourceIP, "Hello")
+		s.sendMessage(reply)
+	}
 }
 
 // Function that continuously polls for new messages being sent to the server
-func receive(s *Server) {
+func (s *Server) receive() {
 	for {
 		if conn, err := (*(*s).Listener).AcceptTCP(); err == nil {
-			go handleConnection(s, conn)
+			go s.handleConnection(conn)
 		}
 	}
 }
@@ -130,7 +134,9 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	if (*s).Listener, err = setupServer(ipAddr); err != nil {
 		return err
 	}
-	go receive(s)
+	// Initialize the session struct to a pointer
+	(*s).Sessions = &[]Session{}
+	go s.receive()
 	log.Printf("Listening on: '%s:%d'", ip, Port)
 	return nil
 }
@@ -147,6 +153,19 @@ func (s *Server) sendMessage(msg *Message) error {
 	if err != nil {
 		return err
 	}
+
+	sessions := s.GetSessionsToIP((*msg).DestIP)
+	fmt.Println((*s).Sessions)
+	if len(sessions) == 0 && !msg.Handshake {
+		return errors.New(fmt.Sprintf("Cannot communicate with %s without an active session\n", msg.DestIP))
+	} else if len(sessions) != 0 && !msg.Handshake {
+		(*msg).StartProtoTimestamp = sessions[0].StartTime
+		cyp, err := sessions[0].Proto.Encrypt([]byte((*msg).Text))
+		if err != nil {
+			return err
+		}
+		(*msg).Text = string(cyp[0])
+	}
 	res, _ := json.Marshal(*msg)
 	fmt.Println(string(res))
 	encoder := json.NewEncoder(dialer)
@@ -161,10 +180,10 @@ func (s *Server) Send(destIp string, message string) error  {
 	return s.sendMessage(NewMessage(s.User, destIp, message))
 }
 
-func (s *Server) GetSessionsToIP(ip string) ([]*Session) {
-	var filterSessions []*Session
-	for _, sess := range s.Sessions {
-		if (*sess).ConverseWith(ip) {
+func (s *Server) GetSessionsToIP(ip string) []Session {
+	var filterSessions []Session
+	for _, sess := range *(*s).Sessions {
+		if sess.ConverseWith(ip) {
 			filterSessions = append(filterSessions, sess)
 		}
 	}
@@ -172,9 +191,9 @@ func (s *Server) GetSessionsToIP(ip string) ([]*Session) {
 }
 
 // Returns a session based on the message received
-func (s *Server) CreateOrGetSession(msg Message) (*Session) {
-	for _, sess := range s.Sessions {
-		if (*sess).ConverseWith(msg.SourceIP) && (*sess).StartTime != msg.StartProtoTimestamp {
+func (s *Server) CreateOrGetSession(msg Message) Session {
+	for _, sess := range *(*s).Sessions {
+		if sess.ConverseWith(msg.SourceIP) && sess.StartTime != msg.StartProtoTimestamp {
 			return sess
 		}
 	}
@@ -183,16 +202,13 @@ func (s *Server) CreateOrGetSession(msg Message) (*Session) {
 	friend.IP = msg.SourceIP
 	friend.MAC = msg.SourceMAC
 	// The From field of a session is always the server's user
-	fmt.Println(msg.StartProto)
 	sess := NewSession(s.User, friend, protocol.CreateProtocolFromType(msg.StartProto), msg.StartProtoTimestamp)
-	s.Sessions = append(s.Sessions, sess)
-	return sess
+	*(*s).Sessions = append(*(*s).Sessions, *sess)
+	return *sess
 }
 
-// High-level function when you want to enable a session with a protocol with another user
+// Start a session with a destination IP using a protocol
 func (s *Server) StartSession(destIp string, proto protocol.Protocol) (error) {
-	// When you first start a session, you don't know the SourceMAC, so just don't create a session for now, create it
-	// when the user gets a response
 	firstMessage, err := proto.NewSession()
 	if err != nil {
 		log.Panicf("StartSession: Error starting new session: %s", err)
