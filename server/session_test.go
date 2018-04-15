@@ -15,10 +15,10 @@ func TestSession_ConverseWith(t *testing.T) {
 	assert.False(t, sess.ConverseWith(alice.IP))
 }
 
-func setUpSession() (*db.User, *Friend, *Session) {
+func setUpSession() (*db.User, *db.Friend, *Session) {
 	alice := new(db.User)
 	alice.IP = "1.2.3.4"
-	bob := new(Friend)
+	bob := new(db.Friend)
 	bob.IP = "5.6.7.8"
 	sess := NewSession(alice, bob, protocol.NewOTRProtocol(), time.Now())
 	return alice, bob, sess
