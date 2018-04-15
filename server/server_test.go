@@ -6,6 +6,7 @@ import (
 	"chat/core"
 	"chat/protocol"
 	"time"
+	"fmt"
 )
 
 func startUpServer(t *testing.T) Server {
@@ -26,10 +27,15 @@ func TestServer_Send(t *testing.T) {
 	assert.NotNil(t, server.User)
 	// Send a message to yourself
 	err := server.StartSession(server.User.IP, protocol.NewOTRProtocol())
+	fmt.Println(server.Sessions)
 	assert.Nil(t, err)
-	time.Sleep(5 * time.Second)
-	//assert.NoError(t, server.Send(server.User.IP, "Hello World!"))
-	//server.Shutdown()
+
+	// TODO: figure out better way to wait for handshake to finish
+	fmt.Println(server.Sessions)
+	time.Sleep(1 * time.Second)
+	fmt.Println(server.Sessions)
+	assert.NoError(t, server.Send(server.User.IP, "Hello World!"))
+	server.Shutdown()
 }
 
 func TestServer_CreateOrGetSession_create(t *testing.T) {
