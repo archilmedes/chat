@@ -8,13 +8,13 @@ import (
 
 type Session struct {
 	From *db.User
-	To *Friend
+	To *db.Friend
 	Proto protocol.Protocol
 	StartTime time.Time
 }
 
 // Return a new session between a user and their friend with a protocol
-func NewSession(from *db.User, to *Friend, protocol protocol.Protocol, startTime time.Time) *Session {
+func NewSession(from *db.User, to *db.Friend, protocol protocol.Protocol, startTime time.Time) *Session {
 	session := new(Session)
 	(*session).From = from
 	(*session).To = to
@@ -24,7 +24,7 @@ func NewSession(from *db.User, to *Friend, protocol protocol.Protocol, startTime
 }
 
 func NewSessionFromUserAndMessage(from *db.User, msg Message) *Session {
-	friend := new(Friend)
+	friend := new(db.Friend)
 	friend.IP = msg.SourceIP
 	friend.MAC = msg.SourceMAC
 	return NewSession(from, friend, protocol.CreateProtocolFromType(msg.StartProto), msg.StartProtoTimestamp)

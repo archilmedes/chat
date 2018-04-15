@@ -6,7 +6,6 @@ import (
 	"chat/core"
 	"chat/protocol"
 	"time"
-	"fmt"
 )
 
 func startUpServer(t *testing.T) Server {
@@ -38,39 +37,6 @@ func TestServer_Send(t *testing.T) {
 	server := setUpServerAndHandshake(t)
 	assert.NoError(t, server.Send(server.User.IP, "Hello World!"))
 	time.Sleep(1 * time.Second)
-	server.Shutdown()
-}
-
-func TestServer_CreateOrGetSession_createNoProto(t *testing.T) {
-	server := startUpServer(t)
-
-	u := getFakeUser()
-	msg := "Hello world"
-	message := NewMessage(u, u.IP, msg)
-
-	defer func() {
-		err := recover().(error)
-
-		if err.Error() != fmt.Sprintf("CreateProtocolFromType: %s", message.StartProto) {
-			t.Fatalf("Wrong panic message: %s", err.Error())
-		}
-		assert.Equal(t, 0, len(*server.Sessions))
-		server.Shutdown()
-	}()
-	server.CreateOrGetSession(*message)
-	server.Shutdown()
-}
-
-func TestServer_CreateOrGetSession_create(t *testing.T) {
-	server := startUpServer(t)
-
-	u := getFakeUser()
-	msg := "Hello world"
-	message := NewMessage(u, u.IP, msg)
-	message.StartProto = protocol.OTRProtocol{}.ToType()
-
-	server.CreateOrGetSession(*message)
-	assert.Equal(t, 1, len(*server.Sessions))
 	server.Shutdown()
 }
 
