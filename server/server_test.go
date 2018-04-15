@@ -1,10 +1,10 @@
 package server
 
 import (
-	"github.com/stretchr/testify/assert"
-	"testing"
 	"chat/core"
 	"chat/protocol"
+	"github.com/stretchr/testify/assert"
+	"testing"
 	"time"
 )
 

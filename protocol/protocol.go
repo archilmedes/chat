@@ -19,7 +19,7 @@ type Protocol interface {
 
 const (
 	PlainType = "plain"
-	OTRType = "otr"
+	OTRType   = "otr"
 )
 
 // Type of protocol that just lets text pass through
@@ -27,7 +27,7 @@ type PlainProtocol struct {
 	Protocol
 }
 
-func wrapMessage(in[] byte) ([][]byte) {
+func wrapMessage(in []byte) [][]byte {
 	b := make([][]byte, 1)
 	b[0] = in
 	return b
@@ -47,6 +47,7 @@ func CreateProtocolFromType(protoType string) Protocol {
 func (p PlainProtocol) Encrypt(in []byte) ([][]byte, error) {
 	return wrapMessage(in), nil
 }
+
 // Decrypts the message by just returning it
 func (p PlainProtocol) Decrypt(dec []byte) ([][]byte, error) {
 	return wrapMessage(dec), nil

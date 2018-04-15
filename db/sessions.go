@@ -6,8 +6,8 @@ import (
 )
 
 type Session struct {
-	SSID, userId, friendId int
-	privateKey, fingerprint  string
+	SSID, userId, friendId  int
+	privateKey, fingerprint string
 }
 
 func InsertIntoSessions(SSID int, userId int, friendId int, privateKey string, fingerprint string) {
@@ -16,24 +16,24 @@ func InsertIntoSessions(SSID int, userId int, friendId int, privateKey string, f
 	ExecuteDatabaseCommand(insertCommand)
 }
 
-func QuerySessions() [] Session{
+func QuerySessions() []Session {
 	log.Println("Retrieving data from sessions...")
-	query := "SELECT * FROM " + sessionsTableName;
+	query := "SELECT * FROM " + sessionsTableName
 	return ExecuteSessionsQuery(query)
 }
 
 // Executes the specified database command
-func ExecuteSessionsQuery(query string) [] Session {
+func ExecuteSessionsQuery(query string) []Session {
 	results, err := DB.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)
 		panic(err)
 	}
-	var sessions [] Session
+	var sessions []Session
 	session := Session{}
-	for results.Next(){
+	for results.Next() {
 		err = results.Scan(&session.SSID, &session.userId, &session.friendId, &session.privateKey, &session.fingerprint)
-		if err!= nil {
+		if err != nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
 		}
@@ -45,4 +45,3 @@ func ExecuteSessionsQuery(query string) [] Session {
 	}
 	return sessions
 }
-

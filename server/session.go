@@ -1,15 +1,15 @@
 package server
 
 import (
+	"chat/db"
 	"chat/protocol"
 	"time"
-	"chat/db"
 )
 
 type Session struct {
-	From *db.User
-	To *db.Friend
-	Proto protocol.Protocol
+	From      *db.User
+	To        *db.Friend
+	Proto     protocol.Protocol
 	StartTime time.Time
 }
 

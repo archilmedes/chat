@@ -1,9 +1,9 @@
 package protocol
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/otr"
+	"testing"
 )
 
 func TestOTRProtocol_EndSession(t *testing.T) {
@@ -11,7 +11,6 @@ func TestOTRProtocol_EndSession(t *testing.T) {
 	o.EndSession()
 	assert.False(t, o.Conv.IsEncrypted())
 }
-
 
 func TestOTRProtocol_Handshake(t *testing.T) {
 	alice, bob := NewOTRProtocol(), NewOTRProtocol()
@@ -23,7 +22,7 @@ func createOTRLink(t *testing.T, alice OTRProtocol, bob OTRProtocol) {
 	var aMsg, bMsg [][]byte
 	aMsg = append(aMsg, []byte(otr.QueryMessage))
 	// Simulate a handshake by just sending messages between two users
-	for ; len(aMsg[0]) > 0 || len(bMsg[0]) > 0; {
+	for len(aMsg[0]) > 0 || len(bMsg[0]) > 0 {
 		var err error
 		bMsg = [][]byte{}
 		for _, msg := range aMsg {

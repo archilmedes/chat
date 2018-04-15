@@ -1,8 +1,8 @@
 package protocol
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 var message = "testMessage"
