@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 )
+
 const (
 	Sent = 0
 	Received = 1
