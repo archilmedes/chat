@@ -1,5 +1,6 @@
 #!/bin/sh
 
+CURR="$(pwd)"
 cd "$(dirname "$0")" 
 
 if [ -z "$2" ]; then
@@ -7,3 +8,6 @@ if [ -z "$2" ]; then
 else
 	mysql -u "$1" -p"$2" < "db_setup.sql"
 fi
+
+cd "$CURR"
+
