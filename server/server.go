@@ -48,10 +48,6 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	var sess Session
 	oldNum := len(*(*s).Sessions)
 
-	for i, s := range *(*s).Sessions {
-		fmt.Printf("%d: %s\n", i, s.StartTime)
-	}
-
 	// If part of the handshake
 	if msg.Handshake {
 		idx := msg.ID % 2
@@ -61,11 +57,7 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 
 			// If sending message to yourself TODO: handle other cases later
 			if msg.SourceIP == msg.DestIP {
-				friend := new(Friend)
-				friend.IP = msg.SourceIP
-				friend.MAC = msg.SourceMAC
-				// The From field of a session is always the server's user
-				sess = *NewSession(s.User, friend, protocol.CreateProtocolFromType(msg.StartProto), msg.StartProtoTimestamp)
+				sess = *NewSessionFromUserAndMessage(s.User, msg)
 				*(*s).Sessions = append(*(*s).Sessions, sess)
 			}
 		} else {
@@ -75,8 +67,12 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 		sess = s.CreateOrGetSession(msg)
 	}
 	newNum := len(*(*s).Sessions)
-	fmt.Printf("ACTUALLY: %s\n", msg.Text)
+	createdSession := oldNum != newNum
+
+
 	dec, err := sess.Proto.Decrypt([]byte(msg.Text))
+	fmt.Println(string(dec[0]))
+
 	switch errorType := err.(type) {
 	case protocol.OTRHandshakeStep:
 		// If it's part of the OTR handshake, send each part of the message back directly to the source,
@@ -85,8 +81,7 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 		for _, stepMessage := range dec {
 			reply := NewMessage(s.User, msg.SourceIP, string(stepMessage))
 			reply.StartProtocol(sess.Proto)
-			if oldNum != newNum {
-				fmt.Println("REPLY BACK LATER")
+			if createdSession {
 				reply.StartProtoTimestamp = time.Now()
 			}
 			reply.ID = msg.ID + 1
@@ -97,14 +92,19 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 		if err != nil {
 			log.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
 		}
+		if createdSession { // That means msg.Handshake must be true
+			reply := NewMessage(s.User, msg.SourceIP, msg.Text)
+			reply.StartProtocol(sess.Proto)
+			if createdSession {
+				reply.StartProtoTimestamp = time.Now()
+			}
+			reply.ID = msg.ID + 1
+			s.sendMessage(reply)
+		}
 	}
 	if sess.Proto.IsActive() && dec[0] != nil {
 		// Print the decoded message and IP
 		fmt.Printf("%s: %s\n", msg.SourceIP, dec[0])
-	} else if sess.Proto.IsActive() {
-		fmt.Println("SEND BACK REPLY")
-		reply := NewMessage(s.User, msg.SourceIP, "Hello")
-		s.sendMessage(reply)
 	}
 }
 
@@ -154,8 +154,8 @@ func (s *Server) sendMessage(msg *Message) error {
 		return err
 	}
 
+	// Unless you're handshaking, then you must have an active session to send a message
 	sessions := s.GetSessionsToIP((*msg).DestIP)
-	fmt.Println((*s).Sessions)
 	if len(sessions) == 0 && !msg.Handshake {
 		return errors.New(fmt.Sprintf("Cannot communicate with %s without an active session\n", msg.DestIP))
 	} else if len(sessions) != 0 && !msg.Handshake {
@@ -166,8 +166,7 @@ func (s *Server) sendMessage(msg *Message) error {
 		}
 		(*msg).Text = string(cyp[0])
 	}
-	res, _ := json.Marshal(*msg)
-	fmt.Println(string(res))
+
 	encoder := json.NewEncoder(dialer)
 	if err := encoder.Encode(msg); err != nil {
 		return err
@@ -180,6 +179,7 @@ func (s *Server) Send(destIp string, message string) error  {
 	return s.sendMessage(NewMessage(s.User, destIp, message))
 }
 
+// Get all sessions that a user talks to an IP. There are only 2 if a user is talking to himself
 func (s *Server) GetSessionsToIP(ip string) []Session {
 	var filterSessions []Session
 	for _, sess := range *(*s).Sessions {
@@ -190,19 +190,14 @@ func (s *Server) GetSessionsToIP(ip string) []Session {
 	return filterSessions
 }
 
-// Returns a session based on the message received
+// Creates or gets a session based on the message received
 func (s *Server) CreateOrGetSession(msg Message) Session {
 	for _, sess := range *(*s).Sessions {
 		if sess.ConverseWith(msg.SourceIP) && sess.StartTime != msg.StartProtoTimestamp {
 			return sess
 		}
 	}
-	// TODO: If we have to create a new session, do we update the protocol?
-	friend := new(Friend)
-	friend.IP = msg.SourceIP
-	friend.MAC = msg.SourceMAC
-	// The From field of a session is always the server's user
-	sess := NewSession(s.User, friend, protocol.CreateProtocolFromType(msg.StartProto), msg.StartProtoTimestamp)
+	sess := NewSessionFromUserAndMessage(s.User, msg)
 	*(*s).Sessions = append(*(*s).Sessions, *sess)
 	return *sess
 }
@@ -214,9 +209,7 @@ func (s *Server) StartSession(destIp string, proto protocol.Protocol) (error) {
 		log.Panicf("StartSession: Error starting new session: %s", err)
 		return err
 	}
-	if len(firstMessage) == 0 {
-		return err
-	}
+
 	msg := NewMessage(s.User, destIp, firstMessage)
 	msg.StartProtocol(proto)
 	msg.ID = 0

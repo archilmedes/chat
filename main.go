@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"chat/protocol"
 )
 
 const Exit = "exit"
@@ -24,7 +25,7 @@ func listen(program *server.Server) {
 		}
 		stringSlice := strings.Fields(message)
 		// Message format is: "IP message"
-		if err := program.Send(stringSlice[0], []byte(strings.Join(stringSlice[1:], " "))); err != nil {
+		if err := program.Send(stringSlice[0], strings.Join(stringSlice[1:], " ")); err != nil {
 			fmt.Printf("input: %s\n", err.Error())
 		}
 	}
@@ -50,5 +51,6 @@ func main() {
 		<-sig
 		os.Exit(0)
 	}()
+	program.StartSession(ip, protocol.OTRProtocol{})
 	listen(&program)
 }

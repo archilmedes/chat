@@ -12,14 +12,21 @@ type Session struct {
 	StartTime time.Time
 }
 
-// Return a new session between two users with a protocol
-func NewSession(from *User, to *Friend, protocol protocol.Protocol, startTime time.Time) (*Session) {
+// Return a new session between a user and their friend with a protocol
+func NewSession(from *User, to *Friend, protocol protocol.Protocol, startTime time.Time) *Session {
 	session := new(Session)
 	(*session).From = from
 	(*session).To = to
 	(*session).Proto = protocol
 	(*session).StartTime = startTime
 	return session
+}
+
+func NewSessionFromUserAndMessage(from *User, msg Message) *Session {
+	friend := new(Friend)
+	friend.IP = msg.SourceIP
+	friend.MAC = msg.SourceMAC
+	return NewSession(from, friend, protocol.CreateProtocolFromType(msg.StartProto), msg.StartProtoTimestamp)
 }
 
 // Ends the current session
