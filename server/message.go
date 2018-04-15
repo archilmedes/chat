@@ -6,12 +6,15 @@ import "chat/protocol"
 type Message struct {
 	SourceMAC, SourceIP, DestIP string
 	StartProto                  protocol.Protocol // If a protocol is started, this will be defined
-	Text                        []byte
+	Text                        string
 }
 
 // Create new message to send a message
-func NewMessage(from *User, destIp string, text []byte) (*Message) {
-	m := Message{SourceMAC: (*from).MAC, SourceIP: (*from).IP, DestIP: destIp, Text: text}
+func NewMessage(from *User, destIp string, text string) (*Message) {
+	m := Message{
+		SourceMAC: (*from).MAC, SourceIP: (*from).IP,
+		DestIP: destIp, Text: text,
+		StartProto: protocol.PlainProtocol{}}
 	return &m
 }
 
