@@ -6,13 +6,13 @@ import (
 )
 
 func UserExists(username string) bool {
-	query := "SELECT username, ipaddress FROM " + userTableName + " WHERE username=\"" + username + "\"";
+	query := "SELECT username, ipaddress FROM " + userTableName + " WHERE username=\"" + username + "\""
 	users := ExecuteUsersQuery(query)
 	return len(users) > 0
 }
 
 func GetUser(username string, password string) *User {
-	query := fmt.Sprintf("SELECT username, ipaddress FROM %s WHERE username= \"%s\" and password= \"%s\"", userTableName, username, password);
+	query := fmt.Sprintf("SELECT username, ipaddress FROM %s WHERE username= \"%s\" and password= \"%s\"", userTableName, username, password)
 	users := ExecuteUsersQuery(query)
 	if len(users) == 0 {
 		return nil
@@ -42,25 +42,25 @@ func DeleteUser(username string) bool {
 	return true
 }
 
-func QueryUsers() [] User {
+func QueryUsers() []User {
 	log.Println("Retrieving data from users...")
-	query := "SELECT username, ipaddress FROM " + userTableName;
+	query := "SELECT username, ipaddress FROM " + userTableName
 	return ExecuteUsersQuery(query)
 }
 
 // Executes the specified database command
-func ExecuteUsersQuery(query string) [] User {
+func ExecuteUsersQuery(query string) []User {
 	results, err := DB.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)
 		panic(err)
 	}
-	var users [] User
+	var users []User
 	user := User{}
 
 	for results.Next() {
 		err = results.Scan(&user.Username, &user.IP)
-		if err!= nil {
+		if err != nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
 		}

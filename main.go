@@ -2,8 +2,9 @@ package main
 
 import (
 	"bufio"
-	"chat/server"
 	"chat/core"
+	"chat/protocol"
+	"chat/server"
 	"fmt"
 	"log"
 	"os"
@@ -24,7 +25,8 @@ func listen(program *server.Server) {
 			return
 		}
 		stringSlice := strings.Fields(message)
-		if err := program.Send(stringSlice[0], []byte(strings.Join(stringSlice[1:], " "))); err != nil {
+		// Message format is: "IP message"
+		if err := program.Send(stringSlice[0], strings.Join(stringSlice[1:], " ")); err != nil {
 			fmt.Printf("input: %s\n", err.Error())
 		}
 	}
@@ -52,5 +54,6 @@ func main() {
 		<-sig
 		os.Exit(0)
 	}()
+	program.StartSession(ip, protocol.OTRProtocol{})
 	listen(&program)
 }

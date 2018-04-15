@@ -1,20 +1,21 @@
 package db
 
 import (
-	_ "github.com/go-sql-driver/mysql"
-	"database/sql"
 	conf "chat/config"
+	"database/sql"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os/exec"
 )
 
 const (
-	databaseName = "otrmessenger" // Constant in execution, can change
-	sessionsTableName = "sessions"
-	userTableName = "users"
+	databaseName          = "otrmessenger" // Constant in execution, can change
+	sessionsTableName     = "sessions"
+	userTableName         = "users"
 	conversationTableName = "conversations"
 )
+
 var DB *sql.DB
 
 // Function to be called to set everything up
@@ -32,7 +33,7 @@ func SetupDatabase(){
 }
 
 // Executes the specified database command
-func ExecuteDatabaseCommand(command string){
+func ExecuteDatabaseCommand(command string) {
 	_, err := DB.Exec(command)
 	if err != nil {
 		fmt.Printf("Failed to execute command %s: %s", command, err)

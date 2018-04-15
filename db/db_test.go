@@ -1,20 +1,18 @@
 package db
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
-
 
 func InsertTestData() {
 	// Insert users
 	AddUser("alice123", "alicepassword", "127.0.0.1")
-	AddUser( "bob", "Password", "123.456.789")
+	AddUser("bob", "Password", "123.456.789")
 	AddUser("karateAMD", "pwd123", "192.168.10.123")
 	AddUser("sameetandpotatoes", "iLuvMacs", "10.192.345.987")
 	AddUser("archilmedes", "linuxFTW", "987.654.321")
 	AddUser("andrew", "anotherPass", "888.888.888")
-
 
 	//Insert sessions
 	InsertIntoSessions(12, 1, 2, "3478462413678237ab87846754785489329853e47237646718487980423f095874236784675889490543874123675478329056bc7823619560458372e956", "12D345678902F83AE")
@@ -35,10 +33,8 @@ func InsertTestData() {
 	InsertIntoConversations(42, "To get to the other side?", "04/12/2018:07:59:13", 0)
 	InsertIntoConversations(35, "When are we playing Fortnite?", "04/08/2018:17:59:02", 0)
 
-
-
 }
-func SetupDatabaseTest (t *testing.T){
+func SetupDatabaseTest(t *testing.T) {
 	//DB := SetupDatabase()
 	SetupDatabase()
 	tables := ShowTables()
@@ -46,7 +42,7 @@ func SetupDatabaseTest (t *testing.T){
 	//return DB
 }
 
-func TestDatabase(t *testing.T){
+func TestDatabase(t *testing.T) {
 	SetupDatabaseTest(t)
 	InsertTestData()
 	UsersTest(t)
