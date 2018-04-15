@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"chat/db"
 )
 
 const (
@@ -14,7 +15,7 @@ const (
 
 // Simple Server struct
 type Server struct {
-	User *User
+	User *db.User
 	Listener *net.TCPListener
 }
 
@@ -51,7 +52,7 @@ func receive(listener *net.TCPListener) {
 func (s *Server) Start(username string, mac string, ip string) error {
 	var err error
 	log.Println("Launching Server...")
-	(*s).User = &User{username, mac, ip}
+	(*s).User = &db.User{username, mac, ip}
 	ipAddr := fmt.Sprintf("%s:%d", ip, Port)
 	if (*s).Listener, err = setupServer(ipAddr); err != nil {
 		return err

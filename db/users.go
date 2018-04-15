@@ -1,37 +1,18 @@
 package db
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 )
 
-type DatabaseUser struct {
-	Username, Password, IP string
-}
-
-// Creates the users table
-func SetupUsersTable() {
-	log.Println("Creating the users table...")
-	var createTableCommand bytes.Buffer
-	createTableCommand.WriteString("CREATE TABLE IF NOT EXISTS ")
-	createTableCommand.WriteString(userTableName)
-	createTableCommand.WriteString(" (\n")
-	createTableCommand.WriteString("username varchar(1000) NOT NULL, \n")
-	createTableCommand.WriteString("password varchar(1000) NOT NULL, \n")
-	createTableCommand.WriteString("ipaddress varchar(18) NOT NULL \n")
-	createTableCommand.WriteString(" );")
-	ExecuteDatabaseCommand(createTableCommand.String())
-}
-
 func UserExists(username string) bool {
-	query := "SELECT * FROM " + userTableName + " WHERE username=\"" + username + "\"";
+	query := "SELECT username, ipaddress FROM " + userTableName + " WHERE username=\"" + username + "\"";
 	users := ExecuteUsersQuery(query)
 	return len(users) > 0
 }
 
-func GetUser(username string, password string) (*DatabaseUser) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE username= \"%s\" and password= \"%s\"", userTableName, username, password);
+func GetUser(username string, password string) *User {
+	query := fmt.Sprintf("SELECT username, ipaddress FROM %s WHERE username= \"%s\" and password= \"%s\"", userTableName, username, password);
 	users := ExecuteUsersQuery(query)
 	if len(users) == 0 {
 		return nil
@@ -61,24 +42,24 @@ func DeleteUser(username string) bool {
 	return true
 }
 
-func QueryUsers() [] DatabaseUser {
+func QueryUsers() [] User {
 	log.Println("Retrieving data from users...")
-	query := "SELECT * FROM " + userTableName;
+	query := "SELECT username, ipaddress FROM " + userTableName;
 	return ExecuteUsersQuery(query)
 }
 
 // Executes the specified database command
-func ExecuteUsersQuery(query string) [] DatabaseUser {
+func ExecuteUsersQuery(query string) [] User {
 	results, err := DB.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)
 		panic(err)
 	}
-	var users [] DatabaseUser
-	user := DatabaseUser{}
+	var users [] User
+	user := User{}
 
 	for results.Next() {
-		err = results.Scan(&user.Username, &user.Password, &user.IP)
+		err = results.Scan(&user.Username, &user.IP)
 		if err!= nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
