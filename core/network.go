@@ -1,8 +1,8 @@
 package core
 
 import (
-	"net"
 	"errors"
+	"net"
 	"runtime"
 )
 
@@ -37,6 +37,6 @@ func GetAddresses() (string, string, error) { // MAC address, IPv4 address, erro
 	if len(mac) != 0 && len(ip) != 0 {
 		return mac, ip, nil
 	}
-	errOccurred:
-		return mac, ip, errors.New("cannot find MAC and IPv4 addresses")
+errOccurred:
+	return mac, ip, errors.New("cannot find MAC and IPv4 addresses")
 }

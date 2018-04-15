@@ -6,13 +6,13 @@ import (
 )
 
 const (
-	Sent = 0
+	Sent     = 0
 	Received = 1
 )
 
 type Conversation struct {
 	SSID, sentOrReceived int
-	message, timestamp string
+	message, timestamp   string
 }
 
 func InsertIntoConversations(SSID int, message string, timestamp string, sentOrReceived int) {
@@ -24,25 +24,24 @@ func InsertIntoConversations(SSID int, message string, timestamp string, sentOrR
 	ExecuteDatabaseCommand(insertCommand)
 }
 
-
-func QueryConversations() [] Conversation{
+func QueryConversations() []Conversation {
 	log.Println("Retrieving data from conversations...")
-	query := "SELECT * FROM " + conversationTableName;
+	query := "SELECT * FROM " + conversationTableName
 	return ExecuteConversationQuery(query)
 }
 
 // Executes the specified database command
-func ExecuteConversationQuery(query string) [] Conversation {
+func ExecuteConversationQuery(query string) []Conversation {
 	results, err := DB.Query(query)
 	if err != nil {
 		fmt.Printf("Failed to execute query %s: %s", query, err)
 		panic(err)
 	}
-	var conversations [] Conversation
+	var conversations []Conversation
 	conv := Conversation{}
-	for results.Next(){
+	for results.Next() {
 		err = results.Scan(&conv.SSID, &conv.message, &conv.timestamp, &conv.sentOrReceived)
-		if err!= nil {
+		if err != nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
 		}
@@ -55,7 +54,7 @@ func ExecuteConversationQuery(query string) [] Conversation {
 	return conversations
 }
 
-func GetConversation(userId int, friendId int) [] Conversation{
+func GetConversation(userId int, friendId int) []Conversation {
 	query := fmt.Sprintf("SELECT * FROM conversations WHERE SSID IN (SELECT SSID FROM sessions WHERE (user_id=%d AND friend_id=%d) OR (friend_id=%d AND user_id=%d))", userId, friendId, userId, friendId)
 	conversations := ExecuteConversationQuery(query)
 	return conversations

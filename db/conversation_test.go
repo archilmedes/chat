@@ -1,11 +1,11 @@
 package db
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-func ConversationTest (t *testing.T){
+func ConversationTest(t *testing.T) {
 	ConversationSetup(t)
 	GetConversationTest(t)
 }
@@ -27,4 +27,3 @@ func ConversationSetup(t *testing.T) {
 	assert.Equal(t, "03/28/2018:18:04:10", conversations[3].timestamp)
 	assert.Equal(t, "lul", conversations[3].message)
 }
-

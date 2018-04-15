@@ -1,20 +1,26 @@
+// package protocol contains basic protocol functionality to encrypt, decrypt messages with
+// plaintext and OTR protocols
 package protocol
 
 import (
-	"golang.org/x/crypto/otr"
 	"crypto/rand"
+	"golang.org/x/crypto/otr"
 	"log"
 )
 
 type OTRProtocol struct {
 	Protocol
-	conv *otr.Conversation
-	sess OTRSession
+	Conv    *otr.Conversation
+	Session OTRSession
 }
 
 type OTRSession struct {
-	SSID [8]byte
-	fingerprint, privKey []byte
+	SSID                    [8]byte
+	Fingerprint, PrivateKey []byte
+}
+
+type OTRHandshakeStep struct {
+	error
 }
 
 const (
@@ -28,81 +34,90 @@ func NewOTRProtocol() OTRProtocol {
 	conv := new(otr.Conversation)
 	conv.PrivateKey = privKey
 	conv.FragmentSize = fragmentSize
-	return OTRProtocol{conv: conv}
+	return OTRProtocol{Conv: conv}
 }
 
-func NewOTRProtocolFromKeys(privKeyBytes[]byte) OTRProtocol {
+// Recreates an OTR protocol given its private key
+func NewOTRProtocolFromKeys(privKeyBytes []byte) OTRProtocol {
 	privKey := new(otr.PrivateKey)
 	privKey.Parse(privKeyBytes)
 	conv := new(otr.Conversation)
 	conv.PrivateKey = privKey
 	conv.FragmentSize = fragmentSize
-	return OTRProtocol{conv: conv}
+	return OTRProtocol{Conv: conv}
 }
 
 // Encrypt the message
 func (o OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
-	cipherText, err := o.conv.Send(in)
+	cipherText, err := o.Conv.Send(in)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return cipherText, nil
 }
 
-func (o OTRProtocol) Decrypt(in []byte) ([]byte, error) {
-	out, encrypted, secChange, msgToPeer, err := o.conv.Receive(in)
+func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
+	out, encrypted, secChange, msgToPeer, err := o.Conv.Receive(in)
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Respond to handshake if handshake is established
 	if len(msgToPeer) > 0 {
 		log.Println("<OTR> Handshaking")
-		for _, msg := range msgToPeer {
-			// TODO server.sendMessage(destIp, msg), refactor to get a connection object here
-			n := len(msg)
-			if n < len(msg) {
-				log.Panicln("<OTR> Handshake could not be established")
-			}
-			return msg, err
-		}
+		return msgToPeer, OTRHandshakeStep{}
 	}
 	switch secChange {
 	case otr.NoChange:
 		// If it's encrypted, just return the decrypted message out
 		if encrypted && o.IsEncrypted() {
-			return out, nil
+			return wrapMessage(out), nil
 		}
 	case otr.NewKeys:
 		log.Printf("<OTR> Key exchange completed.\nFingerprint:%x\nSSID:%x\n",
-			o.conv.TheirPublicKey.Fingerprint(),
-			o.conv.SSID,
+			o.Conv.TheirPublicKey.Fingerprint(),
+			o.Conv.SSID,
 		)
 		// TODO Send OTRSession object to DB to save
 		sess := new(OTRSession)
-		sess.fingerprint = o.conv.TheirPublicKey.Fingerprint()
-		sess.SSID = o.conv.SSID
-		sess.privKey = o.conv.PrivateKey.Serialize(nil)
-		o.sess = *sess
-		return out, nil
+		sess.Fingerprint = o.Conv.TheirPublicKey.Fingerprint()
+		sess.SSID = o.Conv.SSID
+		sess.PrivateKey = o.Conv.PrivateKey.Serialize(nil)
+		o.Session = *sess
+		return wrapMessage(out), nil
 	case otr.ConversationEnded:
 		log.Println("<OTR> Conversation ended")
 		o.EndSession()
-		return out, nil
+		return wrapMessage(out), nil
 	default:
 		log.Fatal("<OTR> SMP not implemented")
 	}
 
-	return out, nil
+	return wrapMessage(out), nil
 }
 
+func (o OTRProtocol) NewSession() (string, error) {
+	return otr.QueryMessage, nil
+}
+
+// Returns true if an OTR conversation is now encrypted
 func (o OTRProtocol) IsEncrypted() bool {
-	return o.conv.IsEncrypted()
+	return o.Conv.IsEncrypted()
 }
 
+// Returns true if an OTR session has been created
+func (o OTRProtocol) IsActive() bool {
+	return o.IsEncrypted()
+}
+
+// Ends the OTR conversation
 func (o OTRProtocol) EndSession() {
-	o.conv.End()
+	o.Conv.End()
 }
 
-func (o OTRProtocol) serialize() []byte {
-	return o.conv.PrivateKey.Serialize(nil)
+func (o OTRProtocol) Serialize() []byte {
+	return o.Conv.PrivateKey.Serialize(nil)
+}
+
+func (o OTRProtocol) ToType() string {
+	return OTRType
 }

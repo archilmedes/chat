@@ -5,12 +5,12 @@ type User struct {
 }
 
 // Persists the user to the database
-func (u *User) Create(password string) (bool) {
+func (u *User) Create(password string) bool {
 	return AddUser(u.Username, password, u.IP)
 }
 
 // Delete the user from the database
-func (u *User) Delete() (bool) {
+func (u *User) Delete() bool {
 	return DeleteUser(u.Username)
 }
 

@@ -1,11 +1,11 @@
 package db
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-func UsersTest (t *testing.T){
+func UsersTest(t *testing.T) {
 	users := QueryUsers()
 	UserSetupTest(t, users)
 	UserExistsTest(t)
@@ -37,4 +37,3 @@ func UserSetupTest(t *testing.T, users []User) {
 	assert.Equal(t, "10.192.345.987", users[3].IP)
 	assert.Equal(t, "sameetandpotatoes", users[3].Username)
 }
-

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+status=0
+for file in $(find . | grep -e '\.go$'); do
+    gofmt -w $file
+done
+exit $status
