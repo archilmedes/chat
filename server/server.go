@@ -16,14 +16,14 @@ const (
 	Network = "tcp"
 )
 
-// Simple Server struct
+// Server holds the user and all of his sessions
 type Server struct {
 	User *db.User
 	Listener *net.TCPListener
 	Sessions *[]Session
 }
 
-// Setup listener for server
+// Setup listener for the server
 func setupServer(address string) (*net.TCPListener, error) {
 	tcpAddr, err := net.ResolveTCPAddr(Network, address)
 	if err != nil {
@@ -152,7 +152,7 @@ func (s *Server) Shutdown() error {
 	return (*s).Listener.Close()
 }
 
-// Private-helper method that sends a formatted message object with the server
+// Sends a formatted Message object with the server, after an active session between the two users have been established
 func (s *Server) sendMessage(msg *Message) error {
 	dialer, err := initDialer(fmt.Sprintf("%s:%d", msg.SourceIP, Port))
 	if err != nil {
