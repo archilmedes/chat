@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"chat/db"
 	"chat/protocol"
 	"time"
 	"errors"
+	"chat/db"
 )
 
 const (

@@ -3,17 +3,18 @@ package server
 import (
 	"chat/protocol"
 	"time"
+	"chat/db"
 )
 
 type Session struct {
-	From *User
+	From *db.User
 	To *Friend
 	Proto protocol.Protocol
 	StartTime time.Time
 }
 
 // Return a new session between a user and their friend with a protocol
-func NewSession(from *User, to *Friend, protocol protocol.Protocol, startTime time.Time) *Session {
+func NewSession(from *db.User, to *Friend, protocol protocol.Protocol, startTime time.Time) *Session {
 	session := new(Session)
 	(*session).From = from
 	(*session).To = to
@@ -22,7 +23,7 @@ func NewSession(from *User, to *Friend, protocol protocol.Protocol, startTime ti
 	return session
 }
 
-func NewSessionFromUserAndMessage(from *User, msg Message) *Session {
+func NewSessionFromUserAndMessage(from *db.User, msg Message) *Session {
 	friend := new(Friend)
 	friend.IP = msg.SourceIP
 	friend.MAC = msg.SourceMAC

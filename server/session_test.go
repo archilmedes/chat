@@ -5,6 +5,7 @@ import (
 	"chat/protocol"
 	"github.com/stretchr/testify/assert"
 	"time"
+	"chat/db"
 )
 
 func TestSession_ConverseWith(t *testing.T) {
@@ -14,8 +15,8 @@ func TestSession_ConverseWith(t *testing.T) {
 	assert.False(t, sess.ConverseWith(alice.IP))
 }
 
-func setUpSession() (*User, *Friend, *Session) {
-	alice := new(User)
+func setUpSession() (*db.User, *Friend, *Session) {
+	alice := new(db.User)
 	alice.IP = "1.2.3.4"
 	bob := new(Friend)
 	bob.IP = "5.6.7.8"

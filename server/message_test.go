@@ -4,10 +4,11 @@ import (
 	"testing"
 	"github.com/stretchr/testify/assert"
 	"chat/protocol"
+	"chat/db"
 )
 
-func getFakeUser() *User {
-	u := new(User)
+func getFakeUser() *db.User {
+	u := new(db.User)
 	u.IP = "1.2.3.4"
 	u.MAC = "ab:cd:ef:gh:ij"
 	u.Username = "sam"
