@@ -3,7 +3,6 @@ package core
 import (
 	"os"
 	"testing"
-	"syscall"
 	"chat/db"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/ssh/terminal"
@@ -13,7 +12,7 @@ import (
 func TestLogin(t *testing.T) {
 	// TODO: More test with delete user
 	db.SetupDatabase()
-	syscall.Close(int(syscall.Stdin))
+	os.Stdin.Close()
 	f, _ := os.Open("login_test.txt")
 	defer f.Close()
 	defer func() {

@@ -31,7 +31,7 @@ func SetupTables() {
 
 // Drops the database if it exists
 func DropDatabase() {
-	dropDatabaseCommand := "DROP DATABASE IF EXISTS " + databaseName;
+	dropDatabaseCommand := "DROP DATABASE IF EXISTS " + databaseName
 	ExecuteDatabaseCommand(dropDatabaseCommand)
 }
 
@@ -43,7 +43,7 @@ func InitializeDatabase() *sql.DB {
 	DB, _ = ConnectToDatabase(connectionString)
 
 	// FOR TESTING ONLY - CLEARS DATABASE EVERY RUN
-	// DropDatabase();
+	DropDatabase()
 
 	// Creates the database if it doesn't exist
 	log.Println("Creating database...")
