@@ -13,6 +13,8 @@ import (
 
 const Me = "me"
 
+var terminalReadPassword = terminal.ReadPassword
+
 // Get username from stdin
 func getUsername(scanner *bufio.Scanner) string {
 	re := regexp.MustCompile("^[[:alnum:]]+$")
@@ -38,7 +40,7 @@ func getUsername(scanner *bufio.Scanner) string {
 func signIn(username string) bool {
 	for counter := 0; counter < 3; counter++ {
 		fmt.Print("Password: ")
-		password, err := terminal.ReadPassword(int(syscall.Stdin))
+		password, err := terminalReadPassword(int(syscall.Stdin))
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -55,7 +57,7 @@ func signIn(username string) bool {
 func createAccount(username string, ip string) bool {
 	for counter := 0; counter < 3; counter++ {
 		fmt.Print("Enter new password: ")
-		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+		bytePassword, err := terminalReadPassword(int(syscall.Stdin))
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -63,7 +65,7 @@ func createAccount(username string, ip string) bool {
 		fmt.Println()
 		password := string(bytePassword)
 		fmt.Print("Confirm password: ")
-		bytePassword, err = terminal.ReadPassword(int(syscall.Stdin))
+		bytePassword, err = terminalReadPassword(int(syscall.Stdin))
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
