@@ -14,6 +14,7 @@ const (
 	sessionsTableName     = "sessions"
 	userTableName         = "users"
 	conversationTableName = "conversations"
+	testDatabaseName      = "otrmessengertest"
 )
 
 var DB *sql.DB
@@ -21,16 +22,27 @@ var DB *sql.DB
 // Function to be called to set everything up
 func SetupDatabase(){
 	cmd := exec.Command("sh", "db/db_setup.sh", conf.Username, conf.Password)
+	SetupDatabaseHelper(databaseName, cmd)
+}
+
+func SetupDatabaseTest(){
+	cmd := exec.Command("sh", "db_test_setup.sh", conf.Username, conf.Password)
+	SetupDatabaseHelper(testDatabaseName, cmd)
+}
+
+func SetupDatabaseHelper(dbName string, cmd *exec.Cmd) {
 	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("Error running script: %s", err)
 
 	}
-	connectionString := FormConnectionString(databaseName)
+	connectionString := FormConnectionString(dbName)
 	DB, _ = ConnectToDatabase(connectionString)
-	useDatabaseCommand := "USE " + databaseName
+	useDatabaseCommand := "USE " + dbName
 	ExecuteDatabaseCommand(useDatabaseCommand)
 }
+
+
 
 // Executes the specified database command
 func ExecuteDatabaseCommand(command string) {
