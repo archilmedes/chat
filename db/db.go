@@ -12,7 +12,7 @@ const (
 	databaseName = "otrmessenger" // Constant in execution, can change
 	sessionsTableName = "sessions"
 	userTableName = "users"
-	conversationTableName = "conversation"
+	conversationTableName = "conversations"
 )
 var DB *sql.DB
 
