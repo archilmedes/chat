@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"runtime"
 )
 
 const (
@@ -20,12 +19,7 @@ var DB *sql.DB
 
 // Function to be called to set everything up
 func SetupDatabase(){
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows"{
-		cmd = exec.Command("sh", "db_setup.sh", conf.Username, conf.Password)
-	} else{
-		cmd = exec.Command("bash", "db_setup.sh", conf.Username, conf.Password)
-	}
+	cmd := exec.Command("sh", "db/db_setup.sh", conf.Username, conf.Password)
 	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("Error running script: %s", err)

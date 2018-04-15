@@ -77,13 +77,13 @@ func initDialer(address string) (*net.TCPConn, error) {
 }
 
 // Send a message to another Server
-func (s *Server) Send(address string, MAC string, message []byte) error  {
+func (s *Server) Send(address string, message []byte) error  {
 	dialer, err := initDialer(fmt.Sprintf("%s:%d", address, Port))
 	if err != nil {
 		return err
 	}
 	var msg Message
-	msg.Init(MAC, message)
+	msg.Init((*s).User.MAC, message)
 	encoder := json.NewEncoder(dialer)
 	if err = encoder.Encode(&msg); err != nil {
 		return err

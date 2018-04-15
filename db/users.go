@@ -23,7 +23,7 @@ func GetUser(username string, password string) *User {
 func AddUser(username string, password string, ipAddress string) bool {
 	log.Println("Inserting data into users...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", \"%s\", \"%s\")", userTableName, username, password, ipAddress)
-	//ExecuteDatabaseCommand(insertCommand)
+	// ExecuteDatabaseCommand(insertCommand)
 	_, err := DB.Exec(insertCommand)
 	if err != nil {
 		fmt.Printf("Failed to add user %s: %s", username, err)
