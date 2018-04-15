@@ -1,3 +1,5 @@
+// Package server provides a server implementation to send messages
+// between two different servers running on different instances of the app
 package server
 
 import (
@@ -24,6 +26,7 @@ func NewMessage(from *db.User, destIp string, text string) (*Message) {
 	return &m
 }
 
+// Start a protocol and its handshake
 func (m *Message) StartProtocol(proto protocol.Protocol) {
 	m.StartProtoTimestamp = time.Now()
 	m.Handshake = true
