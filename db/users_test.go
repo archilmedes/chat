@@ -30,13 +30,11 @@ func UserExistsAfterDeleteTest(t *testing.T) {
 	assert.False(t, UserExists("sameetandpotatoes"))
 }
 
-func UserSetupTest(t *testing.T, users []DatabaseUser) {
-	assert.Equal(t, 5, len(users))
-	assert.Equal(t, "alicepassword", users[0].Password)
+func UserSetupTest(t *testing.T, users []User) {
+	assert.Equal(t, 6, len(users))
 	assert.Equal(t, "bob", users[1].Username)
 	assert.Equal(t, "192.168.10.123", users[2].IP)
 	assert.Equal(t, "10.192.345.987", users[3].IP)
 	assert.Equal(t, "sameetandpotatoes", users[3].Username)
-	assert.Equal(t, "iLuvMacs", users[3].Password)
 }
 
