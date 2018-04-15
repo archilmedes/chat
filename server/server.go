@@ -49,26 +49,31 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	oldNum := len(*(*s).Sessions)
 
 	// If part of the handshake
+	sessions := s.GetSessionsToIP(msg.DestIP)
+	messageYourself := msg.SourceIP == msg.DestIP
 	if msg.Handshake {
-		idx := msg.ID % 2
-		sessions := s.GetSessionsToIP(msg.DestIP) // One for normal cases, two for communicating to yourself
-		if len(sessions) != 2 {
-			// sess = s.CreateOrGetSession(msg)
-
-			// If sending message to yourself TODO: handle other cases later
-			if msg.SourceIP == msg.DestIP {
-				sess = *NewSessionFromUserAndMessage(s.User, msg)
-				*(*s).Sessions = append(*(*s).Sessions, sess)
-			}
+		// In a handshake, create a new session if there aren't the required number of sessions in either situation
+		if len(sessions) != 2 && messageYourself || (len(sessions) != 1 && !messageYourself) {
+			sess = *NewSessionFromUserAndMessage(s.User, msg)
+			*(*s).Sessions = append(*(*s).Sessions, sess)
 		} else {
+			// Communicating between yourself, rotate sessions based on message id (even/odd)
+			idx := msg.ID % 2
 			sess = sessions[idx]
 		}
+	} else if messageYourself {
+		// There are two sessions, so grab the one that doesn't have the same timestamp as you
+		if sessions[0].StartTime == msg.StartProtoTimestamp {
+			sess = sessions[1]
+		} else {
+			sess = sessions[0]
+		}
 	} else {
-		sess = s.CreateOrGetSession(msg)
+		// There should only be one session between A -> B if you aren't messaging yourself, so grab that
+		sess = sessions[0]
 	}
 	newNum := len(*(*s).Sessions)
 	createdSession := oldNum != newNum
-
 
 	dec, err := sess.Proto.Decrypt([]byte(msg.Text))
 	fmt.Println(string(dec[0]))
@@ -188,18 +193,6 @@ func (s *Server) GetSessionsToIP(ip string) []Session {
 		}
 	}
 	return filterSessions
-}
-
-// Creates or gets a session based on the message received
-func (s *Server) CreateOrGetSession(msg Message) Session {
-	for _, sess := range *(*s).Sessions {
-		if sess.ConverseWith(msg.SourceIP) && sess.StartTime != msg.StartProtoTimestamp {
-			return sess
-		}
-	}
-	sess := NewSessionFromUserAndMessage(s.User, msg)
-	*(*s).Sessions = append(*(*s).Sessions, *sess)
-	return *sess
 }
 
 // Start a session with a destination IP using a protocol

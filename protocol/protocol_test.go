@@ -27,3 +27,30 @@ func TestPlainProtocol_IsEncrypted(t *testing.T) {
 	p := new(PlainProtocol)
 	assert.False(t, p.IsEncrypted())
 }
+
+func TestPlainProtocol_IsActive(t *testing.T) {
+	p := new(PlainProtocol)
+	assert.True(t, p.IsActive())
+}
+
+func TestPlainProtocol_ToType(t *testing.T) {
+	p := new(PlainProtocol)
+	assert.Equal(t, PlainType, p.ToType())
+}
+
+func TestPlainProtocol_NewSession(t *testing.T) {
+	p := new(PlainProtocol)
+	firstMessage, err := p.NewSession()
+	assert.Nil(t, err)
+	assert.Equal(t, "", firstMessage)
+}
+
+func TestPlainProtocol_Serialize(t *testing.T) {
+	p := new(PlainProtocol)
+	assert.Equal(t, []byte(nil), p.Serialize())
+}
+
+func TestCreateProtocolFromType_plain(t *testing.T) {
+	p := new(PlainProtocol)
+	assert.Equal(t, PlainProtocol{}, CreateProtocolFromType(p.ToType()))
+}

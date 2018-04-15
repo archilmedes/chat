@@ -36,10 +36,12 @@ func createOTRLink(t *testing.T, alice OTRProtocol, bob OTRProtocol) {
 			assert.Error(t, OTRHandshakeStep{}, err)
 		}
 	}
-	assert.True(t, alice.IsEncrypted(), "Alice should be encrypted")
-	assert.True(t, bob.IsEncrypted(), "Bob should be encrypted")
-	assert.Equal(t, alice.Session.SSID, bob.Session.SSID, "Session IDs should be equal")
-	assert.Equal(t, alice.Session.Fingerprint, bob.Session.Fingerprint, "Fingerprints should be equal")
+	assert.True(t, alice.IsEncrypted())
+	assert.True(t, bob.IsEncrypted())
+	assert.True(t, alice.IsActive())
+	assert.True(t, bob.IsActive())
+	assert.Equal(t, alice.Session.SSID, bob.Session.SSID)
+	assert.Equal(t, alice.Session.Fingerprint, bob.Session.Fingerprint)
 }
 
 func TestOTRProtocol_SendAndReceiveMessages(t *testing.T) {
@@ -55,4 +57,25 @@ func TestOTRProtocol_SendAndReceiveMessages(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, testMessage, string(out[0]), "Strings should be equivalent")
 	}
+}
+
+func TestOTRProtocol_NewSession(t *testing.T) {
+	proto := new(OTRProtocol)
+	firstMessage, err := proto.NewSession()
+	assert.Nil(t, err)
+	assert.Equal(t, otr.QueryMessage, firstMessage)
+}
+
+func TestOTRProtocol_Serialize(t *testing.T) {
+	proto := NewOTRProtocol()
+	enc := proto.Serialize()
+	assert.Equal(t, proto.Conv.PrivateKey.Serialize(nil), enc)
+}
+
+func TestCreateProtocolFromType_otr(t *testing.T) {
+	p := new(OTRProtocol)
+	proto := CreateProtocolFromType(p.ToType())
+	assert.NotNil(t, proto)
+	_, ok := proto.(OTRProtocol)
+	assert.True(t, ok)
 }
