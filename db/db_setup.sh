@@ -1,7 +1,6 @@
 #!/bin/sh
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd ${DIR}
+cd "$(dirname "$0")" 
 
 if [ -z "$2" ]; then
 	mysql -u "$1" < "db_setup.sql"
