@@ -3,6 +3,7 @@ package server
 import (
 	"chat/protocol"
 	"time"
+	"chat/db"
 )
 
 // Struct for messages being sent
@@ -15,7 +16,7 @@ type Message struct {
 }
 
 // Create new message to send a message
-func NewMessage(from *User, destIp string, text string) (*Message) {
+func NewMessage(from *db.User, destIp string, text string) (*Message) {
 	m := Message{
 		SourceMAC: (*from).MAC, SourceIP: (*from).IP,
 		DestIP: destIp, Text: text,
