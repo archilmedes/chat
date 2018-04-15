@@ -1,10 +1,10 @@
 package server
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
-	"chat/protocol"
 	"chat/db"
+	"chat/protocol"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func getFakeUser() *db.User {

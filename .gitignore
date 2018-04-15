@@ -4,9 +4,6 @@
 # Ignore any executables
 bin/*
 
-# Ignore the executable name itself
-chat
-
 # Ignore Mac specific files
 .DS_Store
 

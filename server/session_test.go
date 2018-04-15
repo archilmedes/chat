@@ -1,11 +1,11 @@
 package server
 
 import (
-	"testing"
+	"chat/db"
 	"chat/protocol"
 	"github.com/stretchr/testify/assert"
+	"testing"
 	"time"
-	"chat/db"
 )
 
 func TestSession_ConverseWith(t *testing.T) {

@@ -3,8 +3,8 @@
 package protocol
 
 import (
-	"golang.org/x/crypto/otr"
 	"crypto/rand"
+	"golang.org/x/crypto/otr"
 	"log"
 )
 
@@ -38,7 +38,7 @@ func NewOTRProtocol() OTRProtocol {
 }
 
 // Recreates an OTR protocol given its private key
-func NewOTRProtocolFromKeys(privKeyBytes[]byte) OTRProtocol {
+func NewOTRProtocolFromKeys(privKeyBytes []byte) OTRProtocol {
 	privKey := new(otr.PrivateKey)
 	privKey.Parse(privKeyBytes)
 	conv := new(otr.Conversation)

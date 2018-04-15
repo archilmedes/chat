@@ -1,24 +1,24 @@
 package server
 
 import (
+	"chat/db"
+	"chat/protocol"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net"
-	"chat/protocol"
 	"time"
-	"errors"
-	"chat/db"
 )
 
 const (
-	Port uint16 = 4242
-	Network = "tcp"
+	Port    uint16 = 4242
+	Network        = "tcp"
 )
 
 // Server holds the user and all of his sessions
 type Server struct {
-	User *db.User
+	User     *db.User
 	Listener *net.TCPListener
 	Sessions *[]Session
 }
@@ -180,7 +180,7 @@ func (s *Server) sendMessage(msg *Message) error {
 }
 
 // Send a message to another Server
-func (s *Server) Send(destIp string, message string) error  {
+func (s *Server) Send(destIp string, message string) error {
 	return s.sendMessage(NewMessage(s.User, destIp, message))
 }
 
@@ -196,7 +196,7 @@ func (s *Server) GetSessionsToIP(ip string) []Session {
 }
 
 // Start a session with a destination IP using a protocol
-func (s *Server) StartSession(destIp string, proto protocol.Protocol) (error) {
+func (s *Server) StartSession(destIp string, proto protocol.Protocol) error {
 	firstMessage, err := proto.NewSession()
 	if err != nil {
 		log.Panicf("StartSession: Error starting new session: %s", err)

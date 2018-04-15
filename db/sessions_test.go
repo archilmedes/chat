@@ -1,11 +1,11 @@
 package db
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-func SessionsTest (t *testing.T){
+func SessionsTest(t *testing.T) {
 	sessions := QuerySessions()
 	assert.Equal(t, 7, len(sessions))
 	assert.Equal(t, "CBDEABD347ABDC392", sessions[1].fingerprint)
@@ -19,4 +19,3 @@ func SessionsTest (t *testing.T){
 	assert.Equal(t, 64, sessions[6].SSID)
 	assert.Equal(t, 4, sessions[6].friendId)
 }
-
