@@ -14,21 +14,23 @@ func getFakeUser() *User {
 	return u
 }
 
+const (
+	message = "Hello World"
+)
+
 func TestNewMessage(t *testing.T) {
 	u := getFakeUser()
-	msg := string([]byte("Hello world"))
-	m := NewMessage(u, u.IP, msg)
+	m := NewMessage(u, u.IP, message)
 	assert.Equal(t, u.IP, m.SourceIP)
 	assert.Equal(t, u.MAC, m.SourceMAC)
-	assert.Equal(t, msg, m.Text)
+	assert.Equal(t, message, m.Text)
 }
 
 func TestMessage_StartProtocol(t *testing.T) {
 	u := getFakeUser()
-	msg := string([]byte("Hello world"))
-	m := NewMessage(u, u.IP, msg)
+	m := NewMessage(u, u.IP, message)
 	proto := protocol.OTRProtocol{}
 	m.StartProtocol(proto)
 
-	assert.Equal(t, proto, m.StartProto)
+	assert.Equal(t, proto.ToType(), m.StartProto)
 }

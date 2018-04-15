@@ -4,7 +4,6 @@ import (
 	"testing"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/otr"
-	"fmt"
 )
 
 func TestOTRProtocol_EndSession(t *testing.T) {
@@ -31,15 +30,11 @@ func createOTRLink(t *testing.T, alice OTRProtocol, bob OTRProtocol) {
 			bMsg, err = bob.Decrypt(msg)
 			assert.Error(t, OTRHandshakeStep{}, err)
 		}
-		fmt.Printf("%d\n", len(bMsg))
-		fmt.Println(bMsg[0])
 		aMsg = [][]byte{}
 		for _, msg := range bMsg {
 			aMsg, err = alice.Decrypt(msg)
 			assert.Error(t, OTRHandshakeStep{}, err)
 		}
-		fmt.Printf("%d\n", len(aMsg))
-		fmt.Println(aMsg[0])
 	}
 	assert.True(t, alice.IsEncrypted(), "Alice should be encrypted")
 	assert.True(t, bob.IsEncrypted(), "Bob should be encrypted")
