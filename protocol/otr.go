@@ -94,6 +94,10 @@ func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 	return wrapMessage(out), nil
 }
 
+func (o OTRProtocol) NewSession() (string, error) {
+	return otr.QueryMessage, nil
+}
+
 // Returns true if an OTR conversation is now encrypted
 func (o OTRProtocol) IsEncrypted() bool {
 	return o.Conv.IsEncrypted()
@@ -109,6 +113,10 @@ func (o OTRProtocol) EndSession() {
 	o.Conv.End()
 }
 
-func (o OTRProtocol) serialize() []byte {
+func (o OTRProtocol) Serialize() []byte {
 	return o.Conv.PrivateKey.Serialize(nil)
+}
+
+func (o OTRProtocol) ToType() string {
+	return OTRType
 }
