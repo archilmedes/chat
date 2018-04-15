@@ -1,5 +1,6 @@
-CREATE DATABASE IF NOT EXISTS otrmessenger;
-USE otrmessenger;
+DROP DATABASE IF EXISTS otrmessengertest;
+CREATE DATABASE IF NOT EXISTS otrmessengertest;
+USE otrmessengertest;
 CREATE TABLE IF NOT EXISTS sessions (
   SSID INT NOT NULL PRIMARY KEY,
   user_id INT NOT NULL,

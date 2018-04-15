@@ -34,16 +34,16 @@ func InsertTestData() {
 	InsertIntoConversations(35, "When are we playing Fortnite?", "04/08/2018:17:59:02", 0)
 
 }
-func SetupDatabaseTest(t *testing.T) {
+func SetupDatabaseForTests(t *testing.T) {
 	//DB := SetupDatabase()
-	SetupDatabase()
+	SetupDatabaseTest()
 	tables := ShowTables()
 	assert.Equal(t, 3, len(tables))
 	//return DB
 }
 
 func TestDatabase(t *testing.T) {
-	SetupDatabaseTest(t)
+	SetupDatabaseForTests(t)
 	InsertTestData()
 	UsersTest(t)
 	ConversationTest(t)
