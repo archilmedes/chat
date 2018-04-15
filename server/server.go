@@ -47,13 +47,13 @@ func handleConnection(s *Server, conn *net.TCPConn) {
 	}
 
 	sess := s.CreateOrGetSession(msg)
-	dec, err := sess.Proto.Decrypt(msg.Text)
+	dec, err := sess.Proto.Decrypt([]byte(msg.Text))
 	switch errorType := err.(type) {
 	case protocol.OTRHandshakeStep:
 		// If it's part of the OTR handshake, send each part of the message back directly to the source,
 		// and immediately return
 		for _, stepMessage := range dec {
-			s.Send(msg.SourceIP, stepMessage)
+			s.Send(msg.SourceIP, string(stepMessage))
 		}
 		return
 	default:
@@ -106,6 +106,9 @@ func (s *Server) sendMessage(msg *Message) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println(string(msg.Text))
+	res, _ := json.Marshal(*msg)
+	fmt.Println(string(res))
 	encoder := json.NewEncoder(dialer)
 	if err := encoder.Encode(msg); err != nil {
 		return err
@@ -114,7 +117,7 @@ func (s *Server) sendMessage(msg *Message) error {
 }
 
 // Send a message to another Server
-func (s *Server) Send(destIp string, message []byte) error  {
+func (s *Server) Send(destIp string, message string) error  {
 	return s.sendMessage(NewMessage(s.User, destIp, message))
 }
 
@@ -148,7 +151,7 @@ func (s *Server) StartSession(destIp string, proto protocol.Protocol) (error) {
 	if len(firstMessage) > 0 {
 		return err
 	}
-	msg := NewMessage(s.User, destIp, []byte(firstMessage))
+	msg := NewMessage(s.User, destIp, firstMessage)
 	msg.StartProto = proto
 	return s.sendMessage(msg)
 }
