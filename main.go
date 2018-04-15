@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"chat/db"
 )
 
 const Exit = "exit"
@@ -30,18 +31,20 @@ func listen(program *server.Server) {
 		}
 	}
 	if scanner.Err() != nil {
-		fmt.Printf(scanner.Err().Error())
+		fmt.Println(scanner.Err().Error())
 		return
 	}
 }
 
 func main() {
-	var program server.Server
+	db.SetupDatabase()
 	mac, ip, err := core.GetAddresses()
 	if err != nil {
 		fmt.Printf("getAddresses: %s", err.Error())
 	}
-	if err := program.Start("Archil", mac, ip); err != nil {
+	username := core.Login(bufio.NewScanner(os.Stdin), ip)
+	var program server.Server
+	if err := program.Start(username, mac, ip); err != nil {
 		log.Fatalf("main: %s", err.Error())
 	}
 	defer program.Shutdown()
