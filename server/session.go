@@ -2,19 +2,23 @@ package server
 
 import (
 	"chat/protocol"
+	"time"
 )
 
 type Session struct {
-	From, To *User
+	From *User
+	To *Friend
 	Proto protocol.Protocol
+	StartTime time.Time
 }
 
 // Return a new session between two users with a protocol
-func NewSession(from *User, to *User, protocol protocol.Protocol) (*Session) {
+func NewSession(from *User, to *Friend, protocol protocol.Protocol, startTime time.Time) (*Session) {
 	session := new(Session)
 	(*session).From = from
 	(*session).To = to
 	(*session).Proto = protocol
+	(*session).StartTime = startTime
 	return session
 }
 
