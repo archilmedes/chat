@@ -6,10 +6,10 @@ USE otrmessengertest;
 /* Table Setup*/
 CREATE TABLE IF NOT EXISTS sessions (
   SSID INT NOT NULL PRIMARY KEY,
-  user_id INT NOT NULL,
-  friend_id INT NOT NULL,
-  private_key varchar(10000) NOT NULL,
-  fingerprint varchar(10000) NOT NULL
+  user_id INT DEFAULT -1,
+  friend_id INT DEFAULT -1,
+  private_key varchar(10000) DEFAULT "",
+  fingerprint varchar(10000) DEFAULT ""
 );
 
 CREATE TABLE IF NOT EXISTS users (
