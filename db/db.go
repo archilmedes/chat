@@ -7,6 +7,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os/exec"
+	"time"
 )
 
 const (
@@ -37,6 +38,7 @@ func SetupTestDatabaseAltDir() {
 
 func SetupDatabaseHelper(dbName string, cmd *exec.Cmd) {
 	err := cmd.Run()
+	time.Sleep(2 * time.Second)
 	if err != nil {
 		fmt.Printf("Error running script: %s", err)
 
