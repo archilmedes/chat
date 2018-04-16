@@ -7,6 +7,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os/exec"
+	"time"
 )
 
 const (
@@ -25,13 +26,19 @@ func SetupDatabase() {
 	SetupDatabaseHelper(databaseName, cmd)
 }
 
-func SetupDatabaseTest() {
+func SetupTestDatabase() {
 	cmd := exec.Command("sh", "db_test_setup.sh", conf.Username, conf.Password)
+	SetupDatabaseHelper(testDatabaseName, cmd)
+}
+
+func SetupTestDatabaseAltDir() {
+	cmd := exec.Command("sh", "db/db_test_setup.sh", conf.Username, conf.Password)
 	SetupDatabaseHelper(testDatabaseName, cmd)
 }
 
 func SetupDatabaseHelper(dbName string, cmd *exec.Cmd) {
 	err := cmd.Run()
+	time.Sleep(2 * time.Second)
 	if err != nil {
 		fmt.Printf("Error running script: %s", err)
 
@@ -39,16 +46,7 @@ func SetupDatabaseHelper(dbName string, cmd *exec.Cmd) {
 	connectionString := FormConnectionString(dbName)
 	DB, _ = ConnectToDatabase(connectionString)
 	useDatabaseCommand := "USE " + dbName
-	ExecuteDatabaseCommand(useDatabaseCommand)
-}
-
-// Executes the specified database command
-func ExecuteDatabaseCommand(command string) {
-	_, err := DB.Exec(command)
-	if err != nil {
-		fmt.Printf("Failed to execute command %s: %s", command, err)
-		panic(err)
-	}
+	ExecuteChangeCommand(useDatabaseCommand, "Failed to switch databases")
 }
 
 // Connects to a database - quits if it encounters errors
@@ -83,4 +81,13 @@ func ShowTables() []string {
 		}
 	}
 	return tables
+}
+
+func ExecuteChangeCommand(command string, errorMessage string) bool {
+	_, err := DB.Exec(command)
+	if err != nil {
+		fmt.Printf("%s : %s", errorMessage, err)
+		return false
+	}
+	return true
 }
