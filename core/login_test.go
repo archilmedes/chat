@@ -1,12 +1,12 @@
 package core
 
 import (
-	"os"
-	"testing"
+	"bufio"
 	"chat/db"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/ssh/terminal"
-	"bufio"
+	"os"
+	"testing"
 )
 
 func TestLogin(t *testing.T) {
@@ -19,7 +19,7 @@ func TestLogin(t *testing.T) {
 		terminalReadPassword = terminal.ReadPassword
 	}()
 	scanner := bufio.NewScanner(f)
-	terminalReadPassword = func (fd int) ([]byte, error) {
+	terminalReadPassword = func(fd int) ([]byte, error) {
 		scanner.Scan()
 		return scanner.Bytes(), nil
 	}

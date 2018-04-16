@@ -14,6 +14,5 @@ You can set up a pre-commit hook so that the docs are generated before the code 
 adds the docs to your commit.
 
 ```
-ln -s gen_docs.sh .git/hooks/pre-commit
-ln -s add_doc_to_git.sh .git/hooks/post-commit
+ln -s -f ../../formatting .git/hooks/pre-commit
 ```

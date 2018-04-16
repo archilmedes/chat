@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+const message = "Hello World"
+
 func getFakeUser() *db.User {
 	u := new(db.User)
 	u.IP = "1.2.3.4"
@@ -14,10 +16,6 @@ func getFakeUser() *db.User {
 	u.Username = "sam"
 	return u
 }
-
-const (
-	message = "Hello World"
-)
 
 func TestNewMessage(t *testing.T) {
 	u := getFakeUser()

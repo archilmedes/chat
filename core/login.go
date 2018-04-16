@@ -2,13 +2,13 @@ package core
 
 import (
 	"bufio"
-	"regexp"
-	"fmt"
-	"strings"
-	"os"
-	"golang.org/x/crypto/ssh/terminal"
-	"syscall"
 	"chat/db"
+	"fmt"
+	"golang.org/x/crypto/ssh/terminal"
+	"os"
+	"regexp"
+	"strings"
+	"syscall"
 )
 
 const Me = "me"
