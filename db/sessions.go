@@ -11,7 +11,7 @@ type Session struct {
 }
 
 func InsertIntoSessions(SSID int, userId int, friendId int, privateKey string, fingerprint string) {
-	log.Println("Inserting data into conversations...")
+	log.Println("Inserting data into sessions...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, %d, %d, \"%s\", \"%s\")", sessionsTableName, SSID, userId, friendId, privateKey, fingerprint)
 	ExecuteDatabaseCommand(insertCommand)
 }

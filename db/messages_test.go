@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func ConversationTest(t *testing.T) {
-	ConversationSetup(t)
+func MessagesTest(t *testing.T) {
+	MessagesSetup(t)
 	GetConversationTest(t)
 }
 func GetConversationTest(t *testing.T) {
@@ -19,11 +19,11 @@ func GetConversationTest(t *testing.T) {
 	assert.Equal(t, "When are we playing Fortnite?", conversations[2].message)
 }
 
-func ConversationSetup(t *testing.T) {
-	conversations := QueryConversations()
-	assert.Equal(t, 8, len(conversations))
-	assert.Equal(t, 52, conversations[3].SSID)
-	assert.Equal(t, 0, conversations[3].sentOrReceived)
-	assert.Equal(t, "03/28/2018:18:04:10", conversations[3].timestamp)
-	assert.Equal(t, "lul", conversations[3].message)
+func MessagesSetup(t *testing.T) {
+	messages := QueryMessages()
+	assert.Equal(t, 8, len(messages))
+	assert.Equal(t, 52, messages[3].SSID)
+	assert.Equal(t, 0, messages[3].sentOrReceived)
+	assert.Equal(t, "03/28/2018:18:04:10", messages[3].timestamp)
+	assert.Equal(t, "lul", messages[3].message)
 }
