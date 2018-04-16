@@ -23,7 +23,6 @@ func GetUser(username string, password string) *User {
 func AddUser(username string, password string, ipAddress string) bool {
 	log.Println("Inserting data into users...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", \"%s\", \"%s\")", usersTableName, username, password, ipAddress)
-	// ExecuteDatabaseCommand(insertCommand)
 	_, err := DB.Exec(insertCommand)
 	if err != nil {
 		fmt.Printf("Failed to add user %s: %s", username, err)
@@ -57,7 +56,6 @@ func ExecuteUsersQuery(query string) []User {
 	}
 	var users []User
 	user := User{}
-
 	for results.Next() {
 		err = results.Scan(&user.Username, &user.IP)
 		if err != nil {
