@@ -1,3 +1,5 @@
+// The db package abstracts out the storage layer and provides CRUD operations
+// to various message abstractions
 package db
 
 import (
