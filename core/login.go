@@ -4,8 +4,8 @@ package core
 
 import (
 	"bufio"
-	"chat/db"
 	"fmt"
+	"github.com/wavyllama/chat/db"
 	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"regexp"

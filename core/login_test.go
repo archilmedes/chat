@@ -2,8 +2,8 @@ package core
 
 import (
 	"bufio"
-	"chat/db"
 	"github.com/stretchr/testify/assert"
+	"github.com/wavyllama/chat/db"
 	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"testing"

@@ -2,11 +2,11 @@ package main
 
 import (
 	"bufio"
-	"chat/core"
-	"chat/db"
-	"chat/protocol"
-	"chat/server"
 	"fmt"
+	"github.com/wavyllama/chat/core"
+	"github.com/wavyllama/chat/db"
+	"github.com/wavyllama/chat/protocol"
+	"github.com/wavyllama/chat/server"
 	"log"
 	"os"
 	"os/signal"

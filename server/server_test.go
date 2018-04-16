@@ -1,9 +1,9 @@
 package server
 
 import (
-	"chat/core"
-	"chat/protocol"
 	"github.com/stretchr/testify/assert"
+	"github.com/wavyllama/chat/core"
+	"github.com/wavyllama/chat/protocol"
 	"testing"
 	"time"
 )

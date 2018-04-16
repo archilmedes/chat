@@ -1,10 +1,10 @@
 package db
 
 import (
-	conf "chat/config"
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	conf "github.com/wavyllama/chat/config"
 	"log"
 	"os/exec"
 	"time"
