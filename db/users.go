@@ -23,23 +23,24 @@ func GetUser(username string, password string) *User {
 func AddUser(username string, password string, ipAddress string) bool {
 	log.Println("Inserting data into users...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", \"%s\", \"%s\")", usersTableName, username, password, ipAddress)
-	// ExecuteDatabaseCommand(insertCommand)
-	_, err := DB.Exec(insertCommand)
-	if err != nil {
-		fmt.Printf("Failed to add user %s: %s", username, err)
-		return false
-	}
-	return true
+	return ExecuteChangeCommand(insertCommand, "Failed to add user")
+}
+
+func UpdateUserIP(username string, ipAddress string) bool {
+	log.Println("Updating user's IP...")
+	updateCommand := fmt.Sprintf("UPDATE %s SET ipaddress=\"%s\" WHERE username=\"%s\"", usersTableName, ipAddress, username)
+	return ExecuteChangeCommand(updateCommand, "Failed to update user's IP")
+}
+
+func UpdateUserPassword(username string, password string) bool {
+	log.Println("Updating user's password...")
+	updateCommand := fmt.Sprintf("UPDATE %s SET password=\"%s\" WHERE username=\"%s\"", usersTableName, password, username)
+	return ExecuteChangeCommand(updateCommand, "Failed to update user's password")
 }
 
 func DeleteUser(username string) bool {
 	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE username= \"%s\"", usersTableName, username)
-	_, err := DB.Exec(deleteCommand)
-	if err != nil {
-		fmt.Printf("Failed to delete user %s: %s", username, err)
-		return false
-	}
-	return true
+	return ExecuteChangeCommand(deleteCommand, "Failed to delete user")
 }
 
 func QueryUsers() []User {
@@ -57,7 +58,6 @@ func ExecuteUsersQuery(query string) []User {
 	}
 	var users []User
 	user := User{}
-
 	for results.Next() {
 		err = results.Scan(&user.Username, &user.IP)
 		if err != nil {
