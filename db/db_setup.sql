@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   password varchar(1000) NOT NULL,
   ipaddress varchar(18) NOT NULL
 );
-CREATE TABLE IF NOT EXISTS conversations (
+CREATE TABLE IF NOT EXISTS messages (
   SSID INT NOT NULL,
   message varchar(10000) NOT NULL,
   timestamp varchar(30) NOT NULL,
