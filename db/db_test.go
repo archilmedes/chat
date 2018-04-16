@@ -36,7 +36,7 @@ func InsertTestData() {
 }
 func SetupDatabaseForTests(t *testing.T) {
 	//DB := SetupDatabase()
-	SetupDatabaseTest()
+	SetupTestDatabase()
 	tables := ShowTables()
 	assert.Equal(t, 3, len(tables))
 	//return DB

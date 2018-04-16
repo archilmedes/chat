@@ -25,8 +25,13 @@ func SetupDatabase(){
 	SetupDatabaseHelper(databaseName, cmd)
 }
 
-func SetupDatabaseTest(){
+func SetupTestDatabase(){
 	cmd := exec.Command("sh", "db_test_setup.sh", conf.Username, conf.Password)
+	SetupDatabaseHelper(testDatabaseName, cmd)
+}
+
+func SetupTestDatabaseAltDir() {
+	cmd := exec.Command("sh", "db/db_test_setup.sh", conf.Username, conf.Password)
 	SetupDatabaseHelper(testDatabaseName, cmd)
 }
 
