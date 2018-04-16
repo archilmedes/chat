@@ -39,18 +39,7 @@ func SetupDatabaseHelper(dbName string, cmd *exec.Cmd) {
 	connectionString := FormConnectionString(dbName)
 	DB, _ = ConnectToDatabase(connectionString)
 	useDatabaseCommand := "USE " + dbName
-	ExecuteDatabaseCommand(useDatabaseCommand)
-}
-
-
-
-// Executes the specified database command
-func ExecuteDatabaseCommand(command string) {
-	_, err := DB.Exec(command)
-	if err != nil {
-		fmt.Printf("Failed to execute command %s: %s", command, err)
-		panic(err)
-	}
+	ExecuteChangeCommand(useDatabaseCommand, "Failed to switch databases")
 }
 
 // Connects to a database - quits if it encounters errors
@@ -85,4 +74,13 @@ func ShowTables() []string {
 		}
 	}
 	return tables
+}
+
+func ExecuteChangeCommand(command string, errorMessage string) bool {
+	_, err := DB.Exec(command)
+	if err != nil {
+		fmt.Printf("%s : %s", errorMessage, err)
+		return false
+	}
+	return true
 }

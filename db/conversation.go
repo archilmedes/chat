@@ -31,7 +31,7 @@ func ExecuteConversationsQuery(query string) []Conversation {
 	var conversations []Conversation
 	convo := Conversation{}
 	for results.Next() {
-		err = results.Scan(&convo.Message.SSID, &convo.Message.message, &convo.Message.timestamp, &convo.Message.sentOrReceived, &convo.Session.SSID, &convo.Session.userId, &convo.Session.friendId, &convo.Session.privateKey, &convo.Session.fingerprint)
+		err = results.Scan(&convo.Message.SSID, &convo.Message.message, &convo.Message.timestamp, &convo.Message.sentOrReceived, &convo.Session.SSID, &convo.Session.UserId, &convo.Session.FriendId, &convo.Session.PrivateKey, &convo.Session.Fingerprint)
 		if err != nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
