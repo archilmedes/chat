@@ -11,7 +11,6 @@ func UsersTest(t *testing.T) {
 	UserExistsTest(t)
 	UserExistsAfterDeleteTest(t)
 	ValidateCredentialsTest(t)
-
 }
 
 func ValidateCredentialsTest(t *testing.T) {

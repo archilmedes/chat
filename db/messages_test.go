@@ -7,16 +7,6 @@ import (
 
 func MessagesTest(t *testing.T) {
 	MessagesSetup(t)
-	GetConversationTest(t)
-}
-func GetConversationTest(t *testing.T) {
-	conversations := GetConversation(3, 5)
-	assert.Equal(t, 3, len(conversations))
-	assert.Equal(t, 35, conversations[0].SSID)
-	assert.Equal(t, 35, conversations[1].SSID)
-	assert.Equal(t, 35, conversations[2].SSID)
-	assert.Equal(t, "04/10/2018:12:30:08", conversations[0].timestamp)
-	assert.Equal(t, "When are we playing Fortnite?", conversations[2].message)
 }
 
 func MessagesSetup(t *testing.T) {
