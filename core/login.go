@@ -43,6 +43,7 @@ func signIn(username string) bool {
 	for counter := 0; counter < 3; counter++ {
 		fmt.Print("Password: ")
 		password, err := terminalReadPassword(int(syscall.Stdin))
+		fmt.Println()
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -60,19 +61,19 @@ func createAccount(username string, ip string) bool {
 	for counter := 0; counter < 3; counter++ {
 		fmt.Print("Enter new password: ")
 		bytePassword, err := terminalReadPassword(int(syscall.Stdin))
+		fmt.Println()
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
 		}
-		fmt.Println()
 		password := string(bytePassword)
 		fmt.Print("Confirm password: ")
 		bytePassword, err = terminalReadPassword(int(syscall.Stdin))
+		fmt.Println()
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
 		}
-		fmt.Println()
 		if password == string(bytePassword) {
 			return db.AddUser(username, password, ip)
 		} else {
