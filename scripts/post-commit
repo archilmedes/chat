@@ -1,10 +1,8 @@
 #!/bin/sh
 
 # Add untracked files from result of gofmt
-git add -u
-if [ -a docs ]; then
-    # Add the docs folders
-    git add docs 
-fi
+for file in $(git diff --name-only | grep -e '\.go$'); do
+    git add $file
+done
 # Add these files back to the previous commit
-git commit --amend -C HEAD --no-verify
+git commit --amend -C HEAD --no-verify >/dev/null
