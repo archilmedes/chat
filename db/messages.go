@@ -53,9 +53,3 @@ func ExecuteMessagesQuery(query string) []DBMessage {
 	}
 	return messages
 }
-
-func GetConversation(userId int, friendId int) []DBMessage {
-	query := fmt.Sprintf("SELECT * FROM messages WHERE SSID IN (SELECT SSID FROM sessions WHERE (user_id=%d AND friend_id=%d) OR (friend_id=%d AND user_id=%d))", userId, friendId, userId, friendId)
-	conversations := ExecuteMessagesQuery(query)
-	return conversations
-}
