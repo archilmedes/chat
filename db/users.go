@@ -6,13 +6,13 @@ import (
 )
 
 func UserExists(username string) bool {
-	query := "SELECT username, ipaddress FROM " + userTableName + " WHERE username=\"" + username + "\""
+	query := "SELECT username, ipaddress FROM " + usersTableName + " WHERE username=\"" + username + "\""
 	users := ExecuteUsersQuery(query)
 	return len(users) > 0
 }
 
 func GetUser(username string, password string) *User {
-	query := fmt.Sprintf("SELECT username, ipaddress FROM %s WHERE username= \"%s\" and password= \"%s\"", userTableName, username, password)
+	query := fmt.Sprintf("SELECT username, ipaddress FROM %s WHERE username= \"%s\" and password= \"%s\"", usersTableName, username, password)
 	users := ExecuteUsersQuery(query)
 	if len(users) == 0 {
 		return nil
@@ -22,7 +22,7 @@ func GetUser(username string, password string) *User {
 
 func AddUser(username string, password string, ipAddress string) bool {
 	log.Println("Inserting data into users...")
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", \"%s\", \"%s\")", userTableName, username, password, ipAddress)
+	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", \"%s\", \"%s\")", usersTableName, username, password, ipAddress)
 	// ExecuteDatabaseCommand(insertCommand)
 	_, err := DB.Exec(insertCommand)
 	if err != nil {
@@ -33,7 +33,7 @@ func AddUser(username string, password string, ipAddress string) bool {
 }
 
 func DeleteUser(username string) bool {
-	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE username= \"%s\"", userTableName, username)
+	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE username= \"%s\"", usersTableName, username)
 	_, err := DB.Exec(deleteCommand)
 	if err != nil {
 		fmt.Printf("Failed to delete user %s: %s", username, err)
@@ -44,7 +44,7 @@ func DeleteUser(username string) bool {
 
 func QueryUsers() []User {
 	log.Println("Retrieving data from users...")
-	query := "SELECT username, ipaddress FROM " + userTableName
+	query := "SELECT username, ipaddress FROM " + usersTableName
 	return ExecuteUsersQuery(query)
 }
 
