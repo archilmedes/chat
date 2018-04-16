@@ -1,3 +1,5 @@
+// The core package provides fundamental core functionality shared by multiple parts
+// of the program
 package core
 
 import (
