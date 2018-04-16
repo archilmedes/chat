@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	databaseName          = "otrmessenger" // Constant in execution, can change
-	sessionsTableName     = "sessions"
-	userTableName         = "users"
-	conversationTableName = "conversations"
-	testDatabaseName      = "otrmessengertest"
+	databaseName      = "otrmessenger" // Constant in execution, can change
+	sessionsTableName = "sessions"
+	usersTableName    = "users"
+	messagesTableName = "messages"
+	testDatabaseName  = "otrmessengertest"
 )
 
 var DB *sql.DB
