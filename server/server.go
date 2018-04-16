@@ -49,17 +49,19 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	oldNum := len(*(*s).Sessions)
 
 	// If part of the handshake
-	sessions := s.GetSessionsToIP(msg.DestIP)
+	sessions := s.GetSessionsToIP(msg.SourceIP)
 	messageYourself := msg.SourceIP == msg.DestIP
 	if msg.Handshake {
 		// In a handshake, create a new session if there aren't the required number of sessions in either situation
 		if len(sessions) != 2 && messageYourself || (len(sessions) != 1 && !messageYourself) {
 			sess = *NewSessionFromUserAndMessage(s.User, msg)
 			*(*s).Sessions = append(*(*s).Sessions, sess)
-		} else {
+		} else if len(sessions) == 2 && messageYourself {
 			// Communicating between yourself, rotate sessions based on message id (even/odd)
 			idx := msg.ID % 2
 			sess = sessions[idx]
+		} else {
+			sess = sessions[0]
 		}
 	} else if messageYourself {
 		// There are two sessions, so grab the one that doesn't have the same timestamp as you
@@ -76,7 +78,6 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	createdSession := oldNum != newNum
 
 	dec, err := sess.Proto.Decrypt([]byte(msg.Text))
-	fmt.Println(string(dec[0]))
 
 	switch errorType := err.(type) {
 	case protocol.OTRHandshakeStep:
@@ -154,7 +155,7 @@ func (s *Server) Shutdown() error {
 
 // Sends a formatted Message object with the server, after an active session between the two users have been established
 func (s *Server) sendMessage(msg *Message) error {
-	dialer, err := initDialer(fmt.Sprintf("%s:%d", msg.SourceIP, Port))
+	dialer, err := initDialer(fmt.Sprintf("%s:%d", msg.DestIP, Port))
 	if err != nil {
 		return err
 	}
