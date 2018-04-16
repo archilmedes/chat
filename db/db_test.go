@@ -6,7 +6,7 @@ import (
 )
 
 func SetupDatabaseForTests(t *testing.T) {
-	SetupDatabaseTest()
+	SetupTestDatabase()
 	tables := ShowTables()
 	assert.Equal(t, 3, len(tables))
 }
