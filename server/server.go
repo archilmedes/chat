@@ -1,11 +1,11 @@
 package server
 
 import (
-	"chat/db"
-	"chat/protocol"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/wavyllama/chat/db"
+	"github.com/wavyllama/chat/protocol"
 	"log"
 	"net"
 	"time"

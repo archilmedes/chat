@@ -1,8 +1,8 @@
 package server
 
 import (
-	"chat/db"
-	"chat/protocol"
+	"github.com/wavyllama/chat/db"
+	"github.com/wavyllama/chat/protocol"
 	"time"
 )
 
