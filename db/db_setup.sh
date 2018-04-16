@@ -10,4 +10,3 @@ else
 fi
 
 cd "$CURR"
-
