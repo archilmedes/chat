@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"chat/core"
+	"chat/db"
 	"chat/protocol"
 	"chat/server"
 	"fmt"
@@ -11,7 +12,6 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"chat/db"
 )
 
 const Exit = "exit"

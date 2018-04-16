@@ -20,12 +20,12 @@ const (
 var DB *sql.DB
 
 // Function to be called to set everything up
-func SetupDatabase(){
+func SetupDatabase() {
 	cmd := exec.Command("sh", "db/db_setup.sh", conf.Username, conf.Password)
 	SetupDatabaseHelper(databaseName, cmd)
 }
 
-func SetupDatabaseTest(){
+func SetupDatabaseTest() {
 	cmd := exec.Command("sh", "db_test_setup.sh", conf.Username, conf.Password)
 	SetupDatabaseHelper(testDatabaseName, cmd)
 }
@@ -41,8 +41,6 @@ func SetupDatabaseHelper(dbName string, cmd *exec.Cmd) {
 	useDatabaseCommand := "USE " + dbName
 	ExecuteDatabaseCommand(useDatabaseCommand)
 }
-
-
 
 // Executes the specified database command
 func ExecuteDatabaseCommand(command string) {

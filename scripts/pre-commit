@@ -1,11 +1,31 @@
-#!/bin/bash
+#!/bin/sh
 set -u
+
+# Format code automatically with gofmt
+status=0
+for file in $(find . | grep -e '\.go$'); do
+    gofmt -w $file
+done
 
 build_result=$(go build)
 build_rc=$?
 if [ $build_rc -ne 0 ] ; then
-	echo "git pre-commit check failed: build failed."
+	echo "git pre-commit check failed: build main failed."
 	exit 1
+fi
+
+build_all_result=$(go build ./...)
+build_all_rc=$?
+if [ $build_all_rc -ne 0 ] ; then
+	echo "git pre-commit check failed: build packages failed."
+	exit 1
+fi
+
+test_result=$(go test ./...)
+test_rc=$?
+if [ $test_rc -ne 0 ]; then
+    echo "git pre-commit check failed: tests failed."
+    exit 1
 fi
 
 PKG=chat
