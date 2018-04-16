@@ -10,8 +10,14 @@ type Conversation struct {
 	Session Session
 }
 
-func GetConversation(userId int, friendId int) []Conversation {
+func GetConversationID(userId int, friendId int) []Conversation {
 	query := fmt.Sprintf("SELECT m.*, s.* FROM messages m, sessions s WHERE m.SSID = s.SSID AND m.SSID IN (SELECT s1.SSID FROM sessions s1 WHERE (s1.user_id=%d AND s1.friend_id=%d) OR (s1.friend_id=%d AND s1.user_id=%d))", userId, friendId, userId, friendId)
+	conversations := ExecuteConversationsQuery(query)
+	return conversations
+}
+
+func GetConversationSSID(SSID int) []Conversation {
+	query := fmt.Sprintf("SELECT m.*, s.* FROM messages m, sessions s WHERE m.SSID = s.SSID AND m.SSID = %d", SSID)
 	conversations := ExecuteConversationsQuery(query)
 	return conversations
 }
@@ -36,7 +42,5 @@ func ExecuteConversationsQuery(query string) []Conversation {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Conversation: %+v", conversations)
 	return conversations
 }
-
