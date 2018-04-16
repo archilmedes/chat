@@ -13,3 +13,6 @@ config/config.go
 # Ignore executable
 chat
 chat.exe
+
+# Ignore docs folder
+docs
