@@ -1,12 +1,4 @@
-#!/bin/bash
-set -u
-
-build_result=$(go build)
-build_rc=$?
-if [ $build_rc -ne 0 ] ; then
-	echo "git pre-commit check failed: build failed."
-	exit 1
-fi
+#!/bin/sh
 
 PKG=chat
 DOC_DIR=docs

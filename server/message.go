@@ -19,11 +19,10 @@ type Message struct {
 
 // Create new message to send a message
 func NewMessage(from *db.User, destIp string, text string) *Message {
-	m := Message{
+	return &Message{
 		SourceMAC: (*from).MAC, SourceIP: (*from).IP,
 		DestIP: destIp, Text: text,
 		StartProto: ""}
-	return &m
 }
 
 // Start a protocol and its handshake

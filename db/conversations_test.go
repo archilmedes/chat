@@ -1,8 +1,8 @@
 package db
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func ConversationsTest(t *testing.T) {
