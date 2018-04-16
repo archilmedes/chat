@@ -10,7 +10,24 @@ func UsersTest(t *testing.T) {
 	UserSetupTest(t, users)
 	UserExistsTest(t)
 	UserExistsAfterDeleteTest(t)
+	InsertUserTest(t)
+	UpdateUserTest(t)
 	ValidateCredentialsTest(t)
+}
+
+func UpdateUserTest(t *testing.T) {
+	assert.True(t, UpdateUserIP("sameetandpotatoes", "333.333.333.333"))
+	assert.True(t, UpdateUserPassword("sameetandpotatoes", "p0t8t035AreCool"))
+	users := QueryUsers()
+	assert.Equal(t, 6, len(users))
+	assert.Equal(t, "sameetandpotatoes", users[5].Username)
+	assert.Equal(t, "333.333.333.333", users[5].IP)
+}
+
+func InsertUserTest(t *testing.T) {
+	assert.True(t, AddUser("sameetandpotatoes", "p0t8t035", "666.666.666.666"))
+	users := QueryUsers()
+	assert.Equal(t, 6, len(users))
 }
 
 func ValidateCredentialsTest(t *testing.T) {
