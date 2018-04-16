@@ -4,12 +4,12 @@ set -u
 # Format code automatically with gofmt
 status=0
 for file in $(find . | grep -e '\.go$'); do
-    gofmt -w $file
+	gofmt -w $file
 done
 
 # Add untracked files from result of gofmt
 for file in $(git diff --name-only | grep -e '\.go$'); do
-    git add $file
+	git add $file
 done
 # Add these files back to the previous commit
 # git commit --amend --no-verify >/dev/null
@@ -33,7 +33,7 @@ fi
 test_result=$(go test ./...)
 test_rc=$?
 if [ $test_rc -ne 0 ]; then
-    echo "git pre-commit check failed: tests failed."
-    exit 1
+	echo "git pre-commit check failed: tests failed."
+	exit 1
 fi
 

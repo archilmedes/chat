@@ -9,13 +9,13 @@ import (
 	"testing"
 )
 
-func setup() {
+func setupTest() {
 	db.SetupTestDatabaseAltDir()
 	os.Stdin.Close()
 }
 
 func TestLogin_New_User(t *testing.T) {
-	setup()
+	setupTest()
 	f, _ := os.Open("login_test_new_user.txt")
 	defer f.Close()
 	defer func() {
@@ -31,7 +31,7 @@ func TestLogin_New_User(t *testing.T) {
 }
 
 func TestLogin_Current_User(t *testing.T) {
-	setup()
+	setupTest()
 	f, _ := os.Open("login_test_current_user.txt")
 	defer f.Close()
 	defer func() {

@@ -24,6 +24,7 @@ type OTRHandshakeStep struct {
 }
 
 const (
+	// TODO: Consts should be uppercase
 	fragmentSize = 1000
 )
 
@@ -56,6 +57,7 @@ func (o OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
 	return cipherText, nil
 }
 
+// Decrypt the message
 func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 	out, encrypted, secChange, msgToPeer, err := o.Conv.Receive(in)
 	if err != nil {
@@ -95,6 +97,7 @@ func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 	return wrapMessage(out), nil
 }
 
+// Create a new session
 func (o OTRProtocol) NewSession() (string, error) {
 	return otr.QueryMessage, nil
 }
@@ -114,10 +117,12 @@ func (o OTRProtocol) EndSession() {
 	o.Conv.End()
 }
 
+// Serialize the private key
 func (o OTRProtocol) Serialize() []byte {
 	return o.Conv.PrivateKey.Serialize(nil)
 }
 
+// Return type of protocol
 func (o OTRProtocol) ToType() string {
 	return OTRType
 }
