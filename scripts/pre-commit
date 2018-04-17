@@ -3,10 +3,10 @@
 # Format code automatically with gofmt
 status=0
 for file in $(find . | grep -e '\.go$'); do
-    gofmt -w $file
+	gofmt -w $file
 done
 
 # Add untracked files from result of gofmt
 for file in $(git diff --name-only | grep -e '\.go$'); do
-    git add $file
+	git add $file
 done

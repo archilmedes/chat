@@ -22,17 +22,12 @@ var DB *sql.DB
 
 // Function to be called to set everything up
 func SetupDatabase() {
-	cmd := exec.Command("sh", "db/db_setup.sh", conf.Username, conf.Password)
+	cmd := exec.Command("sh", "scripts/db_setup.sh", conf.Username, conf.Password)
 	SetupDatabaseHelper(databaseName, cmd)
 }
 
 func SetupTestDatabase() {
-	cmd := exec.Command("sh", "db_test_setup.sh", conf.Username, conf.Password)
-	SetupDatabaseHelper(testDatabaseName, cmd)
-}
-
-func SetupTestDatabaseAltDir() {
-	cmd := exec.Command("sh", "db/db_test_setup.sh", conf.Username, conf.Password)
+	cmd := exec.Command("sh", "../scripts/db_test_setup.sh", conf.Username, conf.Password)
 	SetupDatabaseHelper(testDatabaseName, cmd)
 }
 

@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Struct for a messaging session between a user and his/her friend
 type Session struct {
 	From      *db.User
 	To        *db.Friend
@@ -13,7 +14,7 @@ type Session struct {
 	StartTime time.Time
 }
 
-// Return a new session between a user and their friend with a protocol
+// Return a new session between a user and his/her friend with a protocol
 func NewSession(from *db.User, to *db.Friend, protocol protocol.Protocol, startTime time.Time) *Session {
 	session := new(Session)
 	(*session).From = from
@@ -23,6 +24,7 @@ func NewSession(from *db.User, to *db.Friend, protocol protocol.Protocol, startT
 	return session
 }
 
+// Return a new session between a user and his/her friend based on a message
 func NewSessionFromUserAndMessage(from *db.User, msg Message) *Session {
 	friend := new(db.Friend)
 	friend.IP = msg.SourceIP
@@ -35,7 +37,7 @@ func (s *Session) EndSession() {
 	s.Proto.EndSession()
 }
 
-// Returns true if the session is conversing with a use defined by their SourceIP address
+// Returns true if the session is conversing with a user defined by their SourceIP address
 func (s *Session) ConverseWith(sourceIp string) bool {
 	return (*s.To).IP == sourceIp
 }

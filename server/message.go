@@ -17,7 +17,7 @@ type Message struct {
 	Handshake                   bool
 }
 
-// Create new message to send a message
+// Create new Message to send a message
 func NewMessage(from *db.User, destIp string, text string) *Message {
 	return &Message{
 		SourceMAC: (*from).MAC, SourceIP: (*from).IP,
