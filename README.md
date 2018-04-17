@@ -10,12 +10,15 @@ Fill in `config/config.go` with your mysql database credentials.
 
 ###  Pre-commit hook
 
-You can set up a pre-commit hook so that the application go builds and tests pass before committing.
+You can set up a pre-commit hook so that the application `gofmt`s your code before committing.
+You can also set up a pre-push hook so that the application builds and tests your code before pushing.
 Note that the scripts must be executable for the hooks to run.
 
 ```
 chmod +x scripts/pre-commit
 ln -s -f ../../scripts/pre-commit .git/hooks/pre-commit
+chmod +x scripts/pre-push
+ln -s -f ../../scripts/pre-push .git/hooks/pre-push
 ```
 
 ### Generate Documentation
