@@ -6,7 +6,7 @@ import (
 	"runtime"
 )
 
-// Get public IPv4 and MAC address
+// Get MAC and public IPv4 addresses
 // Help from: https://stackoverflow.com/questions/23558425/how-do-i-get-the-local-ip-address-in-go
 // Help from: http://grokbase.com/t/gg/golang-nuts/13cf1dcxhs/go-nuts-getting-ip-address-and-hardware-address-in-golang
 func GetAddresses() (string, string, error) { // MAC address, IPv4 address, error

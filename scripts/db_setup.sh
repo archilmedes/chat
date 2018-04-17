@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CURR="$(pwd)"
-cd "$(dirname "$0")" 
+cd "$(dirname "$0")"
 
 if [ -z "$2" ]; then
 	mysql -u "$1" < "db_setup.sql"
