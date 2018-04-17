@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"github.com/wavyllama/chat/db"
 	"golang.org/x/crypto/ssh/terminal"
-	"os"
+	"log"
 	"regexp"
 	"strings"
 	"syscall"
 )
 
-const Me = "me"
+const Self = "me" // Display name for self.
 
 var terminalReadPassword = terminal.ReadPassword
 
@@ -24,7 +24,7 @@ func getUsername(scanner *bufio.Scanner) string {
 		fmt.Print("Username: ")
 		scanner.Scan()
 		username := strings.TrimSpace(scanner.Text())
-		if strings.EqualFold(Me, username) {
+		if strings.EqualFold(Self, username) {
 			fmt.Printf("getUsername: %s is reserved!\n", username)
 			continue
 		}
@@ -33,12 +33,11 @@ func getUsername(scanner *bufio.Scanner) string {
 		}
 		fmt.Printf("getUsername: %s is an invalid username!\n", username)
 	}
-	fmt.Println(scanner.Err().Error())
-	os.Exit(1)
+	log.Fatalln(scanner.Err().Error())
 	return ""
 }
 
-// Returning user sign-in
+// Sign-in for returning user
 func signIn(username string) bool {
 	for counter := 0; counter < 3; counter++ {
 		fmt.Print("Password: ")
