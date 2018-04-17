@@ -10,7 +10,7 @@ import (
 )
 
 func setupTest() {
-	db.SetupTestDatabaseAltDir()
+	db.SetupTestDatabase()
 	os.Stdin.Close()
 }
 

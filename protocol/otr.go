@@ -1,4 +1,4 @@
-// package protocol contains basic protocol functionality to encrypt, decrypt messages with
+// Package protocol contains basic protocol functionality to encrypt, decrypt messages with
 // plaintext and OTR protocols
 package protocol
 
@@ -24,7 +24,6 @@ type OTRHandshakeStep struct {
 }
 
 const (
-	// TODO: Consts should be uppercase
 	fragmentSize = 1000
 )
 

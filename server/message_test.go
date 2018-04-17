@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-const MessageText = "Hello World"
+const messageText = "Hello World"
 
 func getFakeUser() *db.User {
 	u := new(db.User)
@@ -19,15 +19,15 @@ func getFakeUser() *db.User {
 
 func TestNewMessage(t *testing.T) {
 	u := getFakeUser()
-	m := NewMessage(u, u.IP, MessageText)
+	m := NewMessage(u, u.IP, messageText)
 	assert.Equal(t, u.IP, m.SourceIP)
 	assert.Equal(t, u.MAC, m.SourceMAC)
-	assert.Equal(t, MessageText, m.Text)
+	assert.Equal(t, messageText, m.Text)
 }
 
 func TestMessage_StartProtocol(t *testing.T) {
 	u := getFakeUser()
-	m := NewMessage(u, u.IP, MessageText)
+	m := NewMessage(u, u.IP, messageText)
 	proto := protocol.OTRProtocol{}
 	m.StartProtocol(proto)
 
