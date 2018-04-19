@@ -6,17 +6,13 @@ import (
 	"crypto/rand"
 	"golang.org/x/crypto/otr"
 	"log"
+	"fmt"
+	"strconv"
 )
 
 type OTRProtocol struct {
 	Protocol
 	Conv    *otr.Conversation
-	Session OTRSession
-}
-
-type OTRSession struct {
-	SSID                    [8]byte
-	Fingerprint, PrivateKey []byte
 }
 
 type OTRHandshakeStep struct {
@@ -37,14 +33,13 @@ func NewOTRProtocol() OTRProtocol {
 	return OTRProtocol{Conv: conv}
 }
 
-// Recreates an OTR protocol given its private key
-func NewOTRProtocolFromKeys(privKeyBytes []byte) OTRProtocol {
+func (o OTRProtocol) InitFromBytes(privKeyBytes []byte) error {
 	privKey := new(otr.PrivateKey)
 	privKey.Parse(privKeyBytes)
-	conv := new(otr.Conversation)
-	conv.PrivateKey = privKey
-	conv.FragmentSize = fragmentSize
-	return OTRProtocol{Conv: conv}
+	o.Conv = new(otr.Conversation)
+	o.Conv.PrivateKey = privKey
+	o.Conv.FragmentSize = fragmentSize
+	return nil
 }
 
 // Encrypt the message
@@ -56,13 +51,13 @@ func (o OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
 	return cipherText, nil
 }
 
-// Decrypt the message
+// Decrypt the message and handle OTR protocol
 func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 	out, encrypted, secChange, msgToPeer, err := o.Conv.Receive(in)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Respond to handshake if handshake is established
+	// Respond to handshake if handshake is established with the message to send back
 	if len(msgToPeer) > 0 {
 		return msgToPeer, OTRHandshakeStep{}
 	}
@@ -74,14 +69,8 @@ func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 		}
 	case otr.NewKeys:
 		log.Println("<OTR> Key exchange completed. You are now in a secure session.")
-		sess := new(OTRSession)
-		sess.Fingerprint = o.Conv.TheirPublicKey.Fingerprint()
-		sess.SSID = o.Conv.SSID
-		sess.PrivateKey = o.Conv.PrivateKey.Serialize(nil)
-		o.Session = *sess
 		return wrapMessage(out), nil
 	case otr.ConversationEnded:
-		log.Println("<OTR> Conversation ended")
 		o.EndSession()
 		return wrapMessage(out), nil
 	default:
@@ -94,6 +83,15 @@ func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 // Create a new session
 func (o OTRProtocol) NewSession() (string, error) {
 	return otr.QueryMessage, nil
+}
+
+func (o OTRProtocol) GetSessionID() uint64 {
+	SSID := fmt.Sprintf("%x", o.Conv.SSID)
+	sessionId, err :=strconv.ParseUint(SSID, 16, 64)
+	if err != nil {
+		fmt.Errorf("Error getting session id: %s\n", err.Error())
+	}
+	return sessionId
 }
 
 // Returns true if an OTR conversation is now encrypted
@@ -111,8 +109,11 @@ func (o OTRProtocol) EndSession() {
 	o.Conv.End()
 }
 
-// Serialize the private key
+// Serialize the entire OTRProtocol object
 func (o OTRProtocol) Serialize() []byte {
+	//var b bytes.Buffer
+	//gob.NewEncoder(&b).Encode(&o)
+	//return b.Bytes()
 	return o.Conv.PrivateKey.Serialize(nil)
 }
 

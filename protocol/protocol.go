@@ -4,14 +4,20 @@ package protocol
 import (
 	"errors"
 	"fmt"
+	"encoding/gob"
+	"bytes"
+	"encoding/binary"
+	"crypto/rand"
 )
 
 type Protocol interface {
+	InitFromBytes([]byte) error
 	Encrypt(in []byte) ([][]byte, error)
 	Decrypt(cypher []byte) ([][]byte, error)
 	IsEncrypted() bool
 	IsActive() bool
 	NewSession() (string, error)
+	GetSessionID() uint64
 	EndSession()
 	Serialize() []byte
 	ToType() string
@@ -25,8 +31,10 @@ const (
 // Type of protocol that just lets text pass through
 type PlainProtocol struct {
 	Protocol
+	SessionID uint64
 }
 
+// Wrap the a byte array into an array of messages
 func wrapMessage(in []byte) [][]byte {
 	b := make([][]byte, 1)
 	b[0] = in
@@ -41,6 +49,11 @@ func CreateProtocolFromType(protoType string) Protocol {
 	} else {
 		panic(errors.New(fmt.Sprintf("CreateProtocolFromType: %s", protoType)))
 	}
+}
+
+func (p PlainProtocol) InitFromBytes(dec []byte) error {
+	decBuf := bytes.NewBuffer(dec)
+	return gob.NewDecoder(decBuf).Decode(&p)
 }
 
 // Encrypts the text by adding it into a 2D byte array
@@ -65,17 +78,26 @@ func (p PlainProtocol) IsActive() bool {
 
 // Start a new plain protocol session
 func (p PlainProtocol) NewSession() (string, error) {
-	return "", nil
+	var n uint64
+	err := binary.Read(rand.Reader, binary.LittleEndian, &n)
+	p.SessionID = n
+	return "", err
+}
+
+func (p PlainProtocol) GetSessionID() uint64 {
+	return p.SessionID
 }
 
 // Ends a plain protocol session
 func (p PlainProtocol) EndSession() {
-	// no-op
+	p.SessionID = 0
 }
 
 // Serialize the protocol to save in a database
 func (p PlainProtocol) Serialize() []byte {
-	return []byte(nil)
+	var b bytes.Buffer
+	gob.NewEncoder(&b).Encode(p)
+	return b.Bytes()
 }
 
 // Converts plain protocol to type
