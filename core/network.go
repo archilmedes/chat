@@ -4,6 +4,9 @@ import (
 	"errors"
 	"net"
 	"runtime"
+	"fmt"
+	"os/exec"
+	"log"
 )
 
 // Get MAC and public IPv4 addresses
@@ -39,4 +42,15 @@ func GetAddresses() (string, string, error) { // MAC address, IPv4 address, erro
 	}
 errOccurred:
 	return mac, ip, errors.New("cannot find MAC and IPv4 addresses")
+}
+
+// Set up an encrypted tunnel on a port and return the Cmd through the channel
+func SetupTunnel(username string, port uint16, c chan *exec.Cmd) {
+	args := fmt.Sprintf("--port %d --subdomain %s", port, username)
+	cmd := exec.Command("lt", args)
+	err := cmd.Start()
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	c <- cmd
 }

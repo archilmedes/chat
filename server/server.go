@@ -10,6 +10,8 @@ import (
 	"log"
 	"net"
 	"time"
+	"os/exec"
+	"github.com/wavyllama/chat/core"
 )
 
 const (
@@ -21,6 +23,7 @@ const (
 type Server struct {
 	User     *db.User
 	Listener *net.TCPListener
+	Tunnel  chan *exec.Cmd
 	Sessions *[]Session
 }
 
@@ -185,6 +188,9 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	// Initialize the session struct to a pointer
 	(*s).Sessions = &[]Session{}
 	go s.receive()
+	// Set up the encrypted tunnel
+	(*s).Tunnel = make(chan *exec.Cmd)
+	go core.SetupTunnel(username, Port, (*s).Tunnel)
 	log.Printf("Listening on: '%s:%d'", ip, Port)
 
 	// Updates the IP address of the user and create a friend for yourself
@@ -201,6 +207,8 @@ func (s *Server) Start(username string, mac string, ip string) error {
 // End server connection
 func (s *Server) Shutdown() error {
 	log.Println("Shutting Down Server...")
+	tunnel := <-(*s).Tunnel
+	tunnel.Process.Kill()
 	return (*s).Listener.Close()
 }
 
