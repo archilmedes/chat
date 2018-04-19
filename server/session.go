@@ -4,6 +4,7 @@ import (
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
 	"time"
+	"fmt"
 )
 
 // Struct for a messaging session between a user and his/her friend
@@ -30,7 +31,17 @@ func NewSessionFromUserAndMessage(from *db.User, to *db.Friend, protoType string
 }
 
 // Ends the current session
-func (s *Session) EndSession() {
+func (s *Session) EndSession() bool {
 	s.Proto.EndSession()
-	// TODO: uncomment return db.DeleteSession(s.Proto.GetSessionID())
+	return db.DeleteSession(s.Proto.GetSessionID())
+}
+
+func (s *Session) GetMessages() {
+	//return [][]byte("test")
+}
+
+func (s *Session) Serialize() error {
+	sessionID := s.Proto.GetSessionID()
+	fmt.Printf("%s %s %d %s %s", s.From.Username, s.To.DisplayName, sessionID, s.StartTime, s.Proto.Serialize())
+	return nil
 }

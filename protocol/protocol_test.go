@@ -46,8 +46,19 @@ func TestPlainProtocol_NewSession(t *testing.T) {
 }
 
 func TestPlainProtocol_Serialize(t *testing.T) {
-	p := new(PlainProtocol)
-	assert.Equal(t, []byte(nil), p.Serialize())
+	exp := new(PlainProtocol)
+	actual := CreateProtocolFromType(exp.ToType())
+	actual.InitFromBytes(exp.Serialize())
+	assert.Equal(t, *exp, actual)
+}
+
+func TestPlainProtocol_Serialize_NewSession(t *testing.T) {
+	exp := new(PlainProtocol)
+	exp.NewSession()
+	actual := CreateProtocolFromType(exp.ToType())
+	actual.InitFromBytes(exp.Serialize())
+	assert.Equal(t, *exp, actual)
+	assert.Equal(t, exp.SessionID, actual.GetSessionID())
 }
 
 func TestCreateProtocolFromType_plain(t *testing.T) {
