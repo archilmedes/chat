@@ -40,22 +40,22 @@ func AddFriend(username string, displayName string, macAddress string, ipAddress
 	return ExecuteChangeCommand(insertCommand, "Failed to add friend")
 }
 
-// Delete a friend by their display name
-func DeleteFriendByDisplayName(friendName string) bool {
-	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE friend_display_name= \"%s\"", friendsTableName, friendName)
-	return ExecuteChangeCommand(deleteCommand, "Failed to delete friend")
-}
-
 // Delete a friend by their MAC Address
 func DeleteFriendByMac(macAddress string) bool {
 	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE friend_mac_address= \"%s\"", friendsTableName, macAddress)
 	return ExecuteChangeCommand(deleteCommand, "Failed to delete friend")
 }
 
+// Updates the user's IP Address
+func UpdateFriendIp(macAddress string, ipAddress string) bool {
+	updateCommand := fmt.Sprintf("UPDATE %s SET friend_ip_address= \"%s\" WHERE friend_mac_address=\"%s\"", friendsTableName, ipAddress, macAddress)
+	return ExecuteChangeCommand(updateCommand, "Failed to update friend")
+}
+
 // Get all friends
-func QueryFriends() []Friend {
+func GetFriends(username string) []Friend {
 	log.Println("Retrieving data from friends...")
-	query := "SELECT friend_display_name, friend_mac_address, friend_ip_address FROM " + friendsTableName
+	query := fmt.Sprintf("SELECT friend_display_name, friend_mac_address, friend_ip_address FROM %s WHERE username=\"%s\"", friendsTableName, username)
 	return ExecuteFriendsQuery(query)
 }
 
