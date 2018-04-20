@@ -26,6 +26,13 @@ CREATE TABLE IF NOT EXISTS messages (
   sent_or_received TINYINT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS friends (
+  username varchar(100) NOT NULL,
+  friend_display_name varchar(20) NOT NULL,
+  friend_mac_address varchar(18) NOT NULL,
+  friend_ip_address varchar(18) NOT NULL
+);
+
 /* Inserting test data */
 /* Users */
 INSERT INTO users VALUES ("alice123", "alicepassword", "127.0.0.1");

@@ -15,6 +15,7 @@ const (
 	sessionsTableName = "sessions"
 	usersTableName    = "users"
 	messagesTableName = "messages"
+	friendsTableName  = "friends"
 	testDatabaseName  = "otrmessengertest"
 )
 

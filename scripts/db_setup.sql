@@ -24,3 +24,10 @@ CREATE TABLE IF NOT EXISTS messages (
   message_timestamp timestamp(6) NOT NULL,
   sent_or_received TINYINT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS friends (
+  username varchar(100) NOT NULL,
+  friend_display_name varchar(20) NOT NULL,
+  friend_mac_address varchar(18) NOT NULL,
+  friend_ip_address varchar(18) NOT NULL
+);
