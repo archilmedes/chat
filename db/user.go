@@ -1,5 +1,6 @@
 package db
 
+// Stores a user's information
 type User struct {
 	Username, MAC, IP string
 }
