@@ -20,17 +20,19 @@ const (
 
 var DB *sql.DB
 
-// Function to be called to set everything up
+// Sets up the database - called at startup
 func SetupDatabase() {
 	cmd := exec.Command("sh", "scripts/db_setup.sh", conf.Username, conf.Password)
 	SetupDatabaseHelper(databaseName, cmd)
 }
 
+// Sets up the test database
 func SetupTestDatabase() {
 	cmd := exec.Command("sh", "../scripts/db_test_setup.sh", conf.Username, conf.Password)
 	SetupDatabaseHelper(testDatabaseName, cmd)
 }
 
+// Sets up the database
 func SetupDatabaseHelper(dbName string, cmd *exec.Cmd) {
 	err := cmd.Run()
 	time.Sleep(2 * time.Second)
@@ -60,6 +62,7 @@ func FormConnectionString(Name string) string {
 	return connectionString
 }
 
+// Shows all tables to ensure DB setup was correct
 func ShowTables() []string {
 	log.Println("Fetching all tables for database")
 	results, err := DB.Query("SHOW TABLES")
@@ -78,6 +81,7 @@ func ShowTables() []string {
 	return tables
 }
 
+// Executes Insertions/Updated/Deletes
 func ExecuteChangeCommand(command string, errorMessage string) bool {
 	_, err := DB.Exec(command)
 	if err != nil {

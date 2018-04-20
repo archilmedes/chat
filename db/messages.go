@@ -10,11 +10,13 @@ const (
 	Received = 1
 )
 
+// Stores a DB Message
 type DBMessage struct {
-	SSID, sentOrReceived int
-	message, timestamp   string
+	SSID, SentOrReceived int
+	Text, Timestamp   string
 }
 
+// Inserts a message into the messages table
 func InsertMessage(SSID int, message string, timestamp string, sentOrReceived int) bool {
 	log.Println("Inserting data into messages...")
 	if sentOrReceived != Sent && sentOrReceived != Received {
@@ -24,11 +26,13 @@ func InsertMessage(SSID int, message string, timestamp string, sentOrReceived in
 	return ExecuteChangeCommand(insertCommand, "Failed to insert into messages")
 }
 
+// Removes a message from the messages table
 func DeleteMessage(SSID int, message string, timestamp string, sentOrReceived int) bool {
-	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE SSID=%d AND message=\"%s\" AND timestamp=\"%s\" AND sent_or_received=%d", messagesTableName, SSID, message, timestamp, sentOrReceived)
+	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE SSID=%d AND message=\"%s\" AND message_timestamp=\"%s\" AND sent_or_received=%d", messagesTableName, SSID, message, timestamp, sentOrReceived)
 	return ExecuteChangeCommand(deleteCommand, "Failed to delete message")
 }
 
+// Returns all data in the messages table
 func QueryMessages() []DBMessage {
 	log.Println("Retrieving data from messages...")
 	query := "SELECT * FROM " + messagesTableName
@@ -45,7 +49,7 @@ func ExecuteMessagesQuery(query string) []DBMessage {
 	var messages []DBMessage
 	msg := DBMessage{}
 	for results.Next() {
-		err = results.Scan(&msg.SSID, &msg.message, &msg.timestamp, &msg.sentOrReceived)
+		err = results.Scan(&msg.SSID, &msg.Text, &msg.Timestamp, &msg.SentOrReceived)
 		if err != nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
