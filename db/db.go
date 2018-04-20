@@ -32,7 +32,7 @@ func SetupTestDatabase() {
 	SetupDatabaseHelper(testDatabaseName, cmd)
 }
 
-// Sets up teh database
+// Sets up the database
 func SetupDatabaseHelper(dbName string, cmd *exec.Cmd) {
 	err := cmd.Run()
 	time.Sleep(2 * time.Second)
