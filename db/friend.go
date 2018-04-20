@@ -23,16 +23,6 @@ func AreFriendsMac(username string, friendMacAddress string) bool {
 	return len(friends) > 0
 }
 
-// Get friend from database
-func GetFriendByDisplayName(friendDisplayName string) *Friend {
-	query := fmt.Sprintf("SELECT friend_display_name, friend_mac_address, friend_ip_address FROM %s WHERE friend_display_name= \"%s\"", friendsTableName, friendDisplayName)
-	friends := ExecuteFriendsQuery(query)
-	if len(friends) == 0 {
-		return nil
-	}
-	return &friends[0]
-}
-
 // Add friend to the user's friend's table
 func AddFriend(username string, displayName string, macAddress string, ipAddress string) bool {
 	log.Println("Inserting data into friends...")
