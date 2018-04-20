@@ -5,36 +5,27 @@ import (
 	"log"
 )
 
+// Stores a session between two users
 type Session struct {
-	SSID, UserId, FriendId  int
-	PrivateKey, Fingerprint string
+	SSID                                                         uint64
+	Username, FriendMac, ProtocolType, ProtocolValue, timestamp  string
 }
 
-func InsertIntoSessions(SSID int, userId int, friendId int, privateKey string, fingerprint string) bool {
+// Inserts data into the sessions table
+func InsertIntoSessions(SSID uint64, username string, friendMac string, protocolType string, protocolValue string, timestamp string) bool {
 	log.Println("Inserting data into sessions...")
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, %d, %d, \"%s\", \"%s\")", sessionsTableName, SSID, userId, friendId, privateKey, fingerprint)
+	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", sessionsTableName, SSID, username, friendMac, protocolType, protocolValue, timestamp)
 	return ExecuteChangeCommand(insertCommand, "Failed to insert into sessions")
 }
 
-func InsertServerData(userId int, friendId int, SSID int) bool {
-	log.Println("Inserting server data into sessions...")
-	insertCommand := fmt.Sprintf("INSERT INTO %s (user_id, friend_id, SSID) VALUES (%d, %d, %d)", sessionsTableName, userId, friendId, SSID)
-	return ExecuteChangeCommand(insertCommand, "Failed to insert server data")
-}
-
-func UpdateSessionsOtrData(SSID int, privateKey string, fingerprint string) bool {
-	log.Println("Updating sessions with otr data...")
-	whereClause := fmt.Sprintf("WHERE SSID = %d", SSID)
-	insertCommand := fmt.Sprintf("UPDATE %s SET SSID = %d, private_key = \"%s\", fingerprint = \"%s\" %s", sessionsTableName, SSID, privateKey, fingerprint, whereClause)
-	return ExecuteChangeCommand(insertCommand, "Failed to update otr data in sessions")
-}
-
-func DeleteSession(SSID int) bool {
+// Deletes a session
+func DeleteSession(SSID uint64) bool {
 	log.Println("Deleting row from sessions...")
 	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE SSID =%d", sessionsTableName, SSID)
 	return ExecuteChangeCommand(deleteCommand, "Failed to delete session")
 }
 
+// Gets all sessions
 func QuerySessions() []Session {
 	log.Println("Retrieving data from sessions...")
 	query := "SELECT * FROM " + sessionsTableName
@@ -51,7 +42,7 @@ func ExecuteSessionsQuery(query string) []Session {
 	var sessions []Session
 	session := Session{}
 	for results.Next() {
-		err = results.Scan(&session.SSID, &session.UserId, &session.FriendId, &session.PrivateKey, &session.Fingerprint)
+		err = results.Scan(&session.SSID, &session.Username, &session.FriendMac, &session.ProtocolType, &session.ProtocolValue, &session.timestamp)
 		if err != nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
