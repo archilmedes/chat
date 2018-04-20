@@ -15,6 +15,9 @@ import (
 
 const Self = "me" // Display name for self.
 
+var dbAddUser = db.AddUser
+var dbGetUser = db.GetUser
+var dbUserExists = db.UserExists
 var terminalReadPassword = terminal.ReadPassword
 
 // Get username from stdin
@@ -47,7 +50,7 @@ func signIn(username string) bool {
 			fmt.Println(err.Error())
 			continue
 		}
-		if db.GetUser(username, string(password)) != nil {
+		if dbGetUser(username, string(password)) != nil {
 			return true
 		}
 		fmt.Printf("signIn: invalid password!\n")
@@ -74,7 +77,7 @@ func createAccount(username string, ip string) bool {
 			continue
 		}
 		if password == string(bytePassword) {
-			return db.AddUser(username, password, ip)
+			return dbAddUser(username, password, ip)
 		} else {
 			fmt.Println("Passwords do not match!")
 		}
@@ -86,7 +89,7 @@ func createAccount(username string, ip string) bool {
 func Login(scanner *bufio.Scanner, ip string) string {
 	username := getUsername(scanner)
 	var successful bool
-	if db.UserExists(username) {
+	if dbUserExists(username) {
 		successful = signIn(username)
 	} else {
 		successful = createAccount(username, ip)
