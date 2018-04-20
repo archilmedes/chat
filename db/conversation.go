@@ -12,8 +12,8 @@ type Conversation struct {
 	Session Session
 }
 
-func GetConversationID(userId int, friendId int) []Conversation {
-	query := fmt.Sprintf("SELECT m.*, s.* FROM messages m, sessions s WHERE m.SSID = s.SSID AND m.SSID IN (SELECT s1.SSID FROM sessions s1 WHERE (s1.user_id=%d AND s1.friend_id=%d) OR (s1.friend_id=%d AND s1.user_id=%d))", userId, friendId, userId, friendId)
+func GetConversationUsers(username string, friendMac string) []Conversation {
+	query := fmt.Sprintf("SELECT m.*, s.* FROM messages m, sessions s WHERE m.SSID = s.SSID AND m.SSID IN (SELECT s1.SSID FROM sessions s1 WHERE (s1.username=\"%s\" AND s1.friend_mac=\"%s\") OR (s1.friend_mac=\"%s\" AND s1.username=\"%s\") ORDER BY s.session_timestamp, m.message_timestamp)", username, friendMac, friendMac, username)
 	conversations := ExecuteConversationsQuery(query)
 	return conversations
 }
@@ -33,7 +33,7 @@ func ExecuteConversationsQuery(query string) []Conversation {
 	var conversations []Conversation
 	convo := Conversation{}
 	for results.Next() {
-		err = results.Scan(&convo.Message.SSID, &convo.Message.message, &convo.Message.timestamp, &convo.Message.sentOrReceived, &convo.Session.SSID, &convo.Session.UserId, &convo.Session.FriendId, &convo.Session.PrivateKey, &convo.Session.Fingerprint)
+		err = results.Scan(&convo.Message.SSID, &convo.Message.Text, &convo.Message.Timestamp, &convo.Message.SentOrReceived, &convo.Session.SSID, &convo.Session.Username, &convo.Session.FriendMac, &convo.Session.ProtocolType, &convo.Session.ProtocolValue, &convo.Session.timestamp)
 		if err != nil {
 			fmt.Printf("Failed to parse results %s: %s", query, err)
 			panic(err)
