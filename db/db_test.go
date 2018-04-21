@@ -17,4 +17,5 @@ func TestDatabase(t *testing.T) {
 	MessagesTest(t)
 	SessionsTest(t)
 	ConversationsTest(t)
+	FriendsTest(t)
 }

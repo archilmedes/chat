@@ -29,5 +29,6 @@ CREATE TABLE IF NOT EXISTS friends (
   username varchar(100) NOT NULL,
   friend_display_name varchar(20) NOT NULL,
   friend_mac_address varchar(18) NOT NULL,
-  friend_ip_address varchar(18) NOT NULL
+  friend_ip_address varchar(18) NOT NULL,
+  friend_username varchar(30) NOT NULL
 );
