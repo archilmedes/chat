@@ -1,5 +1,10 @@
 package db
 
+import (
+	"log"
+	"github.com/wavyllama/chat/protocol"
+)
+
 // Stores a user's information
 type User struct {
 	Username, MAC, IP string
@@ -39,7 +44,18 @@ func (u *User) UpdateMyIP() bool {
 	return updateFriendIP(u.MAC, u.IP)
 }
 
-// Log in the user or return null.
-func UserLogin(username string, password string) *User {
-	return GetUser(username, password)
+// Fetch conversations between another friend
+func (u *User) GetConversationHistory(friendDisplayName string) [][]byte {
+	converse := GetConversationUsers(u.Username, friendDisplayName)
+	var messages [][]byte
+	for _, c := range converse {
+		proto := protocol.CreateProtocolFromType(c.Session.ProtocolType)
+		proto.InitFromBytes([]byte(c.Session.ProtocolValue))
+		dec, err := proto.Decrypt([]byte(c.Message.Text))
+		if err != nil {
+			log.Printf("GetMessages: %s", err.Error())
+		}
+		messages = append(messages, dec[0])
+	}
+	return messages
 }

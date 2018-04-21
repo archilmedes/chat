@@ -18,7 +18,7 @@ func TestOTRProtocol_Handshake(t *testing.T) {
 }
 
 // Inspired by official OTR tests in Golang here: https://github.com/keybase/go-crypto
-func createOTRLink(t *testing.T, alice OTRProtocol, bob OTRProtocol) {
+func createOTRLink(t *testing.T, alice *OTRProtocol, bob *OTRProtocol) {
 	var aMsg, bMsg [][]byte
 	aMsg = append(aMsg, []byte(otr.QueryMessage))
 	// Simulate a handshake by just sending messages between two users
@@ -66,24 +66,25 @@ func TestOTRProtocol_NewSession(t *testing.T) {
 
 func TestOTRProtocol_Serialize_BeforeHandshake(t *testing.T) {
 	exp := NewOTRProtocol()
-	actual := CreateProtocolFromType(exp.ToType())
-	actual.InitFromBytes(exp.Serialize())
-	assert.Equal(t, *exp.Conv.PrivateKey, *actual.(OTRProtocol).Conv.PrivateKey)
+
+	ott := CreateProtocolFromType(exp.ToType())
+	ott.InitFromBytes(exp.Conv.PrivateKey.Serialize(nil))
+	assert.Equal(t, *exp, *ott.(*OTRProtocol))
 }
 
 func TestOTRProtocol_Serialize_AfterHandshake(t *testing.T) {
 	alice, bob := NewOTRProtocol(), NewOTRProtocol()
 	createOTRLink(t, alice, bob)
 
-	actual := CreateProtocolFromType(alice.ToType())
-	actual.InitFromBytes(alice.Serialize())
-	assert.Equal(t, *alice.Conv.PrivateKey, *actual.(OTRProtocol).Conv.PrivateKey)
+	ott := CreateProtocolFromType(alice.ToType())
+	ott.InitFromBytes(alice.Conv.PrivateKey.Serialize(nil))
+	assert.Equal(t, *alice.Conv.PrivateKey, *ott.(*OTRProtocol).Conv.PrivateKey)
 }
 
 func TestCreateProtocolFromType_otr(t *testing.T) {
 	p := new(OTRProtocol)
 	proto := CreateProtocolFromType(p.ToType())
 	assert.NotNil(t, proto)
-	_, ok := proto.(OTRProtocol)
+	_, ok := proto.(*OTRProtocol)
 	assert.True(t, ok)
 }
