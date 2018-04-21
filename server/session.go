@@ -4,7 +4,7 @@ import (
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
 	"time"
-	"fmt"
+	"log"
 )
 
 // Struct for a messaging session between a user and his/her friend
@@ -36,12 +36,22 @@ func (s *Session) EndSession() bool {
 	return db.DeleteSession(s.Proto.GetSessionID())
 }
 
-func (s *Session) GetMessages() {
-	//return [][]byte("test")
+// Return all messages that have been sent between two users in a given this session
+func (s *Session) GetMessages() [][]byte {
+	converse := db.GetConversationUsers(s.From.Username, s.To.DisplayName)
+	var messages [][]byte
+	for _, c := range converse {
+		dec, err := s.Proto.Decrypt([]byte(c.Message.Text))
+		if err != nil {
+			log.Printf("GetMessages: %s", err.Error())
+		}
+		messages = append(messages, dec[0])
+	}
+	return messages
 }
 
-func (s *Session) Serialize() error {
+// Saves a session to the database
+func (s *Session) Save() {
 	sessionID := s.Proto.GetSessionID()
-	fmt.Printf("%s %s %d %s %s", s.From.Username, s.To.DisplayName, sessionID, s.StartTime, s.Proto.Serialize())
-	return nil
+	db.InsertIntoSessions(sessionID, s.From.Username, s.To.MAC, s.Proto.ToType(), string(s.Proto.Serialize()), s.StartTime.Format(time.RFC3339))
 }
