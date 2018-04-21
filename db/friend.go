@@ -46,22 +46,20 @@ func GetFriends(username string) []Friend {
 func ExecuteFriendsQuery(query string) []Friend {
 	results, err := DB.Query(query)
 	if err != nil {
-		fmt.Printf("Failed to execute query %s: %s", query, err)
-		panic(err)
+		log.Panicf("Failed to execute friend's query: %s", err)
 	}
 	var friends []Friend
 	friend := Friend{}
 	for results.Next() {
 		err = results.Scan(&friend.DisplayName, &friend.MAC, &friend.IP, &friend.Username)
 		if err != nil {
-			fmt.Printf("Failed to parse results %s: %s", query, err)
-			panic(err)
+			log.Panicf("Failed to parse results from friends with query: %s;  %s", query, err)
 		}
 		friends = append(friends, friend)
 	}
 	err = results.Err()
 	if err != nil {
-		log.Fatal(err)
+		log.Panicf("Failed to get results from conversations query: ", err)
 	}
 	return friends
 }

@@ -36,22 +36,20 @@ func QuerySessions() []Session {
 func ExecuteSessionsQuery(query string) []Session {
 	results, err := DB.Query(query)
 	if err != nil {
-		fmt.Printf("Failed to execute query %s: %s", query, err)
-		panic(err)
+		log.Panicf("Failed to execute %s on conversations table: %s", query, err)
 	}
 	var sessions []Session
 	session := Session{}
 	for results.Next() {
 		err = results.Scan(&session.SSID, &session.Username, &session.FriendMac, &session.ProtocolType, &session.ProtocolValue, &session.timestamp)
 		if err != nil {
-			fmt.Printf("Failed to parse results %s: %s", query, err)
-			panic(err)
+			log.Panicf("Failed to parse results from conversations with query: %s;  %s", query, err)
 		}
 		sessions = append(sessions, session)
 	}
 	err = results.Err()
 	if err != nil {
-		log.Fatal(err)
+		log.Panicf("Failed to get results from sessions query: ", err)
 	}
 	return sessions
 }

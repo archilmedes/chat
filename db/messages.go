@@ -44,22 +44,21 @@ func QueryMessages() []DBMessage {
 func ExecuteMessagesQuery(query string) []DBMessage {
 	results, err := DB.Query(query)
 	if err != nil {
-		fmt.Printf("Failed to execute query %s: %s", query, err)
-		panic(err)
+		log.Panicf("Failed to execute %s on messages table: %s", query, err)
 	}
 	var messages []DBMessage
 	msg := DBMessage{}
 	for results.Next() {
 		err = results.Scan(&msg.SSID, &msg.Text, &msg.Timestamp, &msg.SentOrReceived)
 		if err != nil {
-			fmt.Printf("Failed to parse results %s: %s", query, err)
+			log.Panicf("Failed to parse results from messages with query: %s;  %s", query, err)
 			panic(err)
 		}
 		messages = append(messages, msg)
 	}
 	err = results.Err()
 	if err != nil {
-		log.Fatal(err)
+		log.Panicf("Failed to get results from conversations query: ", err)
 	}
 	return messages
 }

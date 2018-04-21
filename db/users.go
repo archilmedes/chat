@@ -60,22 +60,20 @@ func QueryUsers() []User {
 func ExecuteUsersQuery(query string) []User {
 	results, err := DB.Query(query)
 	if err != nil {
-		fmt.Printf("Failed to execute query %s: %s", query, err)
-		panic(err)
+		log.Panicf("Failed to execute %s on conversations table: %s", query, err)
 	}
 	var users []User
 	user := User{}
 	for results.Next() {
 		err = results.Scan(&user.Username, &user.IP)
 		if err != nil {
-			fmt.Printf("Failed to parse results %s: %s", query, err)
-			panic(err)
+			log.Panicf("Failed to parse results from conversations with query: %s;  %s", query, err)
 		}
 		users = append(users, user)
 	}
 	err = results.Err()
 	if err != nil {
-		log.Fatal(err)
+		log.Panicf("Failed to get results from users query: ", err)
 	}
 	return users
 }
