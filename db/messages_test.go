@@ -14,7 +14,7 @@ func MessagesTest(t *testing.T) {
 func MessagesSetup(t *testing.T) {
 	messages := QueryMessages()
 	assert.Equal(t, 8, len(messages))
-	assert.Equal(t, 52, messages[3].SSID)
+	assert.Equal(t, 52, int(messages[3].SSID))
 	assert.Equal(t, 0, messages[3].SentOrReceived)
 	assert.Equal(t, "2018-03-28 18:04:10.333333", messages[3].Timestamp)
 	assert.Equal(t, "lul", messages[3].Text)

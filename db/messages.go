@@ -12,12 +12,13 @@ const (
 
 // Stores a DB Message
 type DBMessage struct {
-	SSID, SentOrReceived int
+	SSID              uint64
+	SentOrReceived    int
 	Text, Timestamp   string
 }
 
 // Inserts a message into the messages table
-func InsertMessage(SSID int, message string, timestamp string, sentOrReceived int) bool {
+func InsertMessage(SSID uint64, message string, timestamp string, sentOrReceived int) bool {
 	log.Println("Inserting data into messages...")
 	if sentOrReceived != Sent && sentOrReceived != Received {
 		fmt.Printf("Invalid entry for sent/received - msut be 0 or 1. Instead, received a %d", sentOrReceived)
@@ -27,7 +28,7 @@ func InsertMessage(SSID int, message string, timestamp string, sentOrReceived in
 }
 
 // Removes a message from the messages table
-func DeleteMessage(SSID int, message string, timestamp string, sentOrReceived int) bool {
+func DeleteMessage(SSID uint64, message string, timestamp string, sentOrReceived int) bool {
 	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE SSID=%d AND message=\"%s\" AND message_timestamp=\"%s\" AND sent_or_received=%d", messagesTableName, SSID, message, timestamp, sentOrReceived)
 	return ExecuteChangeCommand(deleteCommand, "Failed to delete message")
 }

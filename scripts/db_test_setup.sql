@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS messages (
-  SSID INT NOT NULL,
+  SSID BIGINT NOT NULL,
   message varchar(10000) NOT NULL,
   message_timestamp timestamp(6) NOT NULL,
   sent_or_received TINYINT NOT NULL
