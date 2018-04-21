@@ -1,5 +1,3 @@
-// Package protocol contains basic protocol functionality to encrypt, decrypt messages with
-// plaintext and OTR protocols
 package protocol
 
 import (
@@ -10,11 +8,13 @@ import (
 	"strconv"
 )
 
+// An OTR protocol that contains the crypto/otr struct
 type OTRProtocol struct {
 	Protocol
 	Conv    *otr.Conversation
 }
 
+// A type of error that indicates that the protocol is undergoing the handshake
 type OTRHandshakeStep struct {
 	error
 }
@@ -24,16 +24,16 @@ const (
 )
 
 // Create a new OTR session, with new keys and a new Conversation
-func NewOTRProtocol() OTRProtocol {
+func NewOTRProtocol() *OTRProtocol {
 	privKey := new(otr.PrivateKey)
 	privKey.Generate(rand.Reader)
 	conv := new(otr.Conversation)
 	conv.PrivateKey = privKey
 	conv.FragmentSize = fragmentSize
-	return OTRProtocol{Conv: conv}
+	return &OTRProtocol{Conv: conv}
 }
 
-func (o OTRProtocol) InitFromBytes(privKeyBytes []byte) error {
+func (o *OTRProtocol) InitFromBytes(privKeyBytes []byte) error {
 	privKey := new(otr.PrivateKey)
 	privKey.Parse(privKeyBytes)
 	o.Conv = new(otr.Conversation)
@@ -43,7 +43,7 @@ func (o OTRProtocol) InitFromBytes(privKeyBytes []byte) error {
 }
 
 // Encrypt the message
-func (o OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
+func (o *OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
 	cipherText, err := o.Conv.Send(in)
 	if err != nil {
 		log.Fatal(err)
@@ -52,7 +52,7 @@ func (o OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
 }
 
 // Decrypt the message and handle OTR protocol
-func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
+func (o *OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 	out, encrypted, secChange, msgToPeer, err := o.Conv.Receive(in)
 	if err != nil {
 		log.Fatal(err)
@@ -81,13 +81,18 @@ func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 }
 
 // Create a new session
-func (o OTRProtocol) NewSession() (string, error) {
+func (o *OTRProtocol) NewSession() (string, error) {
 	return otr.QueryMessage, nil
 }
 
-func (o OTRProtocol) GetSessionID() uint64 {
+// Get the SessionID for an OTR session if it exists, or 0 if no session id exists
+func (o *OTRProtocol) GetSessionID() uint64 {
+	if !o.IsActive() {
+		return 0
+	}
+	// Convert a [8]byte -> string -> uint64
 	SSID := fmt.Sprintf("%x", o.Conv.SSID)
-	sessionId, err :=strconv.ParseUint(SSID, 16, 64)
+	sessionId, err := strconv.ParseUint(SSID, 16, 64)
 	if err != nil {
 		fmt.Errorf("Error getting session id: %s\n", err.Error())
 	}
@@ -95,29 +100,26 @@ func (o OTRProtocol) GetSessionID() uint64 {
 }
 
 // Returns true if an OTR conversation is now encrypted
-func (o OTRProtocol) IsEncrypted() bool {
+func (o *OTRProtocol) IsEncrypted() bool {
 	return o.Conv.IsEncrypted()
 }
 
-// Returns true if an OTR session has been created
-func (o OTRProtocol) IsActive() bool {
+// Returns true if an active OTR session has been created and in use
+func (o *OTRProtocol) IsActive() bool {
 	return o.IsEncrypted()
 }
 
 // Ends the OTR conversation
-func (o OTRProtocol) EndSession() {
+func (o *OTRProtocol) EndSession() {
 	o.Conv.End()
 }
 
-// Serialize the entire OTRProtocol object
-func (o OTRProtocol) Serialize() []byte {
-	//var b bytes.Buffer
-	//gob.NewEncoder(&b).Encode(&o)
-	//return b.Bytes()
+// Serialize the private key of an OTR protocol, which is all that is needed to recreate
+func (o *OTRProtocol) Serialize() []byte {
 	return o.Conv.PrivateKey.Serialize(nil)
 }
 
 // Return type of protocol
-func (o OTRProtocol) ToType() string {
+func (o *OTRProtocol) ToType() string {
 	return OTRType
 }

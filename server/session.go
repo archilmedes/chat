@@ -4,8 +4,9 @@ import (
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
 	"time"
-	"log"
 )
+
+var dbDeleteSession = db.DeleteSession
 
 // Struct for a messaging session between a user and his/her friend
 type Session struct {
@@ -33,25 +34,11 @@ func NewSessionFromUserAndMessage(from *db.User, to *db.Friend, protoType string
 // Ends the current session
 func (s *Session) EndSession() bool {
 	s.Proto.EndSession()
-	return db.DeleteSession(s.Proto.GetSessionID())
-}
-
-// Return all messages that have been sent between two users in a given this session
-func (s *Session) GetMessages() [][]byte {
-	converse := db.GetConversationUsers(s.From.Username, s.To.DisplayName)
-	var messages [][]byte
-	for _, c := range converse {
-		dec, err := s.Proto.Decrypt([]byte(c.Message.Text))
-		if err != nil {
-			log.Printf("GetMessages: %s", err.Error())
-		}
-		messages = append(messages, dec[0])
-	}
-	return messages
+	return dbDeleteSession(s.Proto.GetSessionID())
 }
 
 // Saves a session to the database
-func (s *Session) Save() {
+func (s *Session) Save() bool {
 	sessionID := s.Proto.GetSessionID()
-	db.InsertIntoSessions(sessionID, s.From.Username, s.To.MAC, s.Proto.ToType(), string(s.Proto.Serialize()), s.StartTime.Format(time.RFC3339))
+	return db.InsertIntoSessions(sessionID, s.From.Username, s.To.MAC, s.Proto.ToType(), string(s.Proto.Serialize()), s.StartTime.Format(time.RFC3339))
 }

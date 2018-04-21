@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/wavyllama/chat/core"
-	"github.com/wavyllama/chat/protocol"
 	"testing"
 	"time"
 )
@@ -19,7 +18,7 @@ func setUpServerAndHandshake(t *testing.T) Server {
 	server := startUpServer(t)
 	assert.NotNil(t, server.User)
 	// Initialize a session with yourself
-	err := server.StartSession(core.Self, protocol.NewOTRProtocol())
+	err := server.StartOTRSession(core.Self)
 	assert.Nil(t, err)
 	assert.Nil(t, err)
 	// Let time pass for handshake to complete

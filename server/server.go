@@ -11,7 +11,6 @@ import (
 	"net"
 	"time"
 	"os/exec"
-	"github.com/wavyllama/chat/core"
 )
 
 const (
@@ -199,7 +198,7 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	}
 
 	s.User.UpdateMyIP()
-	s.StartSession(core.Self, protocol.OTRProtocol{})
+	s.StartOTRSession(core.Self)
 
 	return nil
 }
@@ -240,7 +239,7 @@ func (s *Server) GetSessionsWithFriend(friendMAC string, friendUsername string) 
 }
 
 // Start a session with a destination IP using a protocol
-func (s *Server) StartSession(displayName string, proto protocol.Protocol) error {
+func (s *Server) StartOTRSession(displayName string) error {
 	friend := s.User.GetFriendByDisplayName(displayName)
 	if friend == nil {
 		fmt.Printf("You do not have a friend named '%s'\n", displayName)
@@ -250,9 +249,10 @@ func (s *Server) StartSession(displayName string, proto protocol.Protocol) error
 		return nil
 	}
 
+	proto := new(protocol.OTRProtocol)
 	firstMessage, err := proto.NewSession()
 	if err != nil {
-		log.Panicf("StartSession: Error starting new session: %s", err)
+		log.Panicf("StartOTRSession: Error starting new session: %s", err)
 		return err
 	}
 
