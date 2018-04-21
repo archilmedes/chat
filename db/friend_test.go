@@ -21,10 +21,8 @@ func FriendSetup(t *testing.T) {
 }
 
 func AreFriendsTest(t *testing.T) {
-	assert.True(t, AreFriendsName("karateAMD", "sameet"))
-	assert.False(t, AreFriendsName("andrew", "archilmedes"))
-	assert.True(t, AreFriendsMac("archilmedes", "01:23:45:67"))
-	assert.False(t, AreFriendsMac("karateAMD", "ff:ff:ff:ff"))
+	assert.True(t, AreFriends("karateAMD", "sameet"))
+	assert.False(t, AreFriends("andrew", "archilmedes"))
 }
 
 func AddUpdateDeleteFriendTest(t *testing.T) {

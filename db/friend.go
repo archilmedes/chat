@@ -10,15 +10,8 @@ type Friend struct {
 }
 
 // Checks if the two users are friends given friend's display name
-func AreFriendsName(username string, friendDisplayName string) bool {
+func AreFriends(username string, friendDisplayName string) bool {
 	query := fmt.Sprintf("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM %s WHERE username=\"%s\" AND friend_display_name=\"%s\"", friendsTableName, username, friendDisplayName)
-	friends := ExecuteFriendsQuery(query)
-	return len(friends) > 0
-}
-
-// Checks if the two users are friends given friend's MAC Address
-func AreFriendsMac(username string, friendMacAddress string) bool {
-	query := fmt.Sprintf("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM %s WHERE username=\"%s\" AND friend_mac_address=\"%s\"", friendsTableName, username, friendMacAddress)
 	friends := ExecuteFriendsQuery(query)
 	return len(friends) > 0
 }
