@@ -185,7 +185,8 @@ func (s *Server) Send(destIp string, message string) error {
 	return s.sendMessage(NewMessage(s.User, destIp, message))
 }
 
-// Get all sessions that a user talks to an IP. There are only 2 if a user is talking to himself
+// Get all sessions that a user talks to an IP
+// There are only 2 if a user is talking to himself
 func (s *Server) GetSessionsToIP(ip string) []Session {
 	var filterSessions []Session
 	for _, sess := range *(*s).Sessions {
