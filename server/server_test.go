@@ -19,7 +19,7 @@ func setUpServerAndHandshake(t *testing.T) Server {
 	server := startUpServer(t)
 	assert.NotNil(t, server.User)
 	// Initialize a session with yourself
-	err := server.startSession(server.User.Username, server.User.IP, protocol.NewOTRProtocol())
+	err := server.StartSession(core.Self, protocol.NewOTRProtocol())
 	assert.Nil(t, err)
 	assert.Nil(t, err)
 	// Let time pass for handshake to complete

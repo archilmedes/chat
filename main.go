@@ -12,6 +12,7 @@ import (
 	"github.com/wavyllama/chat/db"
 	"strings"
 	"runtime"
+	"github.com/wavyllama/chat/protocol"
 )
 
 const (
@@ -44,6 +45,7 @@ func handleInput(program *server.Server, message string) {
 			fmt.Printf("Format to add friend: '%s username@ipaddr'\n", friend)
 		} else if len(words) == 1 && program.User.IsFriendsWith(words[0][1:]) {
 			activeFriend = words[0][1:]
+			program.StartSession(activeFriend, protocol.OTRProtocol{})
 		} else {
 			fmt.Printf("Format for commands: '%s' or '%s'\n", exit, displayName)
 		}

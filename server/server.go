@@ -56,7 +56,7 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	if sourceMAC == "" || sourceUsername == "" {
 		log.Panicln("Received ill-formatted message")
 	}
-	if sourceUsername != s.User.Username {
+	if msg.DestID() != s.User.Username {
 		fmt.Println("Received a message but it was not for me.")
 		return
 	}
@@ -80,6 +80,8 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 			}
 			// TODO: start listener server again in week 4
 			s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
+
+			s.SendFriendRequest(sourceIP, sourceUsername)
 		}
 	case *HandshakeMessage:
 		// We are in a handshake, so the friend should exist already
@@ -179,8 +181,9 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	if s.User.GetFriendByDisplayName(core.Self) == nil {
 		s.User.AddFriend(core.Self, mac, ip, username)
 	}
+
 	s.User.UpdateMyIP()
-	s.startSession(username, ip, protocol.OTRProtocol{})
+	s.StartSession(core.Self, protocol.OTRProtocol{})
 
 	return nil
 }
@@ -219,25 +222,35 @@ func (s *Server) GetSessionsWithFriend(friendMAC string, friendUsername string) 
 }
 
 // Start a session with a destination IP using a protocol
-func (s *Server) startSession(destUsername, destIP string, proto protocol.Protocol) error {
+func (s *Server) StartSession(displayName string, proto protocol.Protocol) error {
+	friend := s.User.GetFriendByDisplayName(displayName)
+	if friend == nil {
+		fmt.Printf("You do not have a friend named '%s'\n", displayName)
+	}
+	sessions := s.GetSessionsWithFriend(friend.MAC, friend.Username)
+	if len(sessions) != 0 {
+		return nil
+	}
+
 	firstMessage, err := proto.NewSession()
 	if err != nil {
-		log.Panicf("startSession: Error starting new session: %s", err)
+		log.Panicf("StartSession: Error starting new session: %s", err)
 		return err
 	}
 
 	msg := new(HandshakeMessage)
-	msg.NewPayload(s.User.MAC, s.User.Username, destUsername)
+	msg.NewPayload(s.User.MAC, s.User.Username, friend.Username)
 	msg.Secret = []byte(firstMessage)
 	msg.ProtoType = proto.ToType()
 	msg.Round = 0
-	return s.sendMessage(destIP, msg)
+	return s.sendMessage(friend.IP, msg)
 }
 
 // Sends a friend request to a specified destUsername@destIP
 func (s *Server) SendFriendRequest(destIP, destUsername string) error {
-	var friendRequest *FriendMessage
+	friendRequest := new(FriendMessage)
 	friendRequest.NewPayload(s.User.MAC, s.User.Username, destUsername)
+
 	return s.sendMessage(destIP, friendRequest)
 }
 
