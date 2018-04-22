@@ -7,8 +7,8 @@ import (
 
 // Stores a session between two users
 type Session struct {
-	SSID                                                         uint64
-	Username, FriendMac, ProtocolType, ProtocolValue, timestamp  string
+	SSID                                                        uint64
+	Username, FriendMac, ProtocolType, ProtocolValue, timestamp string
 }
 
 // Inserts data into the sessions table
