@@ -6,7 +6,7 @@ USE otrmessengertest;
 /* Table Setup*/
 CREATE TABLE IF NOT EXISTS sessions (
   SSID BIGINT NOT NULL PRIMARY KEY,
-  username varchar(100) NOT NULL,
+  username varchar(30) NOT NULL,
   friend_mac varchar(18) NOT NULL,
   protocol_type varchar(8) NOT NULL,
   protocol varchar(10000) NOT NULL,
@@ -14,16 +14,24 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE TABLE IF NOT EXISTS users (
-  username varchar(100) NOT NULL,
+  username varchar(30) NOT NULL,
   password varchar(1000) NOT NULL,
   ipaddress varchar(18) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS messages (
-  SSID INT NOT NULL,
+  SSID BIGINT NOT NULL,
   message varchar(10000) NOT NULL,
   message_timestamp timestamp(6) NOT NULL,
   sent_or_received TINYINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS friends (
+  username varchar(30) NOT NULL,
+  friend_display_name varchar(30) NOT NULL,
+  friend_mac_address varchar(18) NOT NULL,
+  friend_ip_address varchar(18) NOT NULL,
+  friend_username varchar(30) NOT NULL
 );
 
 /* Inserting test data */
@@ -53,3 +61,10 @@ INSERT INTO messages VALUES (34, "I almost made my Mac a brick", "2018-04-08 17:
 INSERT INTO messages VALUES (42, "Why did the chicken cross the road?", "2018-04-12 07:56:00.555555", 1);
 INSERT INTO messages VALUES (42, "To get to the other side?", "2018-04-12 07:59:13.666666", 0);
 INSERT INTO messages VALUES (34, "When are we playing Fortnite?", "2018-04-08 17:59:02.777777", 0);
+
+/* Friends */
+INSERT INTO friends VALUES ("karateAMD", "archil", "ab:cd:ef:ff", "987.654.321", "archilmedes");
+INSERT INTO friends VALUES ("karateAMD", "sameet", "01:23:45:67", "10.192.345.987", "sameetandpotatoes");
+INSERT INTO friends VALUES ("karateAMD", "andrew", "11:11:11:11", "987.654.321", "andrew");
+INSERT INTO friends VALUES ("archilmedes", "sameet", "01:23:45:67", "10.192.345.987", "sameetandpotatoes");
+INSERT INTO friends VALUES ("alice123", "bobby", "ff:ff:ff:ff", "123.456.789", "bob");

@@ -8,7 +8,7 @@ import (
 func SetupDatabaseForTests(t *testing.T) {
 	SetupTestDatabase()
 	tables := ShowTables()
-	assert.Equal(t, 3, len(tables))
+	assert.Equal(t, 4, len(tables))
 }
 
 func TestDatabase(t *testing.T) {
@@ -17,4 +17,5 @@ func TestDatabase(t *testing.T) {
 	MessagesTest(t)
 	SessionsTest(t)
 	ConversationsTest(t)
+	FriendsTest(t)
 }
