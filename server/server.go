@@ -125,6 +125,9 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 			}
 		}
 	case *ChatMessage:
+		if len(sessions) == 0 {
+			return
+		}
 		var sess Session
 		// There are two sessions, so grab the one that doesn't have the same timestamp as you
 		if messageYourself {
@@ -281,5 +284,10 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 
 	chatMsg.NewPayload(s.User.MAC, s.User.Username, friend.Username)
 	(*chatMsg).Text = []byte(message)
-	return s.sendMessage(friend.IP, chatMsg)
+
+	if err := s.sendMessage(friend.IP, chatMsg); err != nil {
+		// We had an issue with sending a message, so clear our session with the user
+		sessions[0].EndSession()
+	}
+	return nil
 }

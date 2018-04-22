@@ -32,4 +32,5 @@ func NewSessionFromUserAndMessage(from *db.User, to *db.Friend, protoType string
 // Ends the current session
 func (s *Session) EndSession() {
 	s.Proto.EndSession()
+	// TODO: uncomment return db.DeleteSession(s.Proto.GetSessionID())
 }
