@@ -146,13 +146,11 @@ func (s *Server) getDisplayName(sourceUsername string, sourceIP string) string {
 	var friendDisplayName string
 	for {
 		friendDisplayName = core.GetDisplayNameFromConsole(sourceIP, sourceUsername)
-		if s.User.IsFriendsWith(friendDisplayName) {
-			fmt.Printf("You already have a friend named '%s'\n", friendDisplayName)
-			continue
+		if !s.User.IsFriendsWith(friendDisplayName) {
+			return friendDisplayName
 		}
-		break
+		fmt.Printf("You already have a friend named '%s'\n", friendDisplayName)
 	}
-	return friendDisplayName
 }
 
 // Function that continuously polls for new messages being sent to the server
