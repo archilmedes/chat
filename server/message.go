@@ -25,10 +25,10 @@ type FriendMessage struct {
 // Message for handshaking an securing a session
 type HandshakeMessage struct {
 	GenericMessage
-	Round                                                      int
-	SessionTime                                                time.Time
-	ProtoType string
-	Secret []byte
+	Round       int
+	SessionTime time.Time
+	ProtoType   string
+	Secret      []byte
 }
 
 // Message for sending regular information to a friend

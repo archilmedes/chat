@@ -12,9 +12,9 @@ const (
 
 // Stores a DB Message
 type DBMessage struct {
-	SSID              uint64
-	SentOrReceived    int
-	Text, Timestamp   string
+	SSID            uint64
+	SentOrReceived  int
+	Text, Timestamp string
 }
 
 // Inserts a message into the messages table
