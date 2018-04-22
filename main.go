@@ -31,7 +31,7 @@ func handleInput(program *server.Server, message string) {
 		if words[0] == exit {
 			runtime.Goexit()
 		} else if words[0] == friend {
-			if len(message) == 2 {
+			if len(words) == 2 {
 				friendInfo := strings.Split(words[1], "@")
 				if len(friendInfo) == 2 {
 					err := program.SendFriendRequest(friendInfo[1], friendInfo[0])

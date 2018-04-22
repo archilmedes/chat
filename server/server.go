@@ -67,9 +67,18 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	switch msg.(type) {
 	case *FriendMessage:
 		if friend == nil {
-			// TODO: stop listener server
-			friendDisplayName := core.GetDisplayNameFromConsole()
-			// TODO: start listener server again
+			// TODO: stop listener server in week 4
+			fmt.Printf("You received a friend request from %s at %s\n", sourceUsername, sourceIP)
+			var friendDisplayName string
+			for {
+				friendDisplayName = core.GetDisplayNameFromConsole()
+				if s.User.IsFriendsWith(friendDisplayName) {
+					fmt.Printf("You already have a friend named '%s'\n", friendDisplayName)
+					continue
+				}
+				break
+			}
+			// TODO: start listener server again in week 4
 			s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
 		}
 	case *HandshakeMessage:
