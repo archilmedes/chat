@@ -42,7 +42,7 @@ func TestServer_Send(t *testing.T) {
 
 func TestServer_GetSessionsToIP(t *testing.T) {
 	server := setUpServerAndHandshake(t)
-	sessions := server.GetSessionsToIP(server.User.IP)
+	sessions := server.GetSessionsWithFriend(server.User.IP)
 	assert.Equal(t, 2, len(sessions))
 
 	msg := []byte("Hello world")
