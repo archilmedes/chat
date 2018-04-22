@@ -49,7 +49,7 @@ func ExecuteSessionsQuery(query string) []Session {
 	}
 	err = results.Err()
 	if err != nil {
-		log.Panicf("Failed to get results from sessions query: ", err)
+		log.Panicf("Failed to get results from sessions query: %s", err)
 	}
 	return sessions
 }
