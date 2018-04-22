@@ -64,7 +64,6 @@ func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 	}
 	// Respond to handshake if handshake is established
 	if len(msgToPeer) > 0 {
-		log.Println("<OTR> Handshaking")
 		return msgToPeer, OTRHandshakeStep{}
 	}
 	switch secChange {
@@ -74,11 +73,7 @@ func (o OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 			return wrapMessage(out), nil
 		}
 	case otr.NewKeys:
-		log.Printf("<OTR> Key exchange completed.\nFingerprint:%x\nSSID:%x\n",
-			o.Conv.TheirPublicKey.Fingerprint(),
-			o.Conv.SSID,
-		)
-		// TODO Send OTRSession object to DB to save
+		log.Println("<OTR> Key exchange completed. You are now in a secure session.")
 		sess := new(OTRSession)
 		sess.Fingerprint = o.Conv.TheirPublicKey.Fingerprint()
 		sess.SSID = o.Conv.SSID

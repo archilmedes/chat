@@ -10,25 +10,75 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 )
 
-const Exit = "exit"
+const (
+	exit        = ":exit"
+	friend      = ":friend"
+	accept      = ":accept"
+	reject      = ":reject"
+	displayName = ":displayName"
+)
 
-// Listen to standard in for messages to be sent
-func listen(program *server.Server) {
+var activeFriend = ""
+
+func handleInput(program *server.Server, message string) {
+	words := strings.Fields(message)
+	if len(message) == 0 {
+		return
+	}
+	if message[0] == ':' {
+		if words[0] == exit {
+			runtime.Goexit()
+		} else if words[0] == accept {
+			core.Friending = core.ACCEPT
+			core.Cond.Signal()
+			core.Cond.L.Lock()
+			for core.Friending == core.ACCEPT {
+				core.Cond.Wait()
+			}
+			core.Cond.L.Unlock()
+		} else if words[0] == reject {
+			core.Friending = core.REJECT
+			core.Cond.Signal()
+		} else if words[0] == friend {
+			if len(words) == 2 {
+				friendInfo := strings.Split(words[1], "@")
+				if len(friendInfo) == 2 {
+					err := program.SendFriendRequest(friendInfo[1], friendInfo[0])
+					if err != nil {
+						log.Printf("Error sending friend request: %s\n", err)
+					}
+					return
+				}
+			}
+			fmt.Printf("Format to add friend: '%s username@ipaddr'\n", friend)
+		} else if len(words) == 1 && program.User.IsFriendsWith(words[0][1:]) {
+			activeFriend = words[0][1:]
+			program.StartSession(activeFriend, protocol.OTRProtocol{})
+		} else {
+			fmt.Printf("Format for commands: '%s' or '%s'\n", exit, displayName)
+		}
+	} else {
+		if activeFriend != "" {
+			err := program.SendChatMessage(activeFriend, message)
+			if err != nil {
+				log.Printf("Error sending message: %s\n", err)
+			}
+		} else {
+			fmt.Printf("Please set active friend: '%s'\n", displayName)
+		}
+	}
+}
+
+// Listen to stdin for messages to be sent
+func Listen(program *server.Server) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		message := scanner.Text()
-		if message == Exit {
-			return
-		}
-		stringSlice := strings.Fields(message)
-		// Message format is: "IP message"
-		if err := program.Send(stringSlice[0], strings.Join(stringSlice[1:], " ")); err != nil {
-			fmt.Printf("input: %s\n", err.Error())
-		}
+		handleInput(program, scanner.Text())
 	}
 	if scanner.Err() != nil {
 		fmt.Println(scanner.Err().Error())
@@ -54,6 +104,5 @@ func main() {
 		<-sig
 		os.Exit(0)
 	}()
-	program.StartSession(ip, protocol.OTRProtocol{})
-	listen(&program)
+	Listen(&program)
 }
