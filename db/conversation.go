@@ -37,7 +37,7 @@ func ExecuteConversationsQuery(query string) []Conversation {
 	}
 	err = results.Err()
 	if err != nil {
-		log.Panicf("Failed to get results from conversations query: ", err)
+		log.Panicf("Failed to get results from conversations query: %s", err)
 	}
 	return conversations
 }

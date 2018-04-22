@@ -58,7 +58,7 @@ func ExecuteMessagesQuery(query string) []DBMessage {
 	}
 	err = results.Err()
 	if err != nil {
-		log.Panicf("Failed to get results from conversations query: ", err)
+		log.Panicf("Failed to get results from conversations query: %s", err)
 	}
 	return messages
 }

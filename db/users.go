@@ -73,7 +73,7 @@ func ExecuteUsersQuery(query string) []User {
 	}
 	err = results.Err()
 	if err != nil {
-		log.Panicf("Failed to get results from users query: ", err)
+		log.Panicf("Failed to get results from users query: %s", err)
 	}
 	return users
 }
