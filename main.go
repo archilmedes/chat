@@ -3,14 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/wavyllama/chat/core"
-	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
 	"github.com/wavyllama/chat/server"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"github.com/wavyllama/chat/core"
+	"github.com/wavyllama/chat/db"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 	}
 	username := core.Login(bufio.NewScanner(os.Stdin), ip)
 	var program server.Server
-	if err := program.Start(username, mac, ip); err != nil {
+	if err := program.Start("sameet", "b8:e8:56:2d:df:c2", "192.168.86.47"); err != nil {
 		log.Fatalf("main: %s", err.Error())
 	}
 	defer program.Shutdown()

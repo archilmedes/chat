@@ -25,19 +25,11 @@ func NewSession(from *db.User, to *db.Friend, protocol protocol.Protocol, startT
 }
 
 // Return a new session between a user and his/her friend based on a message
-func NewSessionFromUserAndMessage(from *db.User, msg Message) *Session {
-	friend := new(db.Friend)
-	friend.IP = msg.SourceIP
-	friend.MAC = msg.SourceMAC
-	return NewSession(from, friend, protocol.CreateProtocolFromType(msg.StartProto), msg.StartProtoTimestamp)
+func NewSessionFromUserAndMessage(from *db.User, to*db.Friend, protoType string, startSessionTime time.Time) *Session {
+	return NewSession(from, to, protocol.CreateProtocolFromType(protoType), startSessionTime)
 }
 
 // Ends the current session
 func (s *Session) EndSession() {
 	s.Proto.EndSession()
-}
-
-// Returns true if the session is conversing with a user defined by their SourceIP address
-func (s *Session) ConverseWith(sourceIp string) bool {
-	return (*s.To).IP == sourceIp
 }

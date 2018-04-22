@@ -12,45 +12,44 @@ type Message interface {
 	DestID() string             // Username
 }
 
+type GenericMessage struct {
+	Message
+	SourceMAC, SourceUsername, DestUsername string
+}
+
 // Message for sending and receiving friend requests/info
 type FriendMessage struct {
-	SourceMAC, SourceIPAddress, SourceUsername, DestUsername string
+	GenericMessage
+	SourceIPAddress string
 }
 
 // Message for handshaking an securing a session
 type HandshakeMessage struct {
+	GenericMessage
 	Round                                                      int
 	SessionTime                                                time.Time
-	SourceMAC, SourceUsername, DestUsername, Secret, Prototype string
+	ProtoType string
+	Secret []byte
 }
 
 // Message for sending regular information to a friend
 type ChatMessage struct {
-	SourceMAC, SourceUsername, DestUsername, Text string
+	GenericMessage
+	Text []byte
 }
 
-// Same implementations for getting ID for sender and receiver:
+func (m *GenericMessage) NewPayload(SourceMAC, SourceUsername, DestUsername string) {
+	(*m).SourceMAC = SourceMAC
+	(*m).SourceUsername = SourceUsername
+	(*m).DestUsername = DestUsername
+}
 
-func (m *FriendMessage) SourceID() (string, string) {
+// Get source-identifying MAC and username info
+func (m *GenericMessage) SourceID() (string, string) {
 	return (*m).SourceMAC, (*m).SourceUsername
 }
 
-func (m *HandshakeMessage) SourceID() (string, string) {
-	return (*m).SourceMAC, (*m).SourceUsername
-}
-
-func (m *ChatMessage) SourceID() (string, string) {
-	return (*m).SourceMAC, (*m).SourceUsername
-}
-
-func (m *FriendMessage) DestID() string {
-	return (*m).DestUsername
-}
-
-func (m *HandshakeMessage) DestID() string {
-	return (*m).DestUsername
-}
-
-func (m *ChatMessage) DestID() string {
+// Get destination-identifying username
+func (m *GenericMessage) DestID() string {
 	return (*m).DestUsername
 }

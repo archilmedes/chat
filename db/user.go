@@ -1,5 +1,7 @@
 package db
 
+import "github.com/wavyllama/chat/config"
+
 // Stores a user's information
 type User struct {
 	Username, MAC, IP string
@@ -15,15 +17,12 @@ func (u *User) Delete() bool {
 	return DeleteUser(u.Username)
 }
 
+func (u *User) GetFriend(friendUsername, friendMAC string) *Friend {
+	return db.GetFriend(u.Username, friendUsername, friendMAC)
+}
+
 // Log in the user or return null.
 func UserLogin(username string, password string) *User {
 	return GetUser(username, password)
 }
 
-func (u *User) SendMessage(toIpAddr string, text []byte) {
-
-}
-
-func (u *User) ReceiveMessage() {
-
-}
