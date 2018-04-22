@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 )
 
 var Friending FRFlag = DONE
+var mutex = sync.Mutex{}
+var Cond = sync.NewCond(&mutex)
 
 func getDisplayName() string {
 	scanner := bufio.NewScanner(os.Stdin)
@@ -24,12 +27,16 @@ func getDisplayName() string {
 // Get display name from stdin
 func GetDisplayNameFromConsole(ip string, username string) string {
 	Friending = DONE
-	fmt.Printf("You have received a friend request from %s@%s (':accept' or ':reject:'):", username, ip)
+	fmt.Printf("You have received a friend request from %s@%s (':accept' or ':reject:'): ", username, ip)
 	defer func() {
 		Friending = DONE
+		Cond.Signal()
 	}()
+	Cond.L.Lock()
 	for Friending == DONE {
+		Cond.Wait()
 	}
+	Cond.L.Unlock()
 	if Friending == REJECT {
 		return ""
 	}

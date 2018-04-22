@@ -35,10 +35,15 @@ func handleInput(program *server.Server, message string) {
 			runtime.Goexit()
 		} else if words[0] == accept {
 			core.Friending = core.ACCEPT
+			core.Cond.Signal()
+			core.Cond.L.Lock()
 			for core.Friending == core.ACCEPT {
+				core.Cond.Wait()
 			}
+			core.Cond.L.Unlock()
 		} else if words[0] == reject {
 			core.Friending = core.REJECT
+			core.Cond.Signal()
 		} else if words[0] == friend {
 			if len(words) == 2 {
 				friendInfo := strings.Split(words[1], "@")
