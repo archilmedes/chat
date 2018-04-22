@@ -1,8 +1,8 @@
 package db
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func FriendsTest(t *testing.T) {
@@ -16,7 +16,7 @@ func FriendSetup(t *testing.T) {
 	assert.Equal(t, 3, len(friends))
 	assert.Equal(t, "archilmedes", friends[0].Username)
 	assert.Equal(t, "10.192.345.987", friends[1].IP)
-	assert.Equal(t,"11:11:11:11", friends[2].MAC)
+	assert.Equal(t, "11:11:11:11", friends[2].MAC)
 	assert.Equal(t, "andrew", friends[2].DisplayName)
 }
 

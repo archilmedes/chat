@@ -1,16 +1,16 @@
 package server
 
 import (
+	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
 	"log"
 	"net"
 	"time"
-	"encoding/gob"
-	"encoding/json"
-	"github.com/wavyllama/chat/core"
 )
 
 const (
@@ -71,7 +71,7 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 			fmt.Printf("You received a friend request from %s at %s\n", sourceUsername, sourceIP)
 			var friendDisplayName string
 			for {
-				friendDisplayName = core.GetDisplayNameFromConsole()
+				friendDisplayName = core.GetDisplayNameFromConsole(sourceIP, sourceUsername)
 				if s.User.IsFriendsWith(friendDisplayName) {
 					fmt.Printf("You already have a friend named '%s'\n", friendDisplayName)
 					continue
@@ -100,7 +100,7 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 			createdSession = true
 		} else if len(sessions) == 2 && messageYourself {
 			// Communicating between yourself, rotate sessions based on round (even/odd)
-			sess = sessions[round % 2]
+			sess = sessions[round%2]
 		} else {
 			sess = sessions[0]
 		}

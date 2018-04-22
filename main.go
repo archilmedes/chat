@@ -3,21 +3,23 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/wavyllama/chat/core"
+	"github.com/wavyllama/chat/db"
+	"github.com/wavyllama/chat/protocol"
 	"github.com/wavyllama/chat/server"
 	"log"
 	"os"
 	"os/signal"
-	"syscall"
-	"github.com/wavyllama/chat/core"
-	"github.com/wavyllama/chat/db"
-	"strings"
 	"runtime"
-	"github.com/wavyllama/chat/protocol"
+	"strings"
+	"syscall"
 )
 
 const (
 	exit        = ":exit"
 	friend      = ":friend"
+	accept      = ":accept"
+	reject      = ":reject"
 	displayName = ":displayName"
 )
 
@@ -31,6 +33,12 @@ func handleInput(program *server.Server, message string) {
 	if message[0] == ':' {
 		if words[0] == exit {
 			runtime.Goexit()
+		} else if words[0] == accept {
+			core.Friending = core.ACCEPT
+			for core.Friending == core.ACCEPT {
+			}
+		} else if words[0] == reject {
+			core.Friending = core.REJECT
 		} else if words[0] == friend {
 			if len(words) == 2 {
 				friendInfo := strings.Split(words[1], "@")

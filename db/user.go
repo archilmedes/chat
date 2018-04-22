@@ -43,4 +43,3 @@ func (u *User) UpdateMyIP() bool {
 func UserLogin(username string, password string) *User {
 	return GetUser(username, password)
 }
-

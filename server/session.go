@@ -25,7 +25,7 @@ func NewSession(from *db.User, to *db.Friend, protocol protocol.Protocol, startT
 }
 
 // Return a new session between a user and his/her friend based on a message
-func NewSessionFromUserAndMessage(from *db.User, to*db.Friend, protoType string, startSessionTime time.Time) *Session {
+func NewSessionFromUserAndMessage(from *db.User, to *db.Friend, protoType string, startSessionTime time.Time) *Session {
 	return NewSession(from, to, protocol.CreateProtocolFromType(protoType), startSessionTime)
 }
 
