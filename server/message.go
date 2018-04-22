@@ -3,31 +3,52 @@
 package server
 
 import (
-	"github.com/wavyllama/chat/db"
-	"github.com/wavyllama/chat/protocol"
 	"time"
 )
 
-// Struct for messages being sent
-type Message struct {
-	SourceMAC, SourceIP, DestIP string
-	StartProtoTimestamp         time.Time
-	StartProto, Text            string // If a protocol is started, StartProto will be defined
-	ID                          int
-	Handshake                   bool
+// Generic interface for messages being sent and received
+type Message interface {
+	SourceID() (string, string) // MAC address, Username
+	DestID() string             // Username
 }
 
-// Create new Message to send a message
-func NewMessage(from *db.User, destIp string, text string) *Message {
-	return &Message{
-		SourceMAC: (*from).MAC, SourceIP: (*from).IP,
-		DestIP: destIp, Text: text,
-		StartProto: ""}
+type GenericMessage struct {
+	Message
+	SourceMAC, SourceUsername, DestUsername string
 }
 
-// Start a protocol and its handshake
-func (m *Message) StartProtocol(proto protocol.Protocol) {
-	m.StartProtoTimestamp = time.Now()
-	m.Handshake = true
-	m.StartProto = proto.ToType()
+// Message for sending and receiving friend requests/info
+type FriendMessage struct {
+	GenericMessage
+}
+
+// Message for handshaking an securing a session
+type HandshakeMessage struct {
+	GenericMessage
+	Round       int
+	SessionTime time.Time
+	ProtoType   string
+	Secret      []byte
+}
+
+// Message for sending regular information to a friend
+type ChatMessage struct {
+	GenericMessage
+	Text []byte
+}
+
+func (m *GenericMessage) NewPayload(SourceMAC, SourceUsername, DestUsername string) {
+	(*m).SourceMAC = SourceMAC
+	(*m).SourceUsername = SourceUsername
+	(*m).DestUsername = DestUsername
+}
+
+// Get source-identifying MAC and username info
+func (m *GenericMessage) SourceID() (string, string) {
+	return (*m).SourceMAC, (*m).SourceUsername
+}
+
+// Get destination-identifying username
+func (m *GenericMessage) DestID() string {
+	return (*m).DestUsername
 }

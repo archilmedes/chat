@@ -1,9 +1,10 @@
 package server
 
 import (
-	"encoding/json"
+	"encoding/gob"
 	"errors"
 	"fmt"
+	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
 	"log"
@@ -23,6 +24,12 @@ type Server struct {
 	Sessions *[]Session
 }
 
+func init() {
+	gob.Register(&FriendMessage{})
+	gob.Register(&HandshakeMessage{})
+	gob.Register(&ChatMessage{})
+}
+
 // Setup listener for the server
 func setupServer(address string) (*net.TCPListener, error) {
 	tcpAddr, err := net.ResolveTCPAddr(Network, address)
@@ -35,82 +42,117 @@ func setupServer(address string) (*net.TCPListener, error) {
 // Handle receiving messages from a TCPConn
 func (s *Server) handleConnection(conn *net.TCPConn) {
 	defer conn.Close()
-	decoder := json.NewDecoder(conn)
+	decoder := gob.NewDecoder(conn)
 	var msg Message
 	if err := decoder.Decode(&msg); err != nil {
-		log.Panicf("handleConnection: %s", err.Error())
+		log.Panicf("Error decoding message: %s", err.Error())
 	}
 
-	if s.User.IP != msg.DestIP {
-		log.Panicln("User received a message that was not meant for them")
+	sourceIP := conn.RemoteAddr().(*net.TCPAddr).IP.String()
+	sourceMAC, sourceUsername := msg.SourceID()
+	if sourceMAC == "" || sourceUsername == "" {
+		log.Panicln("Received ill-formatted message")
 	}
+	if msg.DestID() != s.User.Username {
+		fmt.Println("Received a message but it was not for me.")
+		return
+	}
+	messageYourself := sourceMAC == s.User.MAC && sourceUsername == s.User.Username
+	sessions := s.GetSessionsWithFriend(sourceMAC, sourceUsername)
+	friend := s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
 
-	var sess Session
-	oldNum := len(*(*s).Sessions)
+	switch msg.(type) {
+	case *FriendMessage:
+		if friend == nil {
+			friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
+			if len(friendDisplayName) != 0 {
+				s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
+				// Send a friend request back
+				s.SendFriendRequest(sourceIP, sourceUsername)
+			}
+			// else friend request is rejected, so don't respond back
+		}
+	case *HandshakeMessage:
+		// We are in a handshake, so the friend should exist already
+		if friend == nil {
+			friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
+			if len(friendDisplayName) == 0 {
+				// If we rejected a friend during the handshake, then don't respond back to the handshake
+				return
+			}
+			s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
+			friend = s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
+		}
+		var createdSession bool
+		var sess Session
+		round := msg.(*HandshakeMessage).Round
+		protoType, startSessionTime := msg.(*HandshakeMessage).ProtoType, msg.(*HandshakeMessage).SessionTime
 
-	// If part of the handshake
-	sessions := s.GetSessionsToIP(msg.SourceIP)
-	messageYourself := msg.SourceIP == msg.DestIP
-	if msg.Handshake {
 		// In a handshake, create a new session if there aren't the required number of sessions in either situation
 		if len(sessions) != 2 && messageYourself || (len(sessions) != 1 && !messageYourself) {
-			sess = *NewSessionFromUserAndMessage(s.User, msg)
+			sess = *NewSessionFromUserAndMessage(s.User, friend, protoType, startSessionTime)
 			*(*s).Sessions = append(*(*s).Sessions, sess)
+			createdSession = true
 		} else if len(sessions) == 2 && messageYourself {
-			// Communicating between yourself, rotate sessions based on message id (even/odd)
-			idx := msg.ID % 2
-			sess = sessions[idx]
+			// Communicating between yourself, rotate sessions based on round (even/odd)
+			sess = sessions[round%2]
 		} else {
 			sess = sessions[0]
 		}
-	} else if messageYourself {
+
+		dec, err := sess.Proto.Decrypt(msg.(*HandshakeMessage).Secret)
+
+		switch errorType := err.(type) {
+		case protocol.OTRHandshakeStep:
+			// Send each part of the handshake message back and immediately return
+			for _, stepMessage := range dec {
+				reply := new(HandshakeMessage)
+				reply.NewPayload(s.User.MAC, s.User.Username, sourceUsername)
+				reply.Secret = stepMessage
+				reply.ProtoType = msg.(*HandshakeMessage).ProtoType
+				// If we created a session here, then set current time as start time
+				if createdSession {
+					reply.SessionTime = time.Now()
+				}
+				reply.Round = round + 1
+				s.sendMessage(sourceIP, reply)
+			}
+			return
+		default:
+			// another type of error, which means err is probably not nil
+			if err != nil {
+				log.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
+			}
+		}
+	case *ChatMessage:
+		if len(sessions) == 0 {
+			return
+		}
+		var sess Session
 		// There are two sessions, so grab the one that doesn't have the same timestamp as you
-		if sessions[0].StartTime == msg.StartProtoTimestamp {
+		if messageYourself {
 			sess = sessions[1]
 		} else {
+			// There should only be one session between A -> B if you aren't messaging yourself, so grab that
 			sess = sessions[0]
 		}
-	} else {
-		// There should only be one session between A -> B if you aren't messaging yourself, so grab that
-		sess = sessions[0]
-	}
-	newNum := len(*(*s).Sessions)
-	createdSession := oldNum != newNum
-
-	dec, err := sess.Proto.Decrypt([]byte(msg.Text))
-
-	switch errorType := err.(type) {
-	case protocol.OTRHandshakeStep:
-		// If it's part of the OTR handshake, send each part of the message back directly to the source,
-		// and immediately return
-
-		for _, stepMessage := range dec {
-			reply := NewMessage(s.User, msg.SourceIP, string(stepMessage))
-			reply.StartProtocol(sess.Proto)
-			if createdSession {
-				reply.StartProtoTimestamp = time.Now()
-			}
-			reply.ID = msg.ID + 1
-			s.sendMessage(reply)
-		}
-		return
-	default:
-		if err != nil {
-			log.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
-		}
-		if createdSession { // That means msg.Handshake must be true
-			reply := NewMessage(s.User, msg.SourceIP, msg.Text)
-			reply.StartProtocol(sess.Proto)
-			if createdSession {
-				reply.StartProtoTimestamp = time.Now()
-			}
-			reply.ID = msg.ID + 1
-			s.sendMessage(reply)
+		dec, _ := sess.Proto.Decrypt(msg.(*ChatMessage).Text)
+		if sess.Proto.IsActive() && dec[0] != nil {
+			// Print the decoded message and IP
+			fmt.Printf("%s: %s\n", friend.DisplayName, dec[0])
 		}
 	}
-	if sess.Proto.IsActive() && dec[0] != nil {
-		// Print the decoded message and IP
-		fmt.Printf("%s: %s\n", msg.SourceIP, dec[0])
+}
+
+func (s *Server) getDisplayName(sourceUsername string, sourceIP string) string {
+	fmt.Printf("You received a friend request from %s at %s\n", sourceUsername, sourceIP)
+	var friendDisplayName string
+	for {
+		friendDisplayName = core.GetDisplayNameFromConsole(sourceIP, sourceUsername)
+		if !s.User.IsFriendsWith(friendDisplayName) {
+			return friendDisplayName
+		}
+		fmt.Printf("You already have a friend named '%s'\n", friendDisplayName)
 	}
 }
 
@@ -144,6 +186,15 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	(*s).Sessions = &[]Session{}
 	go s.receive()
 	log.Printf("Listening on: '%s:%d'", ip, Port)
+
+	// Updates the IP address of the user and create a friend for yourself
+	if s.User.GetFriendByDisplayName(core.Self) == nil {
+		s.User.AddFriend(core.Self, mac, ip, username)
+	}
+
+	s.User.UpdateMyIP()
+	s.StartSession(core.Self, protocol.OTRProtocol{})
+
 	return nil
 }
 
@@ -154,42 +205,26 @@ func (s *Server) Shutdown() error {
 }
 
 // Sends a formatted Message object with the server, after an active session between the two users have been established
-func (s *Server) sendMessage(msg *Message) error {
-	dialer, err := initDialer(fmt.Sprintf("%s:%d", msg.DestIP, Port))
+func (s *Server) sendMessage(destIp string, msg Message) error {
+	dialer, err := initDialer(fmt.Sprintf("%s:%d", destIp, Port))
 	if err != nil {
 		return err
 	}
 
-	// Unless you're handshaking, then you must have an active session to send a message
-	sessions := s.GetSessionsToIP((*msg).DestIP)
-	if len(sessions) == 0 && !msg.Handshake {
-		return errors.New(fmt.Sprintf("Cannot communicate with %s without an active session\n", msg.DestIP))
-	} else if len(sessions) != 0 && !msg.Handshake {
-		(*msg).StartProtoTimestamp = sessions[0].StartTime
-		cyp, err := sessions[0].Proto.Encrypt([]byte((*msg).Text))
-		if err != nil {
-			return err
-		}
-		(*msg).Text = string(cyp[0])
-	}
-
-	encoder := json.NewEncoder(dialer)
-	if err := encoder.Encode(msg); err != nil {
+	encoder := gob.NewEncoder(dialer)
+	if err := encoder.Encode(&msg); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Send a message to another Server
-func (s *Server) Send(destIp string, message string) error {
-	return s.sendMessage(NewMessage(s.User, destIp, message))
-}
-
-// Get all sessions that a user talks to an IP. There are only 2 if a user is talking to himself
-func (s *Server) GetSessionsToIP(ip string) []Session {
+// Get all sessions that a user talks to an IP
+// There are only 2 if a user is talking to himself
+// otherwise only 1 session is returned
+func (s *Server) GetSessionsWithFriend(friendMAC string, friendUsername string) []Session {
 	var filterSessions []Session
 	for _, sess := range *(*s).Sessions {
-		if sess.ConverseWith(ip) {
+		if sess.To.MAC == friendMAC && sess.To.Username == friendUsername {
 			filterSessions = append(filterSessions, sess)
 		}
 	}
@@ -197,15 +232,62 @@ func (s *Server) GetSessionsToIP(ip string) []Session {
 }
 
 // Start a session with a destination IP using a protocol
-func (s *Server) StartSession(destIp string, proto protocol.Protocol) error {
+func (s *Server) StartSession(displayName string, proto protocol.Protocol) error {
+	friend := s.User.GetFriendByDisplayName(displayName)
+	if friend == nil {
+		fmt.Printf("You do not have a friend named '%s'\n", displayName)
+	}
+	sessions := s.GetSessionsWithFriend(friend.MAC, friend.Username)
+	if len(sessions) != 0 {
+		return nil
+	}
+
 	firstMessage, err := proto.NewSession()
 	if err != nil {
 		log.Panicf("StartSession: Error starting new session: %s", err)
 		return err
 	}
 
-	msg := NewMessage(s.User, destIp, firstMessage)
-	msg.StartProtocol(proto)
-	msg.ID = 0
-	return s.sendMessage(msg)
+	msg := new(HandshakeMessage)
+	msg.NewPayload(s.User.MAC, s.User.Username, friend.Username)
+	msg.Secret = []byte(firstMessage)
+	msg.ProtoType = proto.ToType()
+	msg.Round = 0
+	return s.sendMessage(friend.IP, msg)
+}
+
+// Sends a friend request to a specified destUsername@destIP
+func (s *Server) SendFriendRequest(destIP, destUsername string) error {
+	friendRequest := new(FriendMessage)
+	friendRequest.NewPayload(s.User.MAC, s.User.Username, destUsername)
+
+	return s.sendMessage(destIP, friendRequest)
+}
+
+// Sends a chat message based on friend display name
+func (s *Server) SendChatMessage(friendDisplayName, message string) error {
+	chatMsg := new(ChatMessage)
+
+	friend := s.User.GetFriendByDisplayName(friendDisplayName)
+	if friend == nil {
+		return errors.New(fmt.Sprintf("Friend with display name '%s' does not exist", friendDisplayName))
+	}
+	sessions := s.GetSessionsWithFriend(friend.MAC, friend.Username)
+	if len(sessions) == 0 {
+		return errors.New(fmt.Sprintf("Cannot communicate with '%s' without an active session\n", friendDisplayName))
+	}
+	cyp, err := sessions[0].Proto.Encrypt(chatMsg.Text)
+	if err != nil {
+		return err
+	}
+	(*chatMsg).Text = cyp[0]
+
+	chatMsg.NewPayload(s.User.MAC, s.User.Username, friend.Username)
+	(*chatMsg).Text = []byte(message)
+
+	if err := s.sendMessage(friend.IP, chatMsg); err != nil {
+		// We had an issue with sending a message, so clear our session with the user
+		sessions[0].EndSession()
+	}
+	return nil
 }
