@@ -8,13 +8,6 @@ import (
 	"time"
 )
 
-func TestSession_ConverseWith(t *testing.T) {
-	alice, bob, sess := setUpSession()
-
-	assert.True(t, sess.ConverseWith(bob.IP))
-	assert.False(t, sess.ConverseWith(alice.IP))
-}
-
 func setUpSession() (*db.User, *db.Friend, *Session) {
 	alice := new(db.User)
 	alice.IP = "1.2.3.4"
