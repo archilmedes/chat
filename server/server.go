@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/gob"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/wavyllama/chat/core"
@@ -48,8 +47,6 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	if err := decoder.Decode(&msg); err != nil {
 		log.Panicf("Error decoding message: %s", err.Error())
 	}
-	res, _ := json.Marshal(msg)
-	fmt.Printf("RECEIVED MESSAGE: %s\n", string(res))
 
 	sourceIP := conn.RemoteAddr().(*net.TCPAddr).IP.String()
 	sourceMAC, sourceUsername := msg.SourceID()
@@ -67,26 +64,17 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	switch msg.(type) {
 	case *FriendMessage:
 		if friend == nil {
-			// TODO: stop listener server in week 4
-			fmt.Printf("You received a friend request from %s at %s\n", sourceUsername, sourceIP)
-			var friendDisplayName string
-			for {
-				friendDisplayName = core.GetDisplayNameFromConsole(sourceIP, sourceUsername)
-				if s.User.IsFriendsWith(friendDisplayName) {
-					fmt.Printf("You already have a friend named '%s'\n", friendDisplayName)
-					continue
-				}
-				break
-			}
-			// TODO: start listener server again in week 4
+			friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
 			s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
-
+			// Send a friend request back
 			s.SendFriendRequest(sourceIP, sourceUsername)
 		}
 	case *HandshakeMessage:
 		// We are in a handshake, so the friend should exist already
 		if friend == nil {
-			log.Panicln("You must be a friend to participate in a handshake")
+			friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
+			s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
+			friend = s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
 		}
 		var createdSession bool
 		var sess Session
@@ -144,6 +132,20 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 			fmt.Printf("%s: %s\n", friend.DisplayName, dec[0])
 		}
 	}
+}
+
+func (s *Server) getDisplayName(sourceUsername string, sourceIP string) string {
+	fmt.Printf("You received a friend request from %s at %s\n", sourceUsername, sourceIP)
+	var friendDisplayName string
+	for {
+		friendDisplayName = core.GetDisplayNameFromConsole(sourceIP, sourceUsername)
+		if s.User.IsFriendsWith(friendDisplayName) {
+			fmt.Printf("You already have a friend named '%s'\n", friendDisplayName)
+			continue
+		}
+		break
+	}
+	return friendDisplayName
 }
 
 // Function that continuously polls for new messages being sent to the server

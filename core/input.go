@@ -14,7 +14,7 @@ var Cond = sync.NewCond(&mutex)
 
 func getDisplayName() string {
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print("Enter display name: ")
+	fmt.Println("Enter display name: ")
 	scanner.Scan()
 	displayName := strings.TrimSpace(scanner.Text())
 	if strings.ToLower(displayName) == Self {
@@ -27,7 +27,7 @@ func getDisplayName() string {
 // Get display name from stdin
 func GetDisplayNameFromConsole(ip string, username string) string {
 	Friending = DONE
-	fmt.Printf("You have received a friend request from %s@%s (':accept' or ':reject:'): ", username, ip)
+	fmt.Printf("You have received a friend request from %s@%s (':accept' or ':reject:'):\n", username, ip)
 	defer func() {
 		Friending = DONE
 		Cond.Signal()
