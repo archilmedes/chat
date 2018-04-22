@@ -3,31 +3,54 @@
 package server
 
 import (
-	"github.com/wavyllama/chat/db"
-	"github.com/wavyllama/chat/protocol"
 	"time"
 )
 
-// Struct for messages being sent
-type Message struct {
-	SourceMAC, SourceIP, DestIP string
-	StartProtoTimestamp         time.Time
-	StartProto, Text            string // If a protocol is started, StartProto will be defined
-	ID                          int
-	Handshake                   bool
+// Generic interface for messages being sent and received
+type Message interface {
+	SourceID() (string, string) // MAC address, Username
+	DestID() string             // Username
 }
 
-// Create new Message to send a message
-func NewMessage(from *db.User, destIp string, text string) *Message {
-	return &Message{
-		SourceMAC: (*from).MAC, SourceIP: (*from).IP,
-		DestIP: destIp, Text: text,
-		StartProto: ""}
+// Message for sending and receiving friend requests/info
+type FriendMessage struct {
+	SourceMAC, SourceIPAddress, SourceUsername, DestUsername string
 }
 
-// Start a protocol and its handshake
-func (m *Message) StartProtocol(proto protocol.Protocol) {
-	m.StartProtoTimestamp = time.Now()
-	m.Handshake = true
-	m.StartProto = proto.ToType()
+// Message for handshaking an securing a session
+type HandshakeMessage struct {
+	Round                                                      int
+	SessionTime                                                time.Time
+	SourceMAC, SourceUsername, DestUsername, Secret, Prototype string
+}
+
+// Message for sending regular information to a friend
+type ChatMessage struct {
+	SourceMAC, SourceUsername, DestUsername, Text string
+}
+
+// Same implementations for getting ID for sender and receiver:
+
+func (m *FriendMessage) SourceID() (string, string) {
+	return (*m).SourceMAC, (*m).SourceUsername
+}
+
+func (m *HandshakeMessage) SourceID() (string, string) {
+	return (*m).SourceMAC, (*m).SourceUsername
+}
+
+func (m *ChatMessage) SourceID() (string, string) {
+	return (*m).SourceMAC, (*m).SourceUsername
+}
+
+func (m *FriendMessage) DestID() string {
+	return (*m).DestUsername
+}
+
+func (m *HandshakeMessage) DestID() string {
+	return (*m).DestUsername
+}
+
+func (m *ChatMessage) DestID() string {
+	return (*m).DestUsername
 }
