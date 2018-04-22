@@ -20,7 +20,6 @@ type GenericMessage struct {
 // Message for sending and receiving friend requests/info
 type FriendMessage struct {
 	GenericMessage
-	SourceIPAddress string
 }
 
 // Message for handshaking an securing a session
