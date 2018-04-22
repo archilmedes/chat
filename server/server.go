@@ -65,14 +65,21 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	case *FriendMessage:
 		if friend == nil {
 			friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
-			s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
-			// Send a friend request back
-			s.SendFriendRequest(sourceIP, sourceUsername)
+			if len(friendDisplayName) != 0 {
+				s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
+				// Send a friend request back
+				s.SendFriendRequest(sourceIP, sourceUsername)
+			}
+			// else friend request is rejected, so don't respond back
 		}
 	case *HandshakeMessage:
 		// We are in a handshake, so the friend should exist already
 		if friend == nil {
 			friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
+			if len(friendDisplayName) == 0 {
+				// If we rejected a friend during the handshake, then don't respond back to the handshake
+				return
+			}
 			s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
 			friend = s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
 		}
