@@ -3,6 +3,9 @@ package db
 import (
 	"log"
 	"github.com/wavyllama/chat/protocol"
+	"os/exec"
+	"strings"
+	"time"
 )
 
 // Stores a user's information
@@ -40,11 +43,42 @@ func (u *User) GetFriendByUsernameAndMAC(friendUsername, friendMAC string) *Frie
 	return getFriendByUsernameAndMAC(u.Username, friendUsername, friendMAC)
 }
 
+func (u *User) GetSessions(friendDisplayName string) []Session {
+	return getUserSessions(u.Username)
+}
+
 func (u *User) UpdateMyIP() bool {
 	return updateFriendIP(u.MAC, u.IP)
 }
 
-// Fetch conversations between another friend
+// Checks if a friend is online, and return a timestamp of when they were last online
+func (u *User) IsFriendOnline(friendDisplayName string) (bool, time.Time) {
+	var lastSeenTime time.Time
+	friend := u.GetFriendByDisplayName(friendDisplayName)
+	sessions := u.GetSessions(friendDisplayName)
+	if friend == nil || len(sessions) == 0 {
+		return false, lastSeenTime
+	}
+	out, _ := exec.Command("ping", friend.IP, "-c 5", "-i 3", "-w 10").Output()
+	friendOnline := !strings.Contains(string(out), "Destination Host Unreachable")
+
+	// If the friend is online now, then they are available now
+	if friendOnline {
+		lastSeenTime = time.Now()
+	} else {
+		// Otherwise their last message in the last session is when they were last online
+		//lastSeenTime, _ = time.Parse(time.RFC3339, sessions[len(sessions) - 1].timestamp)
+		messages := getSessionMessages(sessions[len(sessions) - 1].SSID)
+		for i := len(messages) - 1; i >= 0; i-- {
+			if messages[i].SentOrReceived == 1 {
+				lastSeenTime, _ = time.Parse(time.RFC3339, messages[i].Timestamp)
+			}
+		}
+	}
+	return friendOnline, lastSeenTime
+}
+
+// Fetch conversations between another friend and decrypts the contents of the messages everything
 func (u *User) GetConversationHistory(friendDisplayName string) [][]byte {
 	converse := GetConversationUsers(u.Username, friendDisplayName)
 	var messages [][]byte

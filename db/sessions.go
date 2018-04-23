@@ -8,7 +8,7 @@ import (
 // Stores a session between two users
 type Session struct {
 	SSID                                                        uint64
-	Username, FriendMac, ProtocolType, ProtocolValue, timestamp string
+	Username, FriendDisplayName, ProtocolType, ProtocolValue, timestamp string
 }
 
 // Inserts data into the sessions table
@@ -38,6 +38,12 @@ func deleteSessionsWithMessages(username string) bool {
 	return ExecuteChangeCommand(deleteCommand, "Failed to do large delete")
 }
 
+func getUserSessions(username string) []Session {
+	log.Println("Retrieving data from sessions...")
+	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE Username=%s", sessionsTableName, username)
+	return ExecuteSessionsQuery(queryCommand)
+}
+
 // Executes the specified database command
 func ExecuteSessionsQuery(query string) []Session {
 	results, err := DB.Query(query)
@@ -47,7 +53,7 @@ func ExecuteSessionsQuery(query string) []Session {
 	var sessions []Session
 	session := Session{}
 	for results.Next() {
-		err = results.Scan(&session.SSID, &session.Username, &session.FriendMac, &session.ProtocolType, &session.ProtocolValue, &session.timestamp)
+		err = results.Scan(&session.SSID, &session.Username, &session.FriendDisplayName, &session.ProtocolType, &session.ProtocolValue, &session.timestamp)
 		if err != nil {
 			log.Panicf("Failed to parse results from conversations with query: %s;  %s", query, err)
 		}

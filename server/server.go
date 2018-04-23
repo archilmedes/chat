@@ -10,7 +10,6 @@ import (
 	"log"
 	"net"
 	"time"
-	"bytes"
 	"encoding/json"
 )
 
@@ -23,7 +22,6 @@ const (
 type Server struct {
 	User     *db.User
 	Listener *net.TCPListener
-	Tunnel  chan bytes.Buffer
 	Sessions *[]Session
 }
 
@@ -183,31 +181,19 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	var err error
 	log.Println("Launching Server...")
 
-	// Set up the encrypted tunnel
-	(*s).Tunnel = make(chan bytes.Buffer)
-
-	//go core.SetupTunnel(username, Port)
-	//cmd := <-(*s).Tunnel
-	//fmt.Println(cmd.String())
-	//publicUrl := strings.Split(cmd.String(), "your url is: ")[1]
-	//fmt.Printf("Set public url to: %s\n", publicUrl)
-	//(*s).User.IP = publicUrl
-	//publicUrl := "https://sameerqa.localtunnel.me"
-	publicUrl := "0.tcp.ngrok.io:19565"
-
-	(*s).User = &db.User{username, mac, publicUrl}
-	//ipAddr := fmt.Sprintf("%s:%d", ip, Port)
-	if (*s).Listener, err = setupServer("localhost:4242"); err != nil {
+	(*s).User = &db.User{username, mac, ip}
+	localIpAddr := fmt.Sprintf("localhost:%d", Port)
+	if (*s).Listener, err = setupServer(localIpAddr); err != nil {
 		return err
 	}
 	// Initialize the session struct to a pointer
 	(*s).Sessions = &[]Session{}
 	go s.receive()
-	log.Printf("Listening on: '%s:%d'", ip, Port)
+	log.Printf("Listening on: '%s'", localIpAddr)
 
 	// Updates the IP address of the user and create a friend for yourself
 	if s.User.GetFriendByDisplayName(core.Self) == nil {
-		s.User.AddFriend(core.Self, mac, publicUrl, username)
+		s.User.AddFriend(core.Self, mac, ip, username)
 	}
 
 	s.User.UpdateMyIP()
