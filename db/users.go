@@ -45,8 +45,14 @@ func UpdateUserPassword(username string, password string) bool {
 
 // Delete a user
 func DeleteUser(username string) bool {
-	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE username= \"%s\"", usersTableName, username)
-	return ExecuteChangeCommand(deleteCommand, "Failed to delete user")
+	sessionsAndMessages := DeleteSessionsWithMessages(username)
+	friendsAndUser := DeleteUserAndFriends(username)
+	return sessionsAndMessages && friendsAndUser
+}
+
+func DeleteUserAndFriends(username string) bool {
+	deleteCommand := fmt.Sprintf("DELETE u, f FROM users u LEFT JOIN friends f ON u.username = f.username WHERE u.username=\"%s\"", username)
+	return ExecuteChangeCommand(deleteCommand, "Failed to delete user and friends")
 }
 
 // Get all users

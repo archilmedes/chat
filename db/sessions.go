@@ -32,6 +32,12 @@ func QuerySessions() []Session {
 	return ExecuteSessionsQuery(query)
 }
 
+// Deletes the sessions and messages of the given user
+func DeleteSessionsWithMessages(username string) bool {
+	deleteCommand := fmt.Sprintf("DELETE s, m FROM sessions s LEFT JOIN messages m ON s.SSID = m.SSID WHERE s.Username=\"%s\"", username)
+	return ExecuteChangeCommand(deleteCommand, "Failed to do large delete")
+}
+
 // Executes the specified database command
 func ExecuteSessionsQuery(query string) []Session {
 	results, err := DB.Query(query)
