@@ -13,8 +13,6 @@ import (
 	"syscall"
 )
 
-const Self = "me" // Display name for self.
-
 var dbAddUser = db.AddUser
 var dbGetUser = db.GetUser
 var dbUserExists = db.UserExists
@@ -27,7 +25,7 @@ func getUsername(scanner *bufio.Scanner) string {
 		fmt.Print("Username: ")
 		scanner.Scan()
 		username := strings.TrimSpace(scanner.Text())
-		if strings.EqualFold(Self, username) {
+		if strings.EqualFold(db.Self, username) {
 			fmt.Printf("getUsername: %s is reserved!\n", username)
 			continue
 		}

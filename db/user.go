@@ -13,6 +13,14 @@ type User struct {
 	Username, MAC, IP string
 }
 
+func NewUser(mac, ip, username string) *User {
+	user := User{}
+	user.MAC = mac
+	user.IP = ip
+	user.Username = username
+	return &user
+}
+
 // Persists the user to the database
 func (u *User) Create(password string) bool {
 	return AddUser(u.Username, password, u.IP)
@@ -48,25 +56,24 @@ func (u *User) GetSessions(friendDisplayName string) []Session {
 }
 
 func (u *User) UpdateMyIP() bool {
-	return updateFriendIP(u.MAC, u.IP)
+	return updateFriendIP(u.Username, u.MAC, u.IP)
 }
 
 // Checks if a friend is online, and return a timestamp of when they were last online
 func (u *User) IsFriendOnline(friendDisplayName string) (bool, time.Time) {
 	friend := u.GetFriendByDisplayName(friendDisplayName)
-	sessions := u.GetSessions(friendDisplayName)
 	// If they aren't a friend or you've never communicated with him/her
-	if friend == nil || len(sessions) == 0 {
-		log.Printf("User %s has never communicated with friend %s", u.Username, friendDisplayName)
+	if friend == nil {
 		return false, time.Time{}
 	}
 	out, _ := exec.Command("ping", friend.IP, "-c 5", "-i 3", "-w 10").Output()
 	friendOnline := !strings.Contains(string(out), "Destination Host Unreachable")
 	// If the friend is online now, then they are available now
-	if friendOnline {
+	if friendOnline || friend.DisplayName == Self {
 		return true, time.Now()
 	}
 
+	sessions := u.GetSessions(friendDisplayName)
 	var lastSeenTime time.Time
 	// Otherwise their last message in the last session is when they were last online
 	messages := getSessionMessages(sessions[len(sessions) - 1].SSID)

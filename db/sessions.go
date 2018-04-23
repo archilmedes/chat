@@ -41,7 +41,7 @@ func deleteSessionsWithMessages(username string) bool {
 // Get all sessions belonging to a user by the username
 func getUserSessions(username string) []Session {
 	log.Println("Retrieving data from sessions...")
-	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE Username=%s", sessionsTableName, username)
+	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE Username=\"%s\"", sessionsTableName, username)
 	return ExecuteSessionsQuery(queryCommand)
 }
 

@@ -178,22 +178,23 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	log.Println("Launching Server...")
 
 	(*s).User = &db.User{username, mac, ip}
-	localIpAddr := fmt.Sprintf("localhost:%d", Port)
-	if (*s).Listener, err = setupServer(localIpAddr); err != nil {
+	ipAddr := fmt.Sprintf("%s:%d", ip, Port)
+	if (*s).Listener, err = setupServer(ipAddr); err != nil {
 		return err
 	}
 	// Initialize the session struct to a pointer
 	(*s).Sessions = &[]Session{}
 	go s.receive()
-	log.Printf("Listening on: '%s'", localIpAddr)
+	log.Printf("Listening on: '%s'", ipAddr)
 
 	// Updates the IP address of the user and create a friend for yourself
-	if s.User.GetFriendByDisplayName(core.Self) == nil {
-		s.User.AddFriend(core.Self, mac, ip, username)
+	if s.User.GetFriendByDisplayName(db.Self) == nil {
+		// To communicate with yourself, just use localhost
+		s.User.AddFriend(db.Self, mac, "localhost", username)
 	}
 
 	s.User.UpdateMyIP()
-	s.StartOTRSession(core.Self)
+	s.StartOTRSession(db.Self)
 
 	return nil
 }
@@ -206,11 +207,10 @@ func (s *Server) Shutdown() error {
 
 // Sends a formatted Message object with the server, after an active session between the two users have been established
 func (s *Server) sendMessage(destIp string, msg Message) error {
-	dialer, err := initDialer(destIp)
+	dialer, err := initDialer(fmt.Sprintf("%s:%d", destIp, Port))
 	if err != nil {
 		return err
 	}
-
 	encoder := gob.NewEncoder(dialer)
 	if err := encoder.Encode(&msg); err != nil {
 		return err
@@ -245,7 +245,7 @@ func (s *Server) StartOTRSession(displayName string) error {
 	proto := new(protocol.OTRProtocol)
 	firstMessage, err := proto.NewSession()
 	if err != nil {
-		log.Panicf("StartOTRSession: Error starting new session: %s", err)
+		log.Printf("StartOTRSession: Error starting new session: %s", err)
 		return err
 	}
 

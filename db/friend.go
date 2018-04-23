@@ -5,6 +5,8 @@ import (
 	"log"
 )
 
+const Self = "me" // Display name for self.
+
 type Friend struct {
 	DisplayName, MAC, IP, Username string
 }
@@ -30,8 +32,8 @@ func deleteFriend(username, macAddress string) bool {
 }
 
 // Updates the user's IP Address
-func updateFriendIP(macAddress, ipAddress string) bool {
-	updateCommand := fmt.Sprintf("UPDATE %s SET friend_ip_address= \"%s\" WHERE friend_mac_address=\"%s\"", friendsTableName, ipAddress, macAddress)
+func updateFriendIP(username, macAddress, ipAddress string) bool {
+	updateCommand := fmt.Sprintf("UPDATE %s SET friend_ip_address= \"%s\" WHERE username=\"%s\" AND friend_mac_address=\"%s\"", friendsTableName, ipAddress, username, macAddress)
 	return ExecuteChangeCommand(updateCommand, "Failed to update friend")
 }
 

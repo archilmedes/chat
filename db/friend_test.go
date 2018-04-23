@@ -29,7 +29,7 @@ func AddUpdateDeleteFriendTest(t *testing.T) {
 	assert.True(t, addFriend("alice123", "andrew", "11:11:11:11", "987.654.321", "andrew"))
 	friends := getFriends("alice123")
 	assert.Equal(t, 2, len(friends))
-	assert.True(t, updateFriendIP("11:11:11:11", "444.444.444.444"))
+	assert.True(t, updateFriendIP("alice123", "11:11:11:11", "444.444.444.444"))
 	friends = getFriends("alice123")
 	assert.Equal(t, "444.444.444.444", friends[1].IP)
 	assert.True(t, deleteFriend("alice123", "11:11:11:11"))
