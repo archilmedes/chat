@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE TABLE IF NOT EXISTS users (
   username varchar(30) NOT NULL,
-  password varchar(1000) NOT NULL,
+  password varchar(256) NOT NULL,
   ipaddress varchar(18) NOT NULL
 );
 
