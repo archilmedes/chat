@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/wavyllama/chat/core"
-	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/server"
 	"log"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"github.com/wavyllama/chat/db"
 )
 
 const (
@@ -91,9 +91,9 @@ func main() {
 	if err != nil {
 		fmt.Printf("getAddresses: %s", err.Error())
 	}
+
 	// TODO would be good to change this to return a User object, we could use this to load conversation history, etc.
-	//username := core.Login(bufio.NewScanner(os.Stdin), ip)
-	username := "sameet"
+	username := core.Login(bufio.NewScanner(os.Stdin), ip)
 	var program server.Server
 	if err := program.Start(username, mac, ip); err != nil {
 		log.Fatalf("main: %s", err.Error())

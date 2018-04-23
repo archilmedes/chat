@@ -10,8 +10,8 @@ import (
 	"log"
 	"net"
 	"time"
-	"os/exec"
-	"strings"
+	"bytes"
+	"encoding/json"
 )
 
 const (
@@ -23,7 +23,7 @@ const (
 type Server struct {
 	User     *db.User
 	Listener *net.TCPListener
-	Tunnel  chan *exec.Cmd
+	Tunnel  chan bytes.Buffer
 	Sessions *[]Session
 }
 
@@ -50,9 +50,11 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	if err := decoder.Decode(&msg); err != nil {
 		log.Panicf("Error decoding message: %s", err.Error())
 	}
+	res, _ := json.Marshal(&msg)
+	fmt.Printf("RECEIVED MESSAGE: %s\n", string(res))
 
-	sourceIP := conn.RemoteAddr().(*net.TCPAddr).IP.String()
-	sourceMAC, sourceUsername := msg.SourceID()
+	//sourceIP := conn.RemoteAddr().(*net.TCPAddr).IP.String()
+	sourceMAC, sourceIP, sourceUsername := msg.SourceID()
 	if sourceMAC == "" || sourceUsername == "" {
 		log.Panicln("Received ill-formatted message")
 	}
@@ -110,7 +112,7 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 			// Send each part of the handshake message back and immediately return
 			for _, stepMessage := range dec {
 				reply := new(HandshakeMessage)
-				reply.NewPayload(s.User.MAC, s.User.Username, sourceUsername)
+				reply.NewPayload(s.User.MAC, s.User.IP, s.User.Username, sourceUsername)
 				reply.Secret = stepMessage
 				reply.ProtoType = msg.(*HandshakeMessage).ProtoType
 				// If we created a session here, then set current time as start time
@@ -168,7 +170,7 @@ func (s *Server) receive() {
 	}
 }
 
-func initDialer(address string) (*net.TCPConn, error) {
+func initDialer(address string) (net.Conn, error) {
 	tcpAddr, err := net.ResolveTCPAddr(Network, address)
 	if err != nil {
 		return nil, err
@@ -182,34 +184,20 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	log.Println("Launching Server...")
 
 	// Set up the encrypted tunnel
-	(*s).Tunnel = make(chan *exec.Cmd)
+	(*s).Tunnel = make(chan bytes.Buffer)
 
-	defer func() {
-		tunnel := <-(*s).Tunnel
-		tunnel.Process.Kill()
-	}()
-
-	go core.SetupTunnel(username, Port, (*s).Tunnel)
-	var cmd *exec.Cmd
-	var ok bool
-	for {
-		cmd, ok = <-(*s).Tunnel
-		if ok {
-			break
-		}
-	}
-	out, err := cmd.Output()
-	if err != nil {
-		log.Printf("Error starting encrypted tunnel: %s\n", err)
-		return err
-	}
-	publicUrl := strings.Split(string(out), "your url is: ")[1]
-	fmt.Printf("Set public url to: %s\n", publicUrl)
-	(*s).User.IP = publicUrl
+	//go core.SetupTunnel(username, Port)
+	//cmd := <-(*s).Tunnel
+	//fmt.Println(cmd.String())
+	//publicUrl := strings.Split(cmd.String(), "your url is: ")[1]
+	//fmt.Printf("Set public url to: %s\n", publicUrl)
+	//(*s).User.IP = publicUrl
+	//publicUrl := "https://sameerqa.localtunnel.me"
+	publicUrl := "0.tcp.ngrok.io:19565"
 
 	(*s).User = &db.User{username, mac, publicUrl}
-	ipAddr := fmt.Sprintf("%s:%d", ip, Port)
-	if (*s).Listener, err = setupServer(ipAddr); err != nil {
+	//ipAddr := fmt.Sprintf("%s:%d", ip, Port)
+	if (*s).Listener, err = setupServer("localhost:4242"); err != nil {
 		return err
 	}
 	// Initialize the session struct to a pointer
@@ -231,19 +219,23 @@ func (s *Server) Start(username string, mac string, ip string) error {
 // End server connection
 func (s *Server) Shutdown() error {
 	log.Println("Shutting Down Server...")
-	tunnel := <-(*s).Tunnel
-	tunnel.Process.Kill()
+	//tunnel := <-(*s).Tunnel
+	//tunnel.Process.Kill()
 	return (*s).Listener.Close()
 }
 
 // Sends a formatted Message object with the server, after an active session between the two users have been established
 func (s *Server) sendMessage(destIp string, msg Message) error {
-	dialer, err := initDialer(fmt.Sprintf("%s:%d", destIp, 17461))
+	fmt.Printf("Init dialer to %s\n", destIp)
+	dialer, err := initDialer(destIp)
 	if err != nil {
 		return err
 	}
 
+	res, _ := json.Marshal(&msg)
+	fmt.Printf("SENDING MESSAGE: %s\n", string(res))
 	encoder := gob.NewEncoder(dialer)
+
 	if err := encoder.Encode(&msg); err != nil {
 		return err
 	}
@@ -282,17 +274,22 @@ func (s *Server) StartOTRSession(displayName string) error {
 	}
 
 	msg := new(HandshakeMessage)
-	msg.NewPayload(s.User.MAC, s.User.Username, friend.Username)
+	msg.NewPayload(s.User.MAC, s.User.IP, s.User.Username, friend.Username)
 	msg.Secret = []byte(firstMessage)
 	msg.ProtoType = proto.ToType()
 	msg.Round = 0
-	return s.sendMessage(friend.IP, msg)
+
+	err = s.sendMessage(friend.IP, msg)
+	if err != nil {
+		log.Printf("Error starting OTR session: %s\n", err)
+	}
+	return err
 }
 
 // Sends a friend request to a specified destUsername@destIP
 func (s *Server) SendFriendRequest(destIP, destUsername string) error {
 	friendRequest := new(FriendMessage)
-	friendRequest.NewPayload(s.User.MAC, s.User.Username, destUsername)
+	friendRequest.NewPayload(s.User.MAC, s.User.IP, s.User.Username, destUsername)
 
 	return s.sendMessage(destIP, friendRequest)
 }
@@ -315,7 +312,7 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 	}
 	(*chatMsg).Text = cyp[0]
 
-	chatMsg.NewPayload(s.User.MAC, s.User.Username, friend.Username)
+	chatMsg.NewPayload(s.User.MAC, s.User.IP, s.User.Username, friend.Username)
 	(*chatMsg).Text = []byte(message)
 
 	if err := s.sendMessage(friend.IP, chatMsg); err != nil {
