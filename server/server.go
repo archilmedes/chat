@@ -11,6 +11,7 @@ import (
 	"net"
 	"time"
 	"os/exec"
+	"strings"
 )
 
 const (
@@ -179,7 +180,34 @@ func initDialer(address string) (*net.TCPConn, error) {
 func (s *Server) Start(username string, mac string, ip string) error {
 	var err error
 	log.Println("Launching Server...")
-	(*s).User = &db.User{username, mac, ip}
+
+	// Set up the encrypted tunnel
+	(*s).Tunnel = make(chan *exec.Cmd)
+
+	defer func() {
+		tunnel := <-(*s).Tunnel
+		tunnel.Process.Kill()
+	}()
+
+	go core.SetupTunnel(username, Port, (*s).Tunnel)
+	var cmd *exec.Cmd
+	var ok bool
+	for {
+		cmd, ok = <-(*s).Tunnel
+		if ok {
+			break
+		}
+	}
+	out, err := cmd.Output()
+	if err != nil {
+		log.Printf("Error starting encrypted tunnel: %s\n", err)
+		return err
+	}
+	publicUrl := strings.Split(string(out), "your url is: ")[1]
+	fmt.Printf("Set public url to: %s\n", publicUrl)
+	(*s).User.IP = publicUrl
+
+	(*s).User = &db.User{username, mac, publicUrl}
 	ipAddr := fmt.Sprintf("%s:%d", ip, Port)
 	if (*s).Listener, err = setupServer(ipAddr); err != nil {
 		return err
@@ -187,14 +215,11 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	// Initialize the session struct to a pointer
 	(*s).Sessions = &[]Session{}
 	go s.receive()
-	// Set up the encrypted tunnel
-	(*s).Tunnel = make(chan *exec.Cmd)
-	go core.SetupTunnel(username, Port, (*s).Tunnel)
 	log.Printf("Listening on: '%s:%d'", ip, Port)
 
 	// Updates the IP address of the user and create a friend for yourself
 	if s.User.GetFriendByDisplayName(core.Self) == nil {
-		s.User.AddFriend(core.Self, mac, ip, username)
+		s.User.AddFriend(core.Self, mac, publicUrl, username)
 	}
 
 	s.User.UpdateMyIP()
@@ -213,7 +238,7 @@ func (s *Server) Shutdown() error {
 
 // Sends a formatted Message object with the server, after an active session between the two users have been established
 func (s *Server) sendMessage(destIp string, msg Message) error {
-	dialer, err := initDialer(fmt.Sprintf("%s:%d", destIp, Port))
+	dialer, err := initDialer(fmt.Sprintf("%s:%d", destIp, 17461))
 	if err != nil {
 		return err
 	}
