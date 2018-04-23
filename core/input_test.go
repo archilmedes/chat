@@ -8,18 +8,20 @@ import (
 	"testing"
 )
 
-func TestRejectFriend(t *testing.T) {
+func setupTests() *os.File {
 	os.Stdin.Close()
-	f, _ := os.Open("input_test_reject.txt")
-	CondWait = func() {
-		Friending = REJECT
-	}
-	defer f.Close()
-	CondWait = func() {
-		Friending = ACCEPT
-	}
+	f, _ := os.Open("input_test.txt")
 	bufioNewScanner = func(r io.Reader) *bufio.Scanner {
 		return bufio.NewScanner(f)
+	}
+	return f
+}
+
+func TestRejectFriend(t *testing.T) {
+	f := setupTests()
+	defer f.Close()
+	CondWait = func() {
+		Friending = REJECT
 	}
 	defer func() {
 		CondWait = Cond.Wait
@@ -29,14 +31,10 @@ func TestRejectFriend(t *testing.T) {
 }
 
 func TestAcceptFriend(t *testing.T) {
-	os.Stdin.Close()
-	f, _ := os.Open("input_test_accept.txt")
+	f := setupTests()
 	defer f.Close()
 	CondWait = func() {
 		Friending = ACCEPT
-	}
-	bufioNewScanner = func(r io.Reader) *bufio.Scanner {
-		return bufio.NewScanner(f)
 	}
 	defer func() {
 		CondWait = Cond.Wait
