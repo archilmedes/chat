@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE TABLE IF NOT EXISTS users (
   username varchar(30) NOT NULL,
-  password varchar(1000) NOT NULL,
+  password varchar(256) NOT NULL,
   ipaddress varchar(18) NOT NULL
 );
 
@@ -36,12 +36,12 @@ CREATE TABLE IF NOT EXISTS friends (
 
 /* Inserting test data */
 /* Users */
-INSERT INTO users VALUES ("alice123", "alicepassword", "127.0.0.1");
-INSERT INTO users VALUES ("bob", "Password", "123.456.789");
-INSERT INTO users VALUES ("karateAMD", "pwd123", "192.168.10.123");
-INSERT INTO users VALUES ("sameetandpotatoes", "iLuvMacs", "10.192.345.987");
-INSERT INTO users VALUES ("archilmedes", "linuxFTW", "987.654.321");
-INSERT INTO users VALUES ("andrew", "anotherPass", "888.888.888");
+INSERT INTO users VALUES ("alice123", SHA2("alicepassword", 256), "127.0.0.1");
+INSERT INTO users VALUES ("bob", SHA2("Password", 256), "123.456.789");
+INSERT INTO users VALUES ("karateAMD", SHA2("pwd123", 256), "192.168.10.123");
+INSERT INTO users VALUES ("sameetandpotatoes", SHA2("iLuvMacs", 256), "10.192.345.987");
+INSERT INTO users VALUES ("archilmedes", SHA2("linuxFTW", 256), "987.654.321");
+INSERT INTO users VALUES ("andrew", SHA2("anotherPass", 256), "888.888.888");
 
 /* Sessions */
 INSERT INTO sessions VALUES (12, "alice123", "123.456.789", "otr", "str1", "2018-04-20 14:18:05.283410");

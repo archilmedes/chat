@@ -14,7 +14,7 @@ func UserExists(username string) bool {
 
 // Get user from database
 func GetUser(username string, password string) *User {
-	query := fmt.Sprintf("SELECT username, ipaddress FROM %s WHERE username= \"%s\" and password= \"%s\"", usersTableName, username, password)
+	query := fmt.Sprintf("SELECT username, ipaddress FROM %s WHERE username= \"%s\" and password=SHA2(\"%s\", 256)", usersTableName, username, password)
 	users := ExecuteUsersQuery(query)
 	if len(users) == 0 {
 		return nil
@@ -25,7 +25,7 @@ func GetUser(username string, password string) *User {
 // Add new user to database
 func AddUser(username string, password string, ipAddress string) bool {
 	log.Println("Inserting data into users...")
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", \"%s\", \"%s\")", usersTableName, username, password, ipAddress)
+	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", SHA2(\"%s\", 256), \"%s\")", usersTableName, username, password, ipAddress)
 	return ExecuteChangeCommand(insertCommand, "Failed to add user")
 }
 
@@ -39,14 +39,21 @@ func UpdateUserIP(username string, ipAddress string) bool {
 // Update the password of a user
 func UpdateUserPassword(username string, password string) bool {
 	log.Println("Updating user's password...")
-	updateCommand := fmt.Sprintf("UPDATE %s SET password=\"%s\" WHERE username=\"%s\"", usersTableName, password, username)
+	updateCommand := fmt.Sprintf("UPDATE %s SET password=SHA2(\"%s\", 256) WHERE username=\"%s\"", usersTableName, password, username)
 	return ExecuteChangeCommand(updateCommand, "Failed to update user's password")
 }
 
 // Delete a user
 func DeleteUser(username string) bool {
-	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE username= \"%s\"", usersTableName, username)
-	return ExecuteChangeCommand(deleteCommand, "Failed to delete user")
+	sessionsAndMessages := deleteSessionsWithMessages(username)
+	friendsAndUser := deleteUserAndFriends(username)
+	return sessionsAndMessages && friendsAndUser
+}
+
+// Deletes a user and their friends
+func deleteUserAndFriends(username string) bool {
+	deleteCommand := fmt.Sprintf("DELETE u, f FROM users u LEFT JOIN friends f ON u.username = f.username WHERE u.username=\"%s\"", username)
+	return ExecuteChangeCommand(deleteCommand, "Failed to delete user and friends")
 }
 
 // Get all users
