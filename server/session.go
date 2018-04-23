@@ -38,5 +38,6 @@ func (s *Session) EndSession() bool {
 // Saves a session to the database
 func (s *Session) Save() bool {
 	sessionID := s.Proto.GetSessionID()
-	return db.InsertIntoSessions(sessionID, s.From.Username, s.To.MAC, s.Proto.ToType(), string(s.Proto.Serialize()), s.StartTime.Format(time.RFC3339))
+	bb := s.Proto.Serialize()
+	return db.InsertIntoSessions(sessionID, s.From.Username, s.To.MAC, s.Proto.ToType(), bb, s.StartTime.Format(time.RFC3339))
 }

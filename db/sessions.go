@@ -8,11 +8,12 @@ import (
 // Stores a session between two users
 type Session struct {
 	SSID                                                        uint64
-	Username, FriendDisplayName, ProtocolType, ProtocolValue, timestamp string
+	Username, FriendDisplayName, ProtocolType, timestamp string
+	ProtocolValue []byte
 }
 
 // Inserts data into the sessions table
-func InsertIntoSessions(SSID uint64, username string, friendMac string, protocolType string, protocolValue string, timestamp string) bool {
+func InsertIntoSessions(SSID uint64, username string, friendMac string, protocolType string, protocolValue []byte, timestamp string) bool {
 	log.Println("Inserting data into sessions...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", sessionsTableName, SSID, username, friendMac, protocolType, protocolValue, timestamp)
 	return ExecuteChangeCommand(insertCommand, "Failed to insert into sessions")
