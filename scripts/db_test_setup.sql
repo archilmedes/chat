@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   username varchar(30) NOT NULL,
   friend_display_name varchar(30) NOT NULL,
   protocol_type varchar(8) NOT NULL,
-  protocol varchar(10000) NOT NULL,
+  protocol varbinary(10000) NOT NULL,
   session_timestamp timestamp(6) NOT NULL
 );
 

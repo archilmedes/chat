@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"log"
+	"encoding/hex"
 )
 
 // Stores a session between two users
@@ -15,7 +16,8 @@ type Session struct {
 // Inserts data into the sessions table
 func InsertIntoSessions(SSID uint64, username string, friendMac string, protocolType string, protocolValue []byte, timestamp string) bool {
 	log.Println("Inserting data into sessions...")
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", sessionsTableName, SSID, username, friendMac, protocolType, protocolValue, timestamp)
+	hexProtoValue := hex.EncodeToString(protocolValue)
+	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", \"%s\", UNHEX(\"%s\"), \"%s\")", sessionsTableName, SSID, username, friendMac, protocolType, hexProtoValue, timestamp)
 	return ExecuteChangeCommand(insertCommand, "Failed to insert into sessions")
 }
 

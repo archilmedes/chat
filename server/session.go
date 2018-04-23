@@ -4,6 +4,8 @@ import (
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
 	"time"
+	"fmt"
+	"strings"
 )
 
 // Struct for a messaging session between a user and his/her friend
@@ -39,5 +41,8 @@ func (s *Session) EndSession() bool {
 func (s *Session) Save() bool {
 	sessionID := s.Proto.GetSessionID()
 	bb := s.Proto.Serialize()
-	return db.InsertIntoSessions(sessionID, s.From.Username, s.To.MAC, s.Proto.ToType(), bb, s.StartTime.Format(time.RFC3339))
+
+	timestampParts := strings.Split(s.StartTime.String(), " ")
+	formattedTime := fmt.Sprintf("%s %s", timestampParts[0], timestampParts[1])
+	return db.InsertIntoSessions(sessionID, s.From.Username, s.To.MAC, s.Proto.ToType(), bb, formattedTime)
 }
