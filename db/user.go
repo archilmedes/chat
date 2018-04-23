@@ -53,26 +53,26 @@ func (u *User) UpdateMyIP() bool {
 
 // Checks if a friend is online, and return a timestamp of when they were last online
 func (u *User) IsFriendOnline(friendDisplayName string) (bool, time.Time) {
-	var lastSeenTime time.Time
 	friend := u.GetFriendByDisplayName(friendDisplayName)
 	sessions := u.GetSessions(friendDisplayName)
+	// If they aren't a friend or you've never communicated with him/her
 	if friend == nil || len(sessions) == 0 {
-		return false, lastSeenTime
+		log.Printf("User %s has never communicated with friend %s", u.Username, friendDisplayName)
+		return false, time.Time{}
 	}
 	out, _ := exec.Command("ping", friend.IP, "-c 5", "-i 3", "-w 10").Output()
 	friendOnline := !strings.Contains(string(out), "Destination Host Unreachable")
-
 	// If the friend is online now, then they are available now
 	if friendOnline {
-		lastSeenTime = time.Now()
-	} else {
-		// Otherwise their last message in the last session is when they were last online
-		//lastSeenTime, _ = time.Parse(time.RFC3339, sessions[len(sessions) - 1].timestamp)
-		messages := getSessionMessages(sessions[len(sessions) - 1].SSID)
-		for i := len(messages) - 1; i >= 0; i-- {
-			if messages[i].SentOrReceived == 1 {
-				lastSeenTime, _ = time.Parse(time.RFC3339, messages[i].Timestamp)
-			}
+		return true, time.Now()
+	}
+
+	var lastSeenTime time.Time
+	// Otherwise their last message in the last session is when they were last online
+	messages := getSessionMessages(sessions[len(sessions) - 1].SSID)
+	for i := len(messages) - 1; i >= 0; i-- {
+		if messages[i].SentOrReceived == 1 {
+			lastSeenTime, _ = time.Parse(time.RFC3339, messages[i].Timestamp)
 		}
 	}
 	return friendOnline, lastSeenTime

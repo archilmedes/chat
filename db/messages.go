@@ -40,7 +40,7 @@ func QueryMessages() []DBMessage {
 	return ExecuteMessagesQuery(query)
 }
 
-// Returns all data in the messages table
+// Returns all messages for a given session identified by SSID
 func getSessionMessages(SSID uint64) []DBMessage {
 	log.Println("Retrieving data from messages...")
 	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE SSID=%d", messagesTableName, SSID)

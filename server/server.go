@@ -10,7 +10,6 @@ import (
 	"log"
 	"net"
 	"time"
-	"encoding/json"
 )
 
 const (
@@ -48,10 +47,7 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 	if err := decoder.Decode(&msg); err != nil {
 		log.Panicf("Error decoding message: %s", err.Error())
 	}
-	res, _ := json.Marshal(&msg)
-	fmt.Printf("RECEIVED MESSAGE: %s\n", string(res))
 
-	//sourceIP := conn.RemoteAddr().(*net.TCPAddr).IP.String()
 	sourceMAC, sourceIP, sourceUsername := msg.SourceID()
 	if sourceMAC == "" || sourceUsername == "" {
 		log.Panicln("Received ill-formatted message")
@@ -168,7 +164,7 @@ func (s *Server) receive() {
 	}
 }
 
-func initDialer(address string) (net.Conn, error) {
+func initDialer(address string) (*net.TCPConn, error) {
 	tcpAddr, err := net.ResolveTCPAddr(Network, address)
 	if err != nil {
 		return nil, err
@@ -205,23 +201,17 @@ func (s *Server) Start(username string, mac string, ip string) error {
 // End server connection
 func (s *Server) Shutdown() error {
 	log.Println("Shutting Down Server...")
-	//tunnel := <-(*s).Tunnel
-	//tunnel.Process.Kill()
 	return (*s).Listener.Close()
 }
 
 // Sends a formatted Message object with the server, after an active session between the two users have been established
 func (s *Server) sendMessage(destIp string, msg Message) error {
-	fmt.Printf("Init dialer to %s\n", destIp)
 	dialer, err := initDialer(destIp)
 	if err != nil {
 		return err
 	}
 
-	res, _ := json.Marshal(&msg)
-	fmt.Printf("SENDING MESSAGE: %s\n", string(res))
 	encoder := gob.NewEncoder(dialer)
-
 	if err := encoder.Encode(&msg); err != nil {
 		return err
 	}

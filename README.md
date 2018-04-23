@@ -10,13 +10,6 @@ Fill in `config/config.go` with your mysql database credentials.
 
 ## Running the application
 
-You will need `npm` and you need to install:
-
-```
-npm install -g localtunnel
-```
-
-Then, run:
 ```
 go build
 ./chat

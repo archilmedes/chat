@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-var dbDeleteSession = db.DeleteSession
-
 // Struct for a messaging session between a user and his/her friend
 type Session struct {
 	From      *db.User
@@ -34,7 +32,7 @@ func NewSessionFromUserAndMessage(from *db.User, to *db.Friend, protoType string
 // Ends the current session
 func (s *Session) EndSession() bool {
 	s.Proto.EndSession()
-	return dbDeleteSession(s.Proto.GetSessionID())
+	return db.DeleteSession(s.Proto.GetSessionID())
 }
 
 // Saves a session to the database

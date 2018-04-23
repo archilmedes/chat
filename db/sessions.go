@@ -38,6 +38,7 @@ func deleteSessionsWithMessages(username string) bool {
 	return ExecuteChangeCommand(deleteCommand, "Failed to do large delete")
 }
 
+// Get all sessions belonging to a user by the username
 func getUserSessions(username string) []Session {
 	log.Println("Retrieving data from sessions...")
 	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE Username=%s", sessionsTableName, username)
