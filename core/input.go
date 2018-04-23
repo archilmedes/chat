@@ -11,15 +11,17 @@ import (
 var Friending FRFlag = DONE
 var mutex = sync.Mutex{}
 var Cond = sync.NewCond(&mutex)
+var CondWait = Cond.Wait
+var bufioNewScanner = bufio.NewScanner
 
 func getDisplayName() string {
-	scanner := bufio.NewScanner(os.Stdin)
+	scanner := bufioNewScanner(os.Stdin)
 	fmt.Println("Enter display name: ")
 	scanner.Scan()
 	displayName := strings.TrimSpace(scanner.Text())
 	if strings.ToLower(displayName) == Self {
-		fmt.Println("Username is reserved! Please select another")
-		getDisplayName()
+		fmt.Println("Username is reserved! Please select another.")
+		displayName = getDisplayName()
 	}
 	return displayName
 }
@@ -34,7 +36,7 @@ func GetDisplayNameFromConsole(ip string, username string) string {
 	}()
 	Cond.L.Lock()
 	for Friending == DONE {
-		Cond.Wait()
+		CondWait()
 	}
 	Cond.L.Unlock()
 	if Friending == REJECT {
