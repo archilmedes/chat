@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net"
 	"runtime"
-	"fmt"
 	"os/exec"
+	"fmt"
 	"log"
+	"os"
 )
 
 // Get MAC and public IPv4 addresses
@@ -48,6 +49,7 @@ errOccurred:
 func SetupTunnel(username string, port uint16, c chan *exec.Cmd) {
 	args := fmt.Sprintf("--port %d --subdomain %s", port, username)
 	cmd := exec.Command("lt", args)
+	cmd.Stdout = os.Stdout
 	err := cmd.Start()
 	if err != nil {
 		log.Fatalln(err.Error())

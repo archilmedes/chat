@@ -92,7 +92,8 @@ func main() {
 		fmt.Printf("getAddresses: %s", err.Error())
 	}
 	// TODO would be good to change this to return a User object, we could use this to load conversation history, etc.
-	username := core.Login(bufio.NewScanner(os.Stdin), ip)
+	//username := core.Login(bufio.NewScanner(os.Stdin), ip)
+	username := "sameet"
 	var program server.Server
 	if err := program.Start(username, mac, ip); err != nil {
 		log.Fatalf("main: %s", err.Error())
