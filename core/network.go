@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"os/exec"
 	"fmt"
-	"log"
+	"strconv"
 	"os"
 )
 
@@ -46,13 +46,11 @@ errOccurred:
 }
 
 // Set up an encrypted tunnel on a port and return the Cmd through the channel
-func SetupTunnel(username string, port uint16, c chan *exec.Cmd) {
-	args := fmt.Sprintf("--port %d --subdomain %s", port, username)
-	cmd := exec.Command("lt", args)
+func SetupTunnel(username string, port uint16) {
+	cmd := exec.Command("lt", "--port", strconv.Itoa(int(port)), "--subdomain" , username)
 	cmd.Stdout = os.Stdout
 	err := cmd.Start()
 	if err != nil {
-		log.Fatalln(err.Error())
+		fmt.Println(err)
 	}
-	c <- cmd
 }
