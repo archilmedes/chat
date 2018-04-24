@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"github.com/wavyllama/chat/db"
 )
 
 var Friending FRFlag = DONE
@@ -19,7 +20,7 @@ func getDisplayName() string {
 	fmt.Println("Enter display name: ")
 	scanner.Scan()
 	displayName := strings.TrimSpace(scanner.Text())
-	if strings.ToLower(displayName) == Self {
+	if strings.ToLower(displayName) == db.Self {
 		fmt.Println("Username is reserved! Please select another.")
 		displayName = getDisplayName()
 	}
