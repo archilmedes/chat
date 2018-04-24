@@ -16,7 +16,7 @@ if [ $build_all_rc -ne 0 ] ; then
     exit 1
 fi
 
-test_result=$(go test ./...)
+test_result=$(go test -p 1 ./...)
 test_rc=$?
 if [ $test_rc -ne 0 ]; then
     echo "git pre-commit check failed: tests failed."

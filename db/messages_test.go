@@ -5,7 +5,8 @@ import (
 	"testing"
 )
 
-func MessagesTest(t *testing.T) {
+func TestMessages(t *testing.T) {
+	SetupDatabaseForTests(t)
 	MessagesSetup(t)
 	InsertMessageTest(t)
 	DeleteMessageTest(t)
@@ -17,14 +18,14 @@ func MessagesSetup(t *testing.T) {
 	assert.Equal(t, uint64(52), messages[3].SSID)
 	assert.Equal(t, 0, messages[3].SentOrReceived)
 	assert.Equal(t, "2018-03-28 18:04:10.333333", messages[3].Timestamp)
-	assert.Equal(t, "lul", messages[3].Text)
+	assert.Equal(t, []byte("lul"), messages[3].Text)
 }
 
 func InsertMessageTest(t *testing.T) {
-	assert.True(t, InsertMessage(52, "wassup", "2018-04-12 05:01:10.888888", Received))
+	assert.True(t, InsertMessage(52, []byte("wassup"), "2018-04-12 05:01:10.888888", Received))
 	messages := QueryMessages()
 	assert.Equal(t, 9, len(messages))
-	assert.Equal(t, "wassup", messages[8].Text)
+	assert.Equal(t, []byte("wassup"), messages[8].Text)
 }
 
 func DeleteMessageTest(t *testing.T) {

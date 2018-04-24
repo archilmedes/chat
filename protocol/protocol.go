@@ -1,20 +1,34 @@
-// Contains protocol definition and plain protocol implementation
+// Package protocol contains basic protocol functionality to encrypt, decrypt messages with
+// plaintext and OTR protocols
 package protocol
 
 import (
 	"errors"
 	"fmt"
+	"encoding/gob"
+	"bytes"
+	"encoding/binary"
+	"crypto/rand"
 )
 
+// A generic Protocol interface to handle common protocol methods
 type Protocol interface {
+	InitFromBytes([]byte) error
 	Encrypt(in []byte) ([][]byte, error)
 	Decrypt(cypher []byte) ([][]byte, error)
 	IsEncrypted() bool
 	IsActive() bool
 	NewSession() (string, error)
+	GetSessionID() uint64
 	EndSession()
 	Serialize() []byte
 	ToType() string
+}
+
+// Type of protocol that just lets text pass through without applying any encryption
+type PlainProtocol struct {
+	Protocol
+	SessionID uint64
 }
 
 const (
@@ -22,20 +36,23 @@ const (
 	OTRType   = "otr"
 )
 
-// Type of protocol that just lets text pass through
-type PlainProtocol struct {
-	Protocol
-}
-
+// Wrap the a byte array into an array of messages
 func wrapMessage(in []byte) [][]byte {
 	b := make([][]byte, 1)
 	b[0] = in
 	return b
 }
 
+func init() {
+	gob.Register(&PlainProtocol{})
+	gob.Register(&OTRProtocol{})
+}
+
+// Given the protocol type, reconstruct the subclass
+// Should be used in conjunction with Protocol#InitFromBytes to re-create a protocol
 func CreateProtocolFromType(protoType string) Protocol {
 	if protoType == PlainType {
-		return PlainProtocol{}
+		return new(PlainProtocol)
 	} else if protoType == OTRType {
 		return NewOTRProtocol()
 	} else {
@@ -43,42 +60,56 @@ func CreateProtocolFromType(protoType string) Protocol {
 	}
 }
 
+func (p *PlainProtocol) InitFromBytes(dec []byte) error {
+	decBuf := bytes.NewBuffer(dec)
+	return gob.NewDecoder(decBuf).Decode(p)
+}
+
 // Encrypts the text by adding it into a 2D byte array
-func (p PlainProtocol) Encrypt(in []byte) ([][]byte, error) {
+func (p *PlainProtocol) Encrypt(in []byte) ([][]byte, error) {
 	return wrapMessage(in), nil
 }
 
 // Decrypts the message by just returning it
-func (p PlainProtocol) Decrypt(dec []byte) ([][]byte, error) {
+func (p *PlainProtocol) Decrypt(dec []byte) ([][]byte, error) {
 	return wrapMessage(dec), nil
 }
 
 // Always returns false as a plain protocol is never encrypted
-func (p PlainProtocol) IsEncrypted() bool {
+func (p *PlainProtocol) IsEncrypted() bool {
 	return false
 }
 
 // Always returns true as a plain protocol is always active
-func (p PlainProtocol) IsActive() bool {
+func (p *PlainProtocol) IsActive() bool {
 	return true
 }
 
 // Start a new plain protocol session
-func (p PlainProtocol) NewSession() (string, error) {
-	return "", nil
+func (p *PlainProtocol) NewSession() (string, error) {
+	var n uint64
+	err := binary.Read(rand.Reader, binary.LittleEndian, &n)
+	p.SessionID = n
+	return "", err
+}
+
+func (p *PlainProtocol) GetSessionID() uint64 {
+	return p.SessionID
 }
 
 // Ends a plain protocol session
-func (p PlainProtocol) EndSession() {
-	// no-op
+func (p *PlainProtocol) EndSession() {
+	p.SessionID = 0
 }
 
 // Serialize the protocol to save in a database
-func (p PlainProtocol) Serialize() []byte {
-	return []byte(nil)
+func (p *PlainProtocol) Serialize() []byte {
+	var b bytes.Buffer
+	gob.NewEncoder(&b).Encode(p)
+	return b.Bytes()
 }
 
 // Converts plain protocol to type
-func (p PlainProtocol) ToType() string {
+func (p *PlainProtocol) ToType() string {
 	return PlainType
 }

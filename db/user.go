@@ -1,8 +1,19 @@
 package db
 
+import (
+	"github.com/wavyllama/chat/protocol"
+	"os/exec"
+	"strings"
+	"time"
+)
+
 // Stores a user's information
 type User struct {
-	Username, MAC, IP string
+	MAC, IP, Username string
+}
+
+func NewUser(mac, ip, username string) *User {
+	return &User{MAC: mac, IP: ip, Username: username}
 }
 
 // Persists the user to the database
@@ -35,11 +46,54 @@ func (u *User) GetFriendByUsernameAndMAC(friendUsername, friendMAC string) *Frie
 	return getFriendByUsernameAndMAC(u.Username, friendUsername, friendMAC)
 }
 
-func (u *User) UpdateMyIP() bool {
-	return updateFriendIP(u.MAC, u.IP)
+// Return a user's sessions in descending order timestamp (most recent session first)
+func (u *User) GetSessions(friendDisplayName string) []Session {
+	return getUserSessions(u.Username)
 }
 
-// Log in the user or return null.
-func UserLogin(username string, password string) *User {
-	return GetUser(username, password)
+func (u *User) UpdateMyIP() bool {
+	return updateFriendIP(u.Username, u.MAC, u.IP)
+}
+
+// Checks if a friend is online, and return a timestamp of when they were last online
+func (u *User) IsFriendOnline(friendDisplayName string) (bool, time.Time) {
+	friend := u.GetFriendByDisplayName(friendDisplayName)
+	// If they aren't a friend or you've never communicated with him/her
+	if friend == nil {
+		return false, time.Time{}
+	}
+	out, _ := exec.Command("ping", friend.IP, "-c 5", "-i 3", "-w 10").Output()
+	friendOnline := !strings.Contains(string(out), "Destination Host Unreachable")
+	// If the friend is online now, then they are available now
+	if friendOnline || friend.DisplayName == Self {
+		return true, time.Now()
+	}
+
+	sessions := u.GetSessions(friendDisplayName)
+	var lastSeenTime time.Time
+	// Otherwise their last message in the last session is when they were last online
+	messages := getSessionMessages(sessions[len(sessions) - 1].SSID)
+	for i := len(messages) - 1; i >= 0; i-- {
+		if messages[i].SentOrReceived == Received {
+			lastSeenTime, _ = time.Parse(time.RFC3339, messages[i].Timestamp)
+		}
+	}
+	return friendOnline, lastSeenTime
+}
+
+// Fetch conversations between another friend and decrypts the contents of the messages everything
+func (u *User) GetConversationHistory(friendDisplayName string) [][]byte {
+	converse := GetConversationUsers(u.Username, friendDisplayName)
+	var messages [][]byte
+	for _, c := range converse {
+		proto := protocol.CreateProtocolFromType(c.Session.ProtocolType)
+		proto.InitFromBytes(c.Session.ProtocolValue)
+		// TODO uncomment when solution is found
+		//dec, err := proto.Decrypt([]byte(c.Message.Text))
+		//if err != nil {
+		//	log.Printf("GetMessages: %s", err.Error())
+		//}
+		messages = append(messages, c.Message.Text)
+	}
+	return messages
 }

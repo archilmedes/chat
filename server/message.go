@@ -8,13 +8,13 @@ import (
 
 // Generic interface for messages being sent and received
 type Message interface {
-	SourceID() (string, string) // MAC address, Username
+	SourceID() (string, string, string) // MAC address, IP address, Username
 	DestID() string             // Username
 }
 
 type GenericMessage struct {
 	Message
-	SourceMAC, SourceUsername, DestUsername string
+	SourceMAC, SourceIP, SourceUsername, DestUsername string
 }
 
 // Message for sending and receiving friend requests/info
@@ -37,15 +37,16 @@ type ChatMessage struct {
 	Text []byte
 }
 
-func (m *GenericMessage) NewPayload(SourceMAC, SourceUsername, DestUsername string) {
+func (m *GenericMessage) NewPayload(SourceMAC, SourceIP, SourceUsername, DestUsername string) {
 	(*m).SourceMAC = SourceMAC
+	(*m).SourceIP = SourceIP
 	(*m).SourceUsername = SourceUsername
 	(*m).DestUsername = DestUsername
 }
 
 // Get source-identifying MAC and username info
-func (m *GenericMessage) SourceID() (string, string) {
-	return (*m).SourceMAC, (*m).SourceUsername
+func (m *GenericMessage) SourceID() (string, string, string) {
+	return (*m).SourceMAC, (*m).SourceIP, (*m).SourceUsername
 }
 
 // Get destination-identifying username

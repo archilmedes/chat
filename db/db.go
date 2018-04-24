@@ -24,23 +24,30 @@ var DB *sql.DB
 // Sets up the database - called at startup
 func SetupDatabase() {
 	cmd := exec.Command("sh", "scripts/db_setup.sh", conf.Username, conf.Password)
-	SetupDatabaseHelper(databaseName, cmd)
+	createDatabase(databaseName, cmd)
 }
 
 // Sets up the test database
 func SetupTestDatabase() {
 	cmd := exec.Command("sh", "../scripts/db_test_setup.sh", conf.Username, conf.Password)
-	SetupDatabaseHelper(testDatabaseName, cmd)
+	createDatabase(testDatabaseName, cmd)
+}
+
+// Sets up an empty test database
+func SetupEmptyTestDatabase() {
+	cmd := exec.Command("sh", "../scripts/db_test_setup.sh", conf.Username, conf.Password)
+	createDatabase(testDatabaseName, cmd)
+	clearDatabase()
 }
 
 // Sets up the database
-func SetupDatabaseHelper(dbName string, cmd *exec.Cmd) {
+func createDatabase(dbName string, cmd *exec.Cmd) {
 	err := cmd.Run()
 	if err != nil {
 		log.Panicf("Error running script: %s", err)
 	}
-	connectionString := FormConnectionString(dbName)
-	DB, _ = ConnectToDatabase(connectionString)
+	connectionString := formConnectionString(dbName)
+	DB, _ = connectToDatabase(connectionString)
 	useDatabaseCommand := "USE " + dbName
 	ExecuteChangeCommand(useDatabaseCommand, "Failed to switch databases")
 	numTablesCreated := len(ShowTables())
@@ -49,8 +56,16 @@ func SetupDatabaseHelper(dbName string, cmd *exec.Cmd) {
 	}
 }
 
+// Clears all rows in all tables of the database
+func clearDatabase() {
+	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", usersTableName), "Could not truncate table")
+	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", messagesTableName), "Could not truncate table")
+	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", friendsTableName), "Could not truncate table")
+	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", sessionsTableName), "Could not truncate table")
+}
+
 // Connects to a database - quits if it encounters errors
-func ConnectToDatabase(connectionString string) (*sql.DB, error) {
+func connectToDatabase(connectionString string) (*sql.DB, error) {
 	database, err := sql.Open("mysql", connectionString)
 	if err != nil {
 		log.Panicf("Could not connect to DB: %s", err)
@@ -59,7 +74,7 @@ func ConnectToDatabase(connectionString string) (*sql.DB, error) {
 }
 
 // Creates the connection string using Username, Password, hostname, and port
-func FormConnectionString(Name string) string {
+func formConnectionString(Name string) string {
 	connectionString := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/", conf.Username, conf.Password, conf.Port)
 	return connectionString
 }

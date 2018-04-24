@@ -5,7 +5,8 @@ import (
 	"testing"
 )
 
-func UsersTest(t *testing.T) {
+func TestUsers(t *testing.T) {
+	SetupTestDatabase()
 	users := QueryUsers()
 	UserSetupTest(t, users)
 	UserExistsTest(t)

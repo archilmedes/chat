@@ -3,18 +3,21 @@ package db
 import (
 	"fmt"
 	"log"
+	"encoding/hex"
 )
 
 // Stores a session between two users
 type Session struct {
 	SSID                                                        uint64
-	Username, FriendMac, ProtocolType, ProtocolValue, timestamp string
+	Username, FriendDisplayName, ProtocolType, timestamp string
+	ProtocolValue []byte
 }
 
 // Inserts data into the sessions table
-func InsertIntoSessions(SSID uint64, username string, friendMac string, protocolType string, protocolValue string, timestamp string) bool {
+func InsertIntoSessions(SSID uint64, username string, friendMac string, protocolType string, protocolValue []byte, timestamp string) bool {
 	log.Println("Inserting data into sessions...")
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", sessionsTableName, SSID, username, friendMac, protocolType, protocolValue, timestamp)
+	hexProtoValue := hex.EncodeToString(protocolValue)
+	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", \"%s\", UNHEX(\"%s\"), \"%s\")", sessionsTableName, SSID, username, friendMac, protocolType, hexProtoValue, timestamp)
 	return ExecuteChangeCommand(insertCommand, "Failed to insert into sessions")
 }
 
@@ -38,6 +41,13 @@ func deleteSessionsWithMessages(username string) bool {
 	return ExecuteChangeCommand(deleteCommand, "Failed to do large delete")
 }
 
+// Get all sessions belonging to a user by the username
+func getUserSessions(username string) []Session {
+	log.Println("Retrieving data from sessions...")
+	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE Username=\"%s\" ORDER BY sessions.session_timestamp DESC", sessionsTableName, username)
+	return ExecuteSessionsQuery(queryCommand)
+}
+
 // Executes the specified database command
 func ExecuteSessionsQuery(query string) []Session {
 	results, err := DB.Query(query)
@@ -47,7 +57,7 @@ func ExecuteSessionsQuery(query string) []Session {
 	var sessions []Session
 	session := Session{}
 	for results.Next() {
-		err = results.Scan(&session.SSID, &session.Username, &session.FriendMac, &session.ProtocolType, &session.ProtocolValue, &session.timestamp)
+		err = results.Scan(&session.SSID, &session.Username, &session.FriendDisplayName, &session.ProtocolType, &session.ProtocolValue, &session.timestamp)
 		if err != nil {
 			log.Panicf("Failed to parse results from conversations with query: %s;  %s", query, err)
 		}

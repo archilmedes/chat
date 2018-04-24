@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/wavyllama/chat/core"
-	"github.com/wavyllama/chat/db"
-	"github.com/wavyllama/chat/protocol"
 	"github.com/wavyllama/chat/server"
 	"log"
 	"os"
@@ -13,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"github.com/wavyllama/chat/db"
 )
 
 const (
@@ -58,7 +57,7 @@ func handleInput(program *server.Server, message string) {
 			fmt.Printf("Format to add friend: '%s username@ipaddr'\n", friend)
 		} else if len(words) == 1 && program.User.IsFriendsWith(words[0][1:]) {
 			activeFriend = words[0][1:]
-			program.StartSession(activeFriend, protocol.OTRProtocol{})
+			program.StartOTRSession(activeFriend)
 		} else {
 			fmt.Printf("Format for commands: '%s' or '%s'\n", exit, displayName)
 		}
@@ -92,6 +91,8 @@ func main() {
 	if err != nil {
 		fmt.Printf("getAddresses: %s", err.Error())
 	}
+
+	// TODO would be good to change this to return a User object, we could use this to load conversation history, etc.
 	username := core.Login(bufio.NewScanner(os.Stdin), ip)
 	var program server.Server
 	if err := program.Start(username, mac, ip); err != nil {
