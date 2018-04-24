@@ -65,20 +65,24 @@ func TestOTRProtocol_NewSession(t *testing.T) {
 }
 
 func TestOTRProtocol_Serialize_BeforeHandshake(t *testing.T) {
-	exp := NewOTRProtocol()
+	var exp Protocol
+	exp = NewOTRProtocol()
+	bytes := exp.Serialize()
 
-	ott := CreateProtocolFromType(exp.ToType())
-	ott.InitFromBytes(exp.Conv.PrivateKey.Serialize(nil))
-	assert.Equal(t, *exp, *ott.(*OTRProtocol))
+	act := CreateProtocolFromType(exp.ToType())
+	act.InitFromBytes(bytes)
+
+	assert.Equal(t, exp, act)
 }
 
 func TestOTRProtocol_Serialize_AfterHandshake(t *testing.T) {
 	alice, bob := NewOTRProtocol(), NewOTRProtocol()
 	createOTRLink(t, alice, bob)
 
-	ott := CreateProtocolFromType(alice.ToType())
-	ott.InitFromBytes(alice.Conv.PrivateKey.Serialize(nil))
-	assert.Equal(t, *alice.Conv.PrivateKey, *ott.(*OTRProtocol).Conv.PrivateKey)
+	ott := CreateProtocolFromType(bob.ToType())
+	ott.InitFromBytes(bob.Serialize())
+
+	assert.Equal(t, bob.Conv.PrivateKey, ott.(*OTRProtocol).Conv.PrivateKey)
 }
 
 func TestCreateProtocolFromType_otr(t *testing.T) {

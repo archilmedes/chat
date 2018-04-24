@@ -17,18 +17,18 @@ type Session struct {
 }
 
 // Return a new session between a user and his/her friend with a protocol
-func NewSession(from *db.User, to *db.Friend, protocol protocol.Protocol, startTime time.Time) *Session {
+func NewSession(from *db.User, to *db.Friend, protocol protocol.Protocol) *Session {
 	session := new(Session)
 	(*session).From = from
 	(*session).To = to
 	(*session).Proto = protocol
-	(*session).StartTime = startTime
+	(*session).StartTime = time.Now()
 	return session
 }
 
 // Return a new session between a user and his/her friend based on a message
-func NewSessionFromUserAndMessage(from *db.User, to *db.Friend, protoType string, startSessionTime time.Time) *Session {
-	return NewSession(from, to, protocol.CreateProtocolFromType(protoType), startSessionTime)
+func NewSessionFromUserAndMessage(from *db.User, to *db.Friend, protoType string) *Session {
+	return NewSession(from, to, protocol.CreateProtocolFromType(protoType))
 }
 
 // Ends the current session
@@ -37,12 +37,15 @@ func (s *Session) EndSession() bool {
 	return db.DeleteSession(s.Proto.GetSessionID())
 }
 
+func getFormattedTime(t time.Time) string {
+	timestampParts := strings.Split(t.String(), " ")
+	return fmt.Sprintf("%s %s", timestampParts[0], timestampParts[1])
+}
+
 // Saves a session to the database
 func (s *Session) Save() bool {
 	sessionID := s.Proto.GetSessionID()
 	bb := s.Proto.Serialize()
 
-	timestampParts := strings.Split(s.StartTime.String(), " ")
-	formattedTime := fmt.Sprintf("%s %s", timestampParts[0], timestampParts[1])
-	return db.InsertIntoSessions(sessionID, s.From.Username, s.To.MAC, s.Proto.ToType(), bb, formattedTime)
+	return db.InsertIntoSessions(sessionID, s.From.Username, s.To.DisplayName, s.Proto.ToType(), bb, getFormattedTime(s.StartTime))
 }

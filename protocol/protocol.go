@@ -25,22 +25,28 @@ type Protocol interface {
 	ToType() string
 }
 
-const (
-	PlainType = "plain"
-	OTRType   = "otr"
-)
-
 // Type of protocol that just lets text pass through without applying any encryption
 type PlainProtocol struct {
 	Protocol
 	SessionID uint64
 }
 
+const (
+	PlainType = "plain"
+	OTRType   = "otr"
+)
+
 // Wrap the a byte array into an array of messages
 func wrapMessage(in []byte) [][]byte {
 	b := make([][]byte, 1)
 	b[0] = in
 	return b
+}
+
+func init() {
+	gob.Register(&PlainProtocol{})
+	gob.Register(&OTRProtocol{})
+	gob.Register(&OTRProtocolSerialization{})
 }
 
 // Given the protocol type, reconstruct the subclass

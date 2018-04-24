@@ -5,7 +5,6 @@ import (
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
 	"testing"
-	"time"
 )
 
 const(
@@ -20,7 +19,7 @@ func setUpSession() (*db.User, *db.Friend, *Session) {
 	bob := new(db.Friend)
 	bob.IP = "5.6.7.8"
 	bob.DisplayName = bobDisplayName
-	sess := NewSession(alice, bob, protocol.NewOTRProtocol(), time.Now())
+	sess := NewSession(alice, bob, protocol.NewOTRProtocol())
 	return alice, bob, sess
 }
 

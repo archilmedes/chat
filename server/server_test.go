@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const(
+	fakeMessage = "Hello world"
+)
+
 func startUpServer(t *testing.T) Server {
 	var server Server
 	mac, ip, _ := core.GetAddresses()
@@ -34,4 +38,26 @@ func TestServer_GetSessionsWithFriend(t *testing.T) {
 
 	msgBack, _ := sessions[1].Proto.Decrypt(cyp[0])
 	assert.Equal(t, msgBack[0], msg)
+	assert.NoError(t, server.Shutdown())
+}
+
+func sendAFakeMessage(server Server) {
+	sessions := server.GetSessionsWithFriend(server.User.MAC, server.User.Username)
+
+	user1Proto := sessions[0].Proto
+	db.InsertMessage(user1Proto.GetSessionID(), []byte(fakeMessage), getFormattedTime(time.Now()), db.Sent)
+}
+
+func TestUser_GetConversationHistory(t *testing.T) {
+	server := startUpServer(t)
+
+	sessions := server.GetSessionsWithFriend(server.User.MAC, server.User.Username)
+	assert.Equal(t, 2, len(sessions))
+	sessions[0].Save()
+
+	sendAFakeMessage(server)
+
+	messages := server.User.GetConversationHistory(db.Self)
+	assert.Equal(t, []byte(fakeMessage), messages[0])
+	assert.NoError(t, server.Shutdown())
 }

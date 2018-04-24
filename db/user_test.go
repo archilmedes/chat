@@ -33,12 +33,6 @@ func TestUser_AddFriend(t *testing.T) {
 	assert.False(t, user.IsFriendsWith("Charlie"))
 }
 
-func TestUser_GetConversationHistory(t *testing.T) {
-	user := getFakeUser()
-
-	assert.True(t, user.AddFriend(friendDisplayName, "doesntmatter", "5.6.7.8", "bobbyB"))
-}
-
 func TestUser_IsFriendOnline(t *testing.T) {
 	user := getFakeUser()
 

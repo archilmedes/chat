@@ -14,11 +14,12 @@ const (
 type DBMessage struct {
 	SSID            uint64
 	SentOrReceived  int
-	Text, Timestamp string
+	Text []byte
+	Timestamp string
 }
 
 // Inserts a message into the messages table
-func InsertMessage(SSID uint64, message string, timestamp string, sentOrReceived int) bool {
+func InsertMessage(SSID uint64, message []byte, timestamp string, sentOrReceived int) bool {
 	log.Println("Inserting data into messages...")
 	if sentOrReceived != Sent && sentOrReceived != Received {
 		fmt.Printf("Invalid entry for sent/received - msut be 0 or 1. Instead, received a %d", sentOrReceived)

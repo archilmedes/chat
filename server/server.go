@@ -21,7 +21,7 @@ const (
 type Server struct {
 	User     *db.User
 	Listener *net.TCPListener
-	Sessions *[]Session
+	Sessions *[]*Session
 }
 
 func init() {
@@ -83,13 +83,13 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 			friend = s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
 		}
 		var createdSession bool
-		var sess Session
+		var sess *Session
 		round := msg.(*HandshakeMessage).Round
-		protoType, startSessionTime := msg.(*HandshakeMessage).ProtoType, msg.(*HandshakeMessage).SessionTime
+		protoType, _ := msg.(*HandshakeMessage).ProtoType, msg.(*HandshakeMessage).SessionTime
 
 		// In a handshake, create a new session if there aren't the required number of sessions in either situation
 		if len(sessions) != 2 && messageYourself || (len(sessions) != 1 && !messageYourself) {
-			sess = *NewSessionFromUserAndMessage(s.User, friend, protoType, startSessionTime)
+			sess = NewSessionFromUserAndMessage(s.User, friend, protoType)
 			*(*s).Sessions = append(*(*s).Sessions, sess)
 			createdSession = true
 		} else if len(sessions) == 2 && messageYourself {
@@ -110,8 +110,10 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 				reply.Secret = stepMessage
 				reply.ProtoType = msg.(*HandshakeMessage).ProtoType
 				// If we created a session here, then set current time as start time
+				// TODO remove if unused
 				if createdSession {
 					reply.SessionTime = time.Now()
+					fmt.Printf("create session with session time %s\n", reply.SessionTime)
 				}
 				reply.Round = round + 1
 				s.sendMessage(sourceIP, reply)
@@ -127,7 +129,7 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 		if len(sessions) == 0 {
 			return
 		}
-		var sess Session
+		var sess *Session
 		// There are two sessions, so grab the one that doesn't have the same timestamp as you
 		if messageYourself {
 			sess = sessions[1]
@@ -183,7 +185,8 @@ func (s *Server) Start(username string, mac string, ip string) error {
 		return err
 	}
 	// Initialize the session struct to a pointer
-	(*s).Sessions = &[]Session{}
+	var sessions []*Session
+	(*s).Sessions = &sessions
 	go s.receive()
 	log.Printf("Listening on: '%s'", ipAddr)
 
@@ -221,8 +224,8 @@ func (s *Server) sendMessage(destIp string, msg Message) error {
 // Get all sessions that a user talks to an IP
 // There are only 2 if a user is talking to himself
 // otherwise only 1 session is returned
-func (s *Server) GetSessionsWithFriend(friendMAC string, friendUsername string) []Session {
-	var filterSessions []Session
+func (s *Server) GetSessionsWithFriend(friendMAC string, friendUsername string) []*Session {
+	var filterSessions []*Session
 	for _, sess := range *(*s).Sessions {
 		if sess.To.MAC == friendMAC && sess.To.Username == friendUsername {
 			filterSessions = append(filterSessions, sess)
@@ -282,6 +285,7 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 	if len(sessions) == 0 {
 		return errors.New(fmt.Sprintf("Cannot communicate with '%s' without an active session\n", friendDisplayName))
 	}
+
 	cyp, err := sessions[0].Proto.Encrypt(chatMsg.Text)
 	if err != nil {
 		return err

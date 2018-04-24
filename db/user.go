@@ -1,7 +1,6 @@
 package db
 
 import (
-	"log"
 	"github.com/wavyllama/chat/protocol"
 	"os/exec"
 	"strings"
@@ -51,6 +50,7 @@ func (u *User) GetFriendByUsernameAndMAC(friendUsername, friendMAC string) *Frie
 	return getFriendByUsernameAndMAC(u.Username, friendUsername, friendMAC)
 }
 
+// Return a user's sessions in descending order timestamp (most recent session first)
 func (u *User) GetSessions(friendDisplayName string) []Session {
 	return getUserSessions(u.Username)
 }
@@ -78,7 +78,7 @@ func (u *User) IsFriendOnline(friendDisplayName string) (bool, time.Time) {
 	// Otherwise their last message in the last session is when they were last online
 	messages := getSessionMessages(sessions[len(sessions) - 1].SSID)
 	for i := len(messages) - 1; i >= 0; i-- {
-		if messages[i].SentOrReceived == 1 {
+		if messages[i].SentOrReceived == Received {
 			lastSeenTime, _ = time.Parse(time.RFC3339, messages[i].Timestamp)
 		}
 	}
@@ -91,12 +91,13 @@ func (u *User) GetConversationHistory(friendDisplayName string) [][]byte {
 	var messages [][]byte
 	for _, c := range converse {
 		proto := protocol.CreateProtocolFromType(c.Session.ProtocolType)
-		proto.InitFromBytes([]byte(c.Session.ProtocolValue))
-		dec, err := proto.Decrypt([]byte(c.Message.Text))
-		if err != nil {
-			log.Printf("GetMessages: %s", err.Error())
-		}
-		messages = append(messages, dec[0])
+		proto.InitFromBytes(c.Session.ProtocolValue)
+		// TODO uncomment when solution is found
+		//dec, err := proto.Decrypt([]byte(c.Message.Text))
+		//if err != nil {
+		//	log.Printf("GetMessages: %s", err.Error())
+		//}
+		messages = append(messages, c.Message.Text)
 	}
 	return messages
 }
