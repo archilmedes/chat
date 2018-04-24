@@ -5,7 +5,8 @@ import (
 	"testing"
 )
 
-func FriendsTest(t *testing.T) {
+func TestFriends(t *testing.T) {
+	SetupDatabaseForTests(t)
 	FriendSetup(t)
 	AreFriendsTest(t)
 	AddUpdateDeleteFriendTest(t)

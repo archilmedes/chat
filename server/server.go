@@ -179,7 +179,7 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	var err error
 	log.Println("Launching Server...")
 
-	(*s).User = &db.User{username, mac, ip}
+	(*s).User = db.NewUser(mac, ip, username)
 	ipAddr := fmt.Sprintf("%s:%d", ip, Port)
 	if (*s).Listener, err = setupServer(ipAddr); err != nil {
 		return err
@@ -192,8 +192,8 @@ func (s *Server) Start(username string, mac string, ip string) error {
 
 	// Updates the IP address of the user and create a friend for yourself
 	if s.User.GetFriendByDisplayName(db.Self) == nil {
-		// To communicate with yourself, just use localhost
-		s.User.AddFriend(db.Self, mac, "localhost", username)
+		// TODO To communicate with yourself, start server on localhost instead, fix UpdateMyIP below
+		s.User.AddFriend(db.Self, mac, ip, username)
 	}
 
 	s.User.UpdateMyIP()

@@ -46,7 +46,6 @@ func wrapMessage(in []byte) [][]byte {
 func init() {
 	gob.Register(&PlainProtocol{})
 	gob.Register(&OTRProtocol{})
-	gob.Register(&OTRProtocolSerialization{})
 }
 
 // Given the protocol type, reconstruct the subclass

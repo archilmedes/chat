@@ -5,7 +5,8 @@ import (
 	"testing"
 )
 
-func SessionsTest(t *testing.T) {
+func TestSessions(t *testing.T) {
+	SetupDatabaseForTests(t)
 	InitialSetupTest(t)
 	InsertSessionTest(t)
 	DeleteSessionTest(t)

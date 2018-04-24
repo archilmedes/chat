@@ -8,65 +8,12 @@ import (
 	"strconv"
 	"encoding/gob"
 	"bytes"
-	"math/big"
-	"io"
-	"crypto/sha256"
 )
 
 // An OTR protocol that contains the crypto/otr struct
 type OTRProtocol struct {
 	Protocol
 	Conv    *otr.Conversation
-}
-
-type OTRProtocolSerialization struct {
-	// PrivateKey contains the private key to use to sign key exchanges.
-	PrivateKey *otr.PrivateKey
-
-	// Rand can be set to override the entropy source. Otherwise,
-	// crypto/rand will be used.
-	Rand io.Reader
-	// If FragmentSize is set, all messages produced by Receive and Send
-	// will be fragmented into messages of, at most, this number of bytes.
-	FragmentSize int
-
-	// Once Receive has returned NewKeys once, the following fields are
-	// valid.
-	SSID           [8]byte
-	TheirPublicKey otr.PublicKey
-
-	state, authState int
-
-	r       [16]byte
-	x, y    *big.Int
-	gx, gy  *big.Int
-	gxBytes []byte
-	digest  [sha256.Size]byte
-
-	//revealKeys, sigKeys akeKeys
-	//c      [16]byte
-	//m1, m2 [32]byte
-
-	myKeyId         uint32
-	myCurrentDHPub  *big.Int
-	myCurrentDHPriv *big.Int
-	myLastDHPub     *big.Int
-	myLastDHPriv    *big.Int
-
-	theirKeyId        uint32
-	theirCurrentDHPub *big.Int
-	theirLastDHPub    *big.Int
-
-	//keySlots [4]keySlot
-
-	myCounter    [8]byte
-	theirLastCtr [8]byte
-	oldMACs      []byte
-
-	k, n int // fragment state
-	frag []byte
-
-	//smp smpState
 }
 
 // A type of error that indicates that the protocol is undergoing the handshake

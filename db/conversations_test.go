@@ -5,7 +5,8 @@ import (
 	"testing"
 )
 
-func ConversationsTest(t *testing.T) {
+func TestConversations(t *testing.T) {
+	SetupDatabaseForTests(t)
 	ConversationsTestID(t)
 }
 

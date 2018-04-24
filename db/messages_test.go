@@ -5,7 +5,8 @@ import (
 	"testing"
 )
 
-func MessagesTest(t *testing.T) {
+func TestMessages(t *testing.T) {
+	SetupDatabaseForTests(t)
 	MessagesSetup(t)
 	InsertMessageTest(t)
 	DeleteMessageTest(t)

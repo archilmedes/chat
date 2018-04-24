@@ -9,15 +9,11 @@ import (
 
 // Stores a user's information
 type User struct {
-	Username, MAC, IP string
+	MAC, IP, Username string
 }
 
 func NewUser(mac, ip, username string) *User {
-	user := User{}
-	user.MAC = mac
-	user.IP = ip
-	user.Username = username
-	return &user
+	return &User{MAC: mac, IP: ip, Username: username}
 }
 
 // Persists the user to the database
