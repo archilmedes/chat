@@ -3,12 +3,12 @@ package server
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/wavyllama/chat/core"
-	"testing"
 	"github.com/wavyllama/chat/db"
+	"testing"
 	"time"
 )
 
-const(
+const (
 	fakeMessage = "Hello world"
 )
 

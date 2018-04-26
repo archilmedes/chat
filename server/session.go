@@ -1,11 +1,11 @@
 package server
 
 import (
+	"fmt"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
-	"time"
-	"fmt"
 	"strings"
+	"time"
 )
 
 // Struct for a messaging session between a user and his/her friend

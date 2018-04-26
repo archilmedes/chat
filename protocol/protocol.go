@@ -3,12 +3,12 @@
 package protocol
 
 import (
+	"bytes"
+	"crypto/rand"
+	"encoding/binary"
+	"encoding/gob"
 	"errors"
 	"fmt"
-	"encoding/gob"
-	"bytes"
-	"encoding/binary"
-	"crypto/rand"
 )
 
 // A generic Protocol interface to handle common protocol methods

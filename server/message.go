@@ -9,7 +9,7 @@ import (
 // Generic interface for messages being sent and received
 type Message interface {
 	SourceID() (string, string, string) // MAC address, IP address, Username
-	DestID() string             // Username
+	DestID() string                     // Username
 }
 
 type GenericMessage struct {
@@ -37,6 +37,7 @@ type ChatMessage struct {
 	Text []byte
 }
 
+// Create new message of any type
 func (m *GenericMessage) NewPayload(SourceMAC, SourceIP, SourceUsername, DestUsername string) {
 	(*m).SourceMAC = SourceMAC
 	(*m).SourceIP = SourceIP

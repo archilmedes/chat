@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-const(
+const (
 	bobDisplayName = "Bobby B"
 )
 

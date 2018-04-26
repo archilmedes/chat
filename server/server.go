@@ -154,6 +154,7 @@ func (s *Server) getDisplayName(sourceUsername string, sourceIP string) string {
 			return friendDisplayName
 		}
 		fmt.Printf("You already have a friend named '%s'\n", friendDisplayName)
+		return s.getDisplayName(sourceUsername, sourceIP)
 	}
 }
 

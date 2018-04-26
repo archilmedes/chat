@@ -30,6 +30,10 @@ func (u *User) AddFriend(displayName, macAddress, ipAddress, friendUsername stri
 	return addFriend(u.Username, displayName, macAddress, ipAddress, friendUsername)
 }
 
+func (u *User) DeleteFriend(displayName string) bool {
+	return deleteFriend(u.Username, displayName)
+}
+
 func (u *User) GetFriends() []Friend {
 	return getFriends(u.Username)
 }
@@ -72,7 +76,7 @@ func (u *User) IsFriendOnline(friendDisplayName string) (bool, time.Time) {
 	sessions := u.GetSessions(friendDisplayName)
 	var lastSeenTime time.Time
 	// Otherwise their last message in the last session is when they were last online
-	messages := getSessionMessages(sessions[len(sessions) - 1].SSID)
+	messages := getSessionMessages(sessions[len(sessions)-1].SSID)
 	for i := len(messages) - 1; i >= 0; i-- {
 		if messages[i].SentOrReceived == Received {
 			lastSeenTime, _ = time.Parse(time.RFC3339, messages[i].Timestamp)

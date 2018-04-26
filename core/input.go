@@ -3,10 +3,10 @@ package core
 import (
 	"bufio"
 	"fmt"
+	"github.com/wavyllama/chat/db"
 	"os"
 	"strings"
 	"sync"
-	"github.com/wavyllama/chat/db"
 )
 
 var Friending FRFlag = DONE

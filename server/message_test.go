@@ -1,15 +1,15 @@
 package server
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-const(
-	sourceIP = "1.2.3.4"
-	sourceMAC = "AA:BB:CC:DD:EE"
+const (
+	sourceIP       = "1.2.3.4"
+	sourceMAC      = "AA:BB:CC:DD:EE"
 	sourceUsername = "Source Username"
-	destUsername = "Dest Username"
+	destUsername   = "Dest Username"
 )
 
 func getGenericMessage() Message {

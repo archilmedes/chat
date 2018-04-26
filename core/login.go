@@ -20,7 +20,7 @@ var terminalReadPassword = terminal.ReadPassword
 
 // Get username from stdin
 func getUsername(scanner *bufio.Scanner) string {
-	re := regexp.MustCompile("^[[:alnum:]]+$")
+	re := regexp.MustCompile("^[[:alnum:]]+{,16}$")
 	for {
 		fmt.Print("Username: ")
 		scanner.Scan()
@@ -32,7 +32,8 @@ func getUsername(scanner *bufio.Scanner) string {
 		if re.MatchString(username) {
 			return username
 		}
-		fmt.Printf("getUsername: %s is an invalid username!\n", username)
+		fmt.Printf("%s is an invalid username!\n", username)
+		fmt.Println("Usernames only contain alphanumeric characters only of max length 16")
 	}
 	log.Fatalln(scanner.Err().Error())
 	return ""
@@ -58,6 +59,7 @@ func signIn(username string) bool {
 
 // Create an account for a new user
 func createAccount(username string, ip string) bool {
+	re := regexp.MustCompile("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9]{8,32}$")
 	for counter := 0; counter < 3; counter++ {
 		fmt.Print("Enter new password: ")
 		bytePassword, err := terminalReadPassword(int(syscall.Stdin))
@@ -67,6 +69,10 @@ func createAccount(username string, ip string) bool {
 			continue
 		}
 		password := string(bytePassword)
+		if !re.MatchString(password) {
+			fmt.Println("Invalid Password! Password must be between 8-32 characters long.")
+			fmt.Println("Password must consist of at least one number and one uppercase and one lowercase character.")
+		}
 		fmt.Print("Confirm password: ")
 		bytePassword, err = terminalReadPassword(int(syscall.Stdin))
 		fmt.Println()
