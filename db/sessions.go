@@ -44,6 +44,16 @@ func getUserSessions(username string) []Session {
 	return ExecuteSessionsQuery(queryCommand)
 }
 
+// Get the session corresponding to the session identifier
+func GetSession(SSID uint64) *Session {
+	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE SSID=%d", sessionsTableName, SSID)
+	sessions := ExecuteSessionsQuery(queryCommand)
+	if len(sessions) == 0 {
+		return nil
+	}
+	return &sessions[0]
+}
+
 // Executes the specified database command
 func ExecuteSessionsQuery(query string) []Session {
 	results, err := DB.Query(query)

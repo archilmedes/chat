@@ -9,6 +9,10 @@ import (
 	"testing"
 )
 
+const (
+	ipAddress = "127.0.0.1"
+)
+
 func setupTest(file string) (*os.File, *bufio.Scanner) {
 	os.Stdin.Close()
 	f, _ := os.Open(file)
@@ -17,7 +21,10 @@ func setupTest(file string) (*os.File, *bufio.Scanner) {
 		return true
 	}
 	dbGetUser = func(username string, password string) *db.User {
-		return new(db.User)
+		user := new(db.User)
+		user.Username = username
+		user.IP = ipAddress
+		return user
 	}
 	dbUserExists = func(username string) bool {
 		return username == "bob"
@@ -38,7 +45,9 @@ func TestLogin_New_User(t *testing.T) {
 		dbUserExists = db.UserExists
 		terminalReadPassword = terminal.ReadPassword
 	}()
-	assert.Equal(t, Login(scanner, ""), "sameertqa")
+	newUser := Login(scanner, ipAddress)
+	assert.NotNil(t, newUser)
+	assert.Equal(t, newUser.Username, "sameertqa")
 }
 
 func TestLogin_Current_User(t *testing.T) {
@@ -50,5 +59,7 @@ func TestLogin_Current_User(t *testing.T) {
 		dbUserExists = db.UserExists
 		terminalReadPassword = terminal.ReadPassword
 	}()
-	assert.Equal(t, Login(scanner, ""), "bob")
+	newUser := Login(scanner, ipAddress)
+	assert.NotNil(t, newUser)
+	assert.Equal(t, newUser.Username, "bob")
 }

@@ -82,7 +82,7 @@ func verifyPassword(try string) bool {
 }
 
 // Create an account for a new user
-func createAccount(username string) *db.User {
+func createAccount(username, ip string) *db.User {
 	for counter := 0; counter < numTries; counter++ {
 		fmt.Print("Enter new password: ")
 		bytePassword, err := terminalReadPassword(int(syscall.Stdin))
@@ -104,7 +104,7 @@ func createAccount(username string) *db.User {
 			fmt.Println(err.Error())
 			continue
 		}
-		if password == string(bytePassword) && dbAddUser(username, password, "doesntmatter") {
+		if password == string(bytePassword) && dbAddUser(username, password, ip) {
 			return dbGetUser(username, password)
 		} else {
 			fmt.Println("Passwords do not match!")
@@ -115,17 +115,17 @@ func createAccount(username string) *db.User {
 }
 
 // Login user
-func Login(scanner *bufio.Scanner) *db.User {
+func Login(scanner *bufio.Scanner, ip string) *db.User {
 	username := getUsername(scanner)
 	var user *db.User
 	if dbUserExists(username) {
 		user = signIn(username)
 	} else {
-		user = createAccount(username)
+		user = createAccount(username, ip)
 	}
 	if user != nil{
 		return user
 	} else {
-		return Login(scanner)
+		return Login(scanner, ip)
 	}
 }

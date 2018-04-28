@@ -4,9 +4,6 @@ import (
 	"errors"
 	"net"
 	"runtime"
-	"time"
-	"strings"
-	"fmt"
 )
 
 // Get MAC and public IPv4 addresses
@@ -42,9 +39,4 @@ func GetAddresses() (string, string, error) { // MAC address, IPv4 address, erro
 	}
 errOccurred:
 	return mac, ip, errors.New("cannot find MAC and IPv4 addresses")
-}
-
-func GetFormattedTime(t time.Time) string {
-	timestampParts := strings.Split(t.String(), " ")
-	return fmt.Sprintf("%s %s", timestampParts[0], timestampParts[1])
 }

@@ -129,11 +129,14 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 			// There should only be one session between A -> B if you aren't messaging yourself, so grab that
 			sess = sessions[0]
 		}
+		if db.GetSession(sess.Proto.GetSessionID()) == nil {
+			sess.Save()
+		}
 		dec, _ := sess.Proto.Decrypt(msg.(*ChatMessage).Text)
 		if sess.Proto.IsActive() && dec[0] != nil {
 			// Print the decoded message and IP
 			fmt.Printf("%s: %s\n", friend.DisplayName, dec[0])
-			sess.Save()
+
 			db.InsertMessage(sess.Proto.GetSessionID(), dec[0], core.GetFormattedTime(time.Now()), db.Received)
 		}
 	}
@@ -191,7 +194,6 @@ func (s *Server) Start(user *db.User) error {
 		s.User.AddFriend(db.Self, user.MAC, user.IP, user.Username)
 	}
 
-	s.User.UpdateMyIP()
 	s.StartOTRSession(db.Self)
 
 	return nil
@@ -296,7 +298,6 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 		userSession.EndSession()
 	}
 	// If we didn't have an issue, save the message into the database
-	userSession.Save()
 	db.InsertMessage(userSession.Proto.GetSessionID(), bytes, core.GetFormattedTime(time.Now()), db.Sent)
 	return nil
 }

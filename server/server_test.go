@@ -16,7 +16,12 @@ func startUpServer(t *testing.T) Server {
 	var server Server
 	mac, ip, _ := core.GetAddresses()
 	db.SetupEmptyTestDatabase()
-	assert.NoError(t, server.Start("Archil", mac, ip))
+
+	user := new(db.User)
+	user.Username = "archillin"
+	user.IP = ip
+	user.MAC = mac
+	assert.NoError(t, server.Start(user))
 	// Let time pass for handshake to complete
 	time.Sleep(2000 * time.Millisecond)
 	return server

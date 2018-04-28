@@ -1,7 +1,6 @@
 package db
 
 import (
-	"github.com/wavyllama/chat/protocol"
 	"os/exec"
 	"strings"
 	"time"
@@ -90,13 +89,7 @@ func (u *User) GetConversationHistory(friendDisplayName string) [][]byte {
 	converse := GetConversationUsers(u.Username, friendDisplayName)
 	var messages [][]byte
 	for _, c := range converse {
-		proto := protocol.CreateProtocolFromType(c.Session.ProtocolType)
-		proto.InitFromBytes(c.Session.ProtocolValue)
-		// TODO uncomment when solution is found
-		//dec, err := proto.Decrypt([]byte(c.Message.Text))
-		//if err != nil {
-		//	log.Printf("GetMessages: %s", err.Error())
-		//}
+		// No reason to initiate protocol from DB because messages are not stored encrypted
 		messages = append(messages, c.Message.Text)
 	}
 	return messages

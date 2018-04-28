@@ -24,6 +24,7 @@ func InsertMessage(SSID uint64, message []byte, timestamp string, sentOrReceived
 		log.Fatalf("Invalid entry for sent/received - must be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", %d)", messagesTableName, SSID, message, timestamp, sentOrReceived)
+	fmt.Println(insertCommand)
 	return ExecuteChangeCommand(insertCommand, "Failed to insert into messages")
 }
 

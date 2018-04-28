@@ -107,9 +107,12 @@ func main() {
 		fmt.Printf("getAddresses: %s", err.Error())
 	}
 
-	user := core.Login(bufio.NewScanner(os.Stdin))
+	user := core.Login(bufio.NewScanner(os.Stdin), ip)
+	// Update the IP anyways
 	user.IP = ip
 	user.MAC = mac
+	// Update the IP in the database
+	user.UpdateMyIP()
 	var program server.Server
 	if err := program.Start(user); err != nil {
 		log.Fatalf("main: %s", err.Error())
