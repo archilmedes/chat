@@ -1,19 +1,19 @@
 package protocol
 
 import (
+	"bytes"
 	"crypto/rand"
+	"encoding/gob"
+	"fmt"
 	"golang.org/x/crypto/otr"
 	"log"
-	"fmt"
 	"strconv"
-	"encoding/gob"
-	"bytes"
 )
 
 // An OTR protocol that contains the crypto/otr struct
 type OTRProtocol struct {
 	Protocol
-	Conv    *otr.Conversation
+	Conv *otr.Conversation
 }
 
 // A type of error that indicates that the protocol is undergoing the handshake

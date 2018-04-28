@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"syscall"
+	"unicode"
 )
 
 var dbAddUser = db.AddUser
@@ -20,7 +21,7 @@ var terminalReadPassword = terminal.ReadPassword
 
 // Get username from stdin
 func getUsername(scanner *bufio.Scanner) string {
-	re := regexp.MustCompile("^[[:alnum:]]+$")
+	re := regexp.MustCompile("^[[:alnum:]]{2,16}$")
 	for {
 		fmt.Print("Username: ")
 		scanner.Scan()
@@ -32,7 +33,8 @@ func getUsername(scanner *bufio.Scanner) string {
 		if re.MatchString(username) {
 			return username
 		}
-		fmt.Printf("getUsername: %s is an invalid username!\n", username)
+		fmt.Printf("%s is an invalid username!\n", username)
+		fmt.Println("Usernames only contain alphanumeric characters only of max length 16")
 	}
 	log.Fatalln(scanner.Err().Error())
 	return ""
@@ -56,6 +58,23 @@ func signIn(username string) bool {
 	return false
 }
 
+func verifyPassword(try string) bool {
+	lower, upper, num := false, false, false
+	size := len(try)
+	for _, c := range try {
+		if unicode.IsNumber(c) {
+			num = true
+		} else if unicode.IsLower(c) {
+			lower = true
+		} else if unicode.IsUpper(c) {
+			upper = true
+		} else if !unicode.IsPrint(c) || unicode.IsSpace(c) {
+			return false
+		}
+	}
+	return lower && upper && num && 8 <= size && size <= 32
+}
+
 // Create an account for a new user
 func createAccount(username string, ip string) bool {
 	for counter := 0; counter < 3; counter++ {
@@ -67,6 +86,11 @@ func createAccount(username string, ip string) bool {
 			continue
 		}
 		password := string(bytePassword)
+		if !verifyPassword(password) || strings.ToLower(password) == strings.ToLower(username) {
+			fmt.Println("Invalid Password! Password must be between 8-32 characters long.")
+			fmt.Println("Password must consist of at least one number and one uppercase and one lowercase character.")
+			continue
+		}
 		fmt.Print("Confirm password: ")
 		bytePassword, err = terminalReadPassword(int(syscall.Stdin))
 		fmt.Println()

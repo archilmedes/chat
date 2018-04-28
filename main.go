@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/wavyllama/chat/core"
+	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/server"
 	"log"
 	"os"
@@ -11,7 +12,6 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-	"github.com/wavyllama/chat/db"
 )
 
 const (
@@ -20,9 +20,54 @@ const (
 	accept      = ":accept"
 	reject      = ":reject"
 	displayName = ":displayName"
+	unfriend    = ":delete"
 )
 
 var activeFriend = ""
+
+func handleSpecialString(program *server.Server, words []string) {
+	switch words[0] {
+	case exit:
+		runtime.Goexit()
+	case accept:
+		core.Friending = core.ACCEPT
+		core.Cond.Signal()
+		core.Cond.L.Lock()
+		for core.Friending == core.ACCEPT {
+			core.Cond.Wait()
+		}
+		core.Cond.L.Unlock()
+	case reject:
+		core.Friending = core.REJECT
+		core.Cond.Signal()
+	case friend:
+		if len(words) == 2 {
+			friendInfo := strings.Split(words[1], "@")
+			if len(friendInfo) == 2 {
+				err := program.SendFriendRequest(friendInfo[1], friendInfo[0])
+				if err != nil {
+					log.Printf("Error sending friend request: %s\n", err)
+				}
+				return
+			}
+		}
+		fmt.Printf("Format to add friend: '%s username@ipaddr'\n", friend)
+	case unfriend:
+		if len(words) == 2 {
+			if !program.User.DeleteFriend(words[1]) {
+				fmt.Printf("Error deleting friend: %s\n", words[1])
+			}
+		}
+		fmt.Printf("Format to delete a friend: '%s displayName\n", unfriend)
+	default:
+		if len(words) == 1 && program.User.IsFriendsWith(words[0][1:]) {
+			activeFriend = words[0][1:]
+			program.StartOTRSession(activeFriend)
+		} else {
+			fmt.Printf("Format for commands: '%s' or '%s'\n", exit, displayName)
+		}
+	}
+}
 
 func handleInput(program *server.Server, message string) {
 	words := strings.Fields(message)
@@ -30,37 +75,7 @@ func handleInput(program *server.Server, message string) {
 		return
 	}
 	if message[0] == ':' {
-		if words[0] == exit {
-			runtime.Goexit()
-		} else if words[0] == accept {
-			core.Friending = core.ACCEPT
-			core.Cond.Signal()
-			core.Cond.L.Lock()
-			for core.Friending == core.ACCEPT {
-				core.Cond.Wait()
-			}
-			core.Cond.L.Unlock()
-		} else if words[0] == reject {
-			core.Friending = core.REJECT
-			core.Cond.Signal()
-		} else if words[0] == friend {
-			if len(words) == 2 {
-				friendInfo := strings.Split(words[1], "@")
-				if len(friendInfo) == 2 {
-					err := program.SendFriendRequest(friendInfo[1], friendInfo[0])
-					if err != nil {
-						log.Printf("Error sending friend request: %s\n", err)
-					}
-					return
-				}
-			}
-			fmt.Printf("Format to add friend: '%s username@ipaddr'\n", friend)
-		} else if len(words) == 1 && program.User.IsFriendsWith(words[0][1:]) {
-			activeFriend = words[0][1:]
-			program.StartOTRSession(activeFriend)
-		} else {
-			fmt.Printf("Format for commands: '%s' or '%s'\n", exit, displayName)
-		}
+		handleSpecialString(program, words)
 	} else {
 		if activeFriend != "" {
 			err := program.SendChatMessage(activeFriend, message)

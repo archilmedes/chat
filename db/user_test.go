@@ -1,14 +1,14 @@
 package db
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-const(
-	mac = "AA:BB:CC:DD:EE"
-	ip = "1.2.3.4"
-	username = "sameet"
+const (
+	mac               = "AA:BB:CC:DD:EE"
+	ip                = "1.2.3.4"
+	username          = "sameet"
 	friendDisplayName = "Bob"
 )
 

@@ -1,16 +1,16 @@
 package db
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
-	"encoding/hex"
 )
 
 // Stores a session between two users
 type Session struct {
-	SSID                                                        uint64
+	SSID                                                 uint64
 	Username, FriendDisplayName, ProtocolType, timestamp string
-	ProtocolValue []byte
+	ProtocolValue                                        []byte
 }
 
 // Inserts data into the sessions table
