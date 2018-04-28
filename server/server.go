@@ -141,6 +141,7 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 		if sess.Proto.IsActive() && dec[0] != nil {
 			// Print the decoded message and IP
 			fmt.Printf("%s: %s\n", friend.DisplayName, dec[0])
+			db.InsertMessage(sess.Proto.GetSessionID(), dec[0], time.Now().String(), db.Received)
 		}
 	}
 }
@@ -294,7 +295,9 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 	(*chatMsg).Text = cyp[0]
 
 	chatMsg.NewPayload(s.User.MAC, s.User.IP, s.User.Username, friend.Username)
-	(*chatMsg).Text = []byte(message)
+	bytes := []byte(message)
+	(*chatMsg).Text = bytes
+	db.InsertMessage(sessions[0].Proto.GetSessionID(), bytes, time.Now().String(), db.Sent)
 
 	if err := s.sendMessage(friend.IP, chatMsg); err != nil {
 		// We had an issue with sending a message, so clear our session with the user
