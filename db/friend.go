@@ -25,7 +25,7 @@ func addFriend(username, displayName, macAddress, ipAddress, friendUsername stri
 	return ExecuteChangeCommand(insertCommand, "Failed to add friend")
 }
 
-// Delete a friend by their displayName Address
+// Delete a friend by their displayName
 func deleteFriend(username, displayName string) bool {
 	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE username=\"%s\" AND friend_display_name= \"%s\"", friendsTableName, username, displayName)
 	return ExecuteChangeCommand(deleteCommand, "Failed to delete friend")
