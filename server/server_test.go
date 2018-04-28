@@ -45,7 +45,7 @@ func sendAFakeMessage(server Server) {
 	sessions := server.GetSessionsWithFriend(server.User.MAC, server.User.Username)
 
 	user1Proto := sessions[0].Proto
-	db.InsertMessage(user1Proto.GetSessionID(), []byte(fakeMessage), getFormattedTime(time.Now()), db.Sent)
+	db.InsertMessage(user1Proto.GetSessionID(), []byte(fakeMessage), core.GetFormattedTime(time.Now()), db.Sent)
 }
 
 func TestUser_GetConversationHistory(t *testing.T) {

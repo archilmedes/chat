@@ -15,7 +15,6 @@ type Session struct {
 
 // Inserts data into the sessions table
 func InsertIntoSessions(SSID uint64, username string, friendMac string, protocolType string, protocolValue []byte, timestamp string) bool {
-	log.Println("Inserting data into sessions...")
 	hexProtoValue := hex.EncodeToString(protocolValue)
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", \"%s\", UNHEX(\"%s\"), \"%s\")", sessionsTableName, SSID, username, friendMac, protocolType, hexProtoValue, timestamp)
 	return ExecuteChangeCommand(insertCommand, "Failed to insert into sessions")
@@ -23,14 +22,12 @@ func InsertIntoSessions(SSID uint64, username string, friendMac string, protocol
 
 // Deletes a session
 func DeleteSession(SSID uint64) bool {
-	log.Println("Deleting row from sessions...")
 	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE SSID =%d", sessionsTableName, SSID)
 	return ExecuteChangeCommand(deleteCommand, "Failed to delete session")
 }
 
 // Gets all sessions
 func QuerySessions() []Session {
-	log.Println("Retrieving data from sessions...")
 	query := "SELECT * FROM " + sessionsTableName
 	return ExecuteSessionsQuery(query)
 }
@@ -43,7 +40,6 @@ func deleteSessionsWithMessages(username string) bool {
 
 // Get all sessions belonging to a user by the username
 func getUserSessions(username string) []Session {
-	log.Println("Retrieving data from sessions...")
 	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE Username=\"%s\" ORDER BY sessions.session_timestamp DESC", sessionsTableName, username)
 	return ExecuteSessionsQuery(queryCommand)
 }

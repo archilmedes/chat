@@ -14,6 +14,10 @@ import (
 	"unicode"
 )
 
+const (
+	numTries = 3
+)
+
 var dbAddUser = db.AddUser
 var dbGetUser = db.GetUser
 var dbUserExists = db.UserExists
@@ -41,8 +45,8 @@ func getUsername(scanner *bufio.Scanner) string {
 }
 
 // Sign-in for returning user
-func signIn(username string) bool {
-	for counter := 0; counter < 3; counter++ {
+func signIn(username string) *db.User {
+	for counter := 0; counter < numTries; counter++ {
 		fmt.Print("Password: ")
 		password, err := terminalReadPassword(int(syscall.Stdin))
 		fmt.Println()
@@ -50,12 +54,14 @@ func signIn(username string) bool {
 			fmt.Println(err.Error())
 			continue
 		}
-		if dbGetUser(username, string(password)) != nil {
-			return true
+		user := dbGetUser(username, string(password))
+		if user != nil {
+			return user
 		}
-		fmt.Printf("signIn: invalid password!\n")
+		fmt.Println("Username and password combination do not match.")
 	}
-	return false
+	fmt.Printf("Authentication failed after %d attempts.\n", numTries)
+	return nil
 }
 
 func verifyPassword(try string) bool {
@@ -76,8 +82,8 @@ func verifyPassword(try string) bool {
 }
 
 // Create an account for a new user
-func createAccount(username string, ip string) bool {
-	for counter := 0; counter < 3; counter++ {
+func createAccount(username string) *db.User {
+	for counter := 0; counter < numTries; counter++ {
 		fmt.Print("Enter new password: ")
 		bytePassword, err := terminalReadPassword(int(syscall.Stdin))
 		fmt.Println()
@@ -98,27 +104,28 @@ func createAccount(username string, ip string) bool {
 			fmt.Println(err.Error())
 			continue
 		}
-		if password == string(bytePassword) {
-			return dbAddUser(username, password, ip)
+		if password == string(bytePassword) && dbAddUser(username, password, "doesntmatter") {
+			return dbGetUser(username, password)
 		} else {
 			fmt.Println("Passwords do not match!")
 		}
 	}
-	return false
+	fmt.Printf("Account creation failed after %d attempts.\n", numTries)
+	return nil
 }
 
 // Login user
-func Login(scanner *bufio.Scanner, ip string) string {
+func Login(scanner *bufio.Scanner) *db.User {
 	username := getUsername(scanner)
-	var successful bool
+	var user *db.User
 	if dbUserExists(username) {
-		successful = signIn(username)
+		user = signIn(username)
 	} else {
-		successful = createAccount(username, ip)
+		user = createAccount(username)
 	}
-	if successful {
-		return username
+	if user != nil{
+		return user
 	} else {
-		return Login(scanner, ip)
+		return Login(scanner)
 	}
 }

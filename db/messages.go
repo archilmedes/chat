@@ -20,9 +20,8 @@ type DBMessage struct {
 
 // Inserts a message into the messages table
 func InsertMessage(SSID uint64, message []byte, timestamp string, sentOrReceived int) bool {
-	log.Println("Inserting data into messages...")
 	if sentOrReceived != Sent && sentOrReceived != Received {
-		fmt.Printf("Invalid entry for sent/received - msut be 0 or 1. Instead, received a %d", sentOrReceived)
+		log.Fatalf("Invalid entry for sent/received - must be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", %d)", messagesTableName, SSID, message, timestamp, sentOrReceived)
 	return ExecuteChangeCommand(insertCommand, "Failed to insert into messages")
@@ -36,14 +35,12 @@ func DeleteMessage(SSID uint64, message string, timestamp string, sentOrReceived
 
 // Returns all data in the messages table
 func QueryMessages() []DBMessage {
-	log.Println("Retrieving data from messages...")
 	query := "SELECT * FROM " + messagesTableName
 	return ExecuteMessagesQuery(query)
 }
 
 // Returns all messages for a given session identified by SSID
 func getSessionMessages(SSID uint64) []DBMessage {
-	log.Println("Retrieving data from messages...")
 	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE SSID=%d", messagesTableName, SSID)
 	return ExecuteMessagesQuery(queryCommand)
 }

@@ -82,16 +82,14 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 			s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
 			friend = s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
 		}
-		var createdSession bool
 		var sess *Session
 		round := msg.(*HandshakeMessage).Round
-		protoType, _ := msg.(*HandshakeMessage).ProtoType, msg.(*HandshakeMessage).SessionTime
+		protoType := msg.(*HandshakeMessage).ProtoType
 
 		// In a handshake, create a new session if there aren't the required number of sessions in either situation
 		if len(sessions) != 2 && messageYourself || (len(sessions) != 1 && !messageYourself) {
 			sess = NewSessionFromUserAndMessage(s.User, friend, protoType)
 			*(*s).Sessions = append(*(*s).Sessions, sess)
-			createdSession = true
 		} else if len(sessions) == 2 && messageYourself {
 			// Communicating between yourself, rotate sessions based on round (even/odd)
 			sess = sessions[round%2]
@@ -109,12 +107,6 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 				reply.NewPayload(s.User.MAC, s.User.IP, s.User.Username, sourceUsername)
 				reply.Secret = stepMessage
 				reply.ProtoType = msg.(*HandshakeMessage).ProtoType
-				// If we created a session here, then set current time as start time
-				// TODO remove if unused
-				if createdSession {
-					reply.SessionTime = time.Now()
-					fmt.Printf("create session with session time %s\n", reply.SessionTime)
-				}
 				reply.Round = round + 1
 				s.sendMessage(sourceIP, reply)
 			}
@@ -141,7 +133,8 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 		if sess.Proto.IsActive() && dec[0] != nil {
 			// Print the decoded message and IP
 			fmt.Printf("%s: %s\n", friend.DisplayName, dec[0])
-			db.InsertMessage(sess.Proto.GetSessionID(), dec[0], time.Now().String(), db.Received)
+			sess.Save()
+			db.InsertMessage(sess.Proto.GetSessionID(), dec[0], core.GetFormattedTime(time.Now()), db.Received)
 		}
 	}
 }
@@ -177,12 +170,12 @@ func initDialer(address string) (*net.TCPConn, error) {
 }
 
 // Start up server
-func (s *Server) Start(username string, mac string, ip string) error {
+func (s *Server) Start(user *db.User) error {
 	var err error
 	log.Println("Launching Server...")
 
-	(*s).User = db.NewUser(mac, ip, username)
-	ipAddr := fmt.Sprintf("%s:%d", ip, Port)
+	(*s).User = user
+	ipAddr := fmt.Sprintf("%s:%d", user.IP, Port)
 	if (*s).Listener, err = setupServer(ipAddr); err != nil {
 		return err
 	}
@@ -195,7 +188,7 @@ func (s *Server) Start(username string, mac string, ip string) error {
 	// Updates the IP address of the user and create a friend for yourself
 	if s.User.GetFriendByDisplayName(db.Self) == nil {
 		// TODO To communicate with yourself, start server on localhost instead, fix UpdateMyIP below
-		s.User.AddFriend(db.Self, mac, ip, username)
+		s.User.AddFriend(db.Self, user.MAC, user.IP, user.Username)
 	}
 
 	s.User.UpdateMyIP()
@@ -287,8 +280,8 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 	if len(sessions) == 0 {
 		return errors.New(fmt.Sprintf("Cannot communicate with '%s' without an active session\n", friendDisplayName))
 	}
-
-	cyp, err := sessions[0].Proto.Encrypt(chatMsg.Text)
+	userSession := sessions[0]
+	cyp, err := userSession.Proto.Encrypt(chatMsg.Text)
 	if err != nil {
 		return err
 	}
@@ -297,11 +290,13 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 	chatMsg.NewPayload(s.User.MAC, s.User.IP, s.User.Username, friend.Username)
 	bytes := []byte(message)
 	(*chatMsg).Text = bytes
-	db.InsertMessage(sessions[0].Proto.GetSessionID(), bytes, time.Now().String(), db.Sent)
 
 	if err := s.sendMessage(friend.IP, chatMsg); err != nil {
 		// We had an issue with sending a message, so clear our session with the user
-		sessions[0].EndSession()
+		userSession.EndSession()
 	}
+	// If we didn't have an issue, save the message into the database
+	userSession.Save()
+	db.InsertMessage(userSession.Proto.GetSessionID(), bytes, core.GetFormattedTime(time.Now()), db.Sent)
 	return nil
 }

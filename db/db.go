@@ -47,7 +47,10 @@ func createDatabase(dbName string, cmd *exec.Cmd) {
 		log.Panicf("Error running script: %s", err)
 	}
 	connectionString := formConnectionString(dbName)
-	DB, _ = connectToDatabase(connectionString)
+	DB, err = connectToDatabase(connectionString)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 	useDatabaseCommand := "USE " + dbName
 	ExecuteChangeCommand(useDatabaseCommand, "Failed to switch databases")
 	numTablesCreated := len(ShowTables())
@@ -81,7 +84,6 @@ func formConnectionString(Name string) string {
 
 // Shows all tables to ensure DB setup was correct
 func ShowTables() []string {
-	log.Println("Fetching all tables for database")
 	results, err := DB.Query("SHOW TABLES")
 	if err != nil {
 		log.Panicf("Failed to display tables: %s", err)
@@ -102,8 +104,9 @@ func ShowTables() []string {
 func ExecuteChangeCommand(command string, errorMessage string) bool {
 	_, err := DB.Exec(command)
 	if err != nil {
-		log.Panicf("Failed to execute change command: %s", err)
-		return false
+		//log.Panicf("Failed to execute change command: %s", err)
+		useDatabaseCommand := "USE " + databaseName
+		return ExecuteChangeCommand(useDatabaseCommand, "Failed to switch databases")
 	}
 	return true
 }
