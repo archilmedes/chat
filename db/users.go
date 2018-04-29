@@ -3,19 +3,34 @@ package db
 import (
 	"fmt"
 	"log"
+	"database/sql"
 )
 
 // Check if user has already created an account
 func UserExists(username string) bool {
-	query := "SELECT username, ipaddress FROM " + usersTableName + " WHERE username=\"" + username + "\""
-	users := ExecuteUsersQuery(query)
+	query, err := DB.Prepare("SELECT username, ipaddress FROM users WHERE username=?")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for UserExists: %s", err)
+	}
+	results, err :=query.Query(username)
+	if err != nil {
+		fmt.Printf("Error executing UserExists query: %s", err)
+	}
+	users := ExecuteUsersQuery(results)
 	return len(users) > 0
 }
 
 // Get user from database
 func GetUser(username string, password string) *User {
-	query := fmt.Sprintf("SELECT username, ipaddress FROM %s WHERE username= \"%s\" and password=SHA2(\"%s\", 256)", usersTableName, username, password)
-	users := ExecuteUsersQuery(query)
+	query, err := DB.Prepare("SELECT username, ipaddress FROM users WHERE username=? and password=SHA2(?, 256)")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for GetUser: %s", err)
+	}
+	results, err :=query.Query(username, password)
+	if err != nil {
+		fmt.Printf("Error executing GetUser query: %s", err)
+	}
+	users := ExecuteUsersQuery(results)
 	if len(users) == 0 {
 		return nil
 	}
@@ -55,26 +70,29 @@ func deleteUserAndFriends(username string) bool {
 
 // Get all users
 func QueryUsers() []User {
-	query := "SELECT username, ipaddress FROM " + usersTableName
-	return ExecuteUsersQuery(query)
+	query, err := DB.Prepare("SELECT username, ipaddress FROM users")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for QueryUsers: %s", err)
+	}
+	results, err :=query.Query()
+	if err != nil {
+		fmt.Printf("Error executing QueryUsers query: %s", err)
+	}
+	return ExecuteUsersQuery(results)
 }
 
 // Executes the specified database command
-func ExecuteUsersQuery(query string) []User {
-	results, err := DB.Query(query)
-	if err != nil {
-		log.Panicf("Failed to execute %s on conversations table: %s", query, err)
-	}
+func ExecuteUsersQuery(results *sql.Rows) []User {
 	var users []User
 	user := User{}
 	for results.Next() {
-		err = results.Scan(&user.Username, &user.IP)
+		err := results.Scan(&user.Username, &user.IP)
 		if err != nil {
-			log.Panicf("Failed to parse results from conversations with query: %s;  %s", query, err)
+			log.Panicf("Failed to parse results from conversations: %s", err)
 		}
 		users = append(users, user)
 	}
-	err = results.Err()
+	err := results.Err()
 	if err != nil {
 		log.Panicf("Failed to get results from users query: %s", err)
 	}
