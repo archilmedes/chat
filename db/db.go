@@ -44,12 +44,12 @@ func SetupEmptyTestDatabase() {
 func createDatabase(dbName string, cmd *exec.Cmd) {
 	err := cmd.Run()
 	if err != nil {
-		log.Panicf("Error running script: %s", err)
+		log.Fatalf("Error running script: %s", err)
 	}
 	connectionString := formConnectionString(dbName)
 	DB, err = connectToDatabase(connectionString)
 	if err != nil {
-		log.Fatalln(err.Error())
+		log.Fatalf("Could not connect to DB: %s", err)
 	}
 	numTablesCreated := len(ShowTables())
 	if numTablesCreated != numTables {
@@ -65,18 +65,14 @@ func clearDatabase() {
 	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", sessionsTableName), "Could not truncate table")
 }
 
-// Connects to a database - quits if it encounters errors
+// Connects to a database
 func connectToDatabase(connectionString string) (*sql.DB, error) {
-	database, err := sql.Open("mysql", connectionString)
-	if err != nil {
-		log.Panicf("Could not connect to DB: %s", err)
-	}
-	return database, err
+	return sql.Open("mysql", connectionString)
 }
 
 // Creates the connection string using Username, Password, hostname, and port
-func formConnectionString(Name string) string {
-	connectionString := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/%s", conf.Username, conf.Password, conf.Port, Name)
+func formConnectionString(dbName string) string {
+	connectionString := fmt.Sprintf("%s:%s@tcp(127.0.0.1:%s)/%s", conf.Username, conf.Password, conf.Port, dbName)
 	return connectionString
 }
 
@@ -102,8 +98,7 @@ func ShowTables() []string {
 func ExecuteChangeCommand(command string, errorMessage string) bool {
 	_, err := DB.Exec(command)
 	if err != nil {
-		log.Println(errorMessage)
-		log.Fatalf("Failed to execute change command: %s", err)
+		log.Panicf("Failed to execute change command: %s: %s\n", errorMessage, err)
 	}
 	return true
 }
