@@ -48,7 +48,7 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 		log.Panicf("Error decoding message: %s", err.Error())
 	}
 
-	sourceMAC, sourceIP, sourceUsername := msg.SourceID()
+	sourceMAC, _, sourceUsername := msg.SourceID()
 	if sourceMAC == "" || sourceUsername == "" {
 		log.Panicln("Received ill-formatted message")
 	}
@@ -56,89 +56,114 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 		fmt.Println("Received a message but it was not for me.")
 		return
 	}
-	messageYourself := sourceMAC == s.User.MAC && sourceUsername == s.User.Username
 	sessions := s.GetSessionsWithFriend(sourceMAC, sourceUsername)
 	friend := s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
 
 	switch msg.(type) {
 	case *FriendMessage:
-		if friend == nil {
-			friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
-			if len(friendDisplayName) != 0 {
-				s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
-				// Send a friend request back
-				s.SendFriendRequest(sourceIP, sourceUsername)
-			}
-			// else friend request is rejected, so don't respond back
-		}
-	case *HandshakeMessage:
-		// We are in a handshake, so the friend should exist already
-		if friend == nil {
-			friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
-			if len(friendDisplayName) == 0 {
-				// If we rejected a friend during the handshake, then don't respond back to the handshake
-				return
-			}
-			s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
-			friend = s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
-		}
-		var sess *Session
-		round := msg.(*HandshakeMessage).Round
-		protoType := msg.(*HandshakeMessage).ProtoType
-
-		// In a handshake, create a new session if there aren't the required number of sessions in either situation
-		if len(sessions) != 2 && messageYourself || (len(sessions) != 1 && !messageYourself) {
-			sess = NewSessionFromUserAndMessage(s.User, friend, protoType)
-			*(*s).Sessions = append(*(*s).Sessions, sess)
-		} else if len(sessions) == 2 && messageYourself {
-			// Communicating between yourself, rotate sessions based on round (even/odd)
-			sess = sessions[round%2]
-		} else {
-			sess = sessions[0]
-		}
-
-		dec, err := sess.Proto.Decrypt(msg.(*HandshakeMessage).Secret)
-
-		switch errorType := err.(type) {
-		case protocol.OTRHandshakeStep:
-			// Send each part of the handshake message back and immediately return
-			for _, stepMessage := range dec {
-				reply := new(HandshakeMessage)
-				reply.NewPayload(s.User.MAC, s.User.IP, s.User.Username, sourceUsername)
-				reply.Secret = stepMessage
-				reply.ProtoType = msg.(*HandshakeMessage).ProtoType
-				reply.Round = round + 1
-				s.sendMessage(sourceIP, reply)
-			}
+		if friend != nil {
 			return
-		default:
-			// another type of error, which means err is probably not nil
-			if err != nil {
-				log.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
-			}
 		}
+		s.handleFriendMessage(msg.(*FriendMessage))
+	case *HandshakeMessage:
+		s.handleHandshakeMessage(friend, msg.(*HandshakeMessage))
 	case *ChatMessage:
 		if len(sessions) == 0 {
 			return
 		}
-		var sess *Session
-		// There are two sessions, so grab the one that doesn't have the same timestamp as you
-		if messageYourself {
-			sess = sessions[1]
-		} else {
-			// There should only be one session between A -> B if you aren't messaging yourself, so grab that
-			sess = sessions[0]
-		}
-		if db.GetSession(sess.Proto.GetSessionID()) == nil {
-			sess.Save()
-		}
-		dec, _ := sess.Proto.Decrypt(msg.(*ChatMessage).Text)
-		if sess.Proto.IsActive() && dec[0] != nil {
-			// Print the decoded message and IP
-			fmt.Printf("%s: %s\n", friend.DisplayName, dec[0])
+		s.handleChatMessage(msg.(*ChatMessage))
+	}
+}
 
-			db.InsertMessage(sess.Proto.GetSessionID(), dec[0], core.GetFormattedTime(time.Now()), db.Received)
+// Handles a friend message
+func (s *Server) handleFriendMessage(msg *FriendMessage) {
+	sourceMAC, sourceIP, sourceUsername := msg.SourceID()
+
+	friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
+	if len(friendDisplayName) != 0 {
+		s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
+		// Send a friend request back
+		s.SendFriendRequest(sourceIP, sourceUsername)
+	}
+	// else friend request is rejected, so don't respond back
+}
+
+// Handles a handshake message
+func (s *Server) handleHandshakeMessage(friend *db.Friend, msg *HandshakeMessage) {
+	sourceMAC, sourceIP, sourceUsername := msg.SourceID()
+	messageYourself := sourceMAC == s.User.MAC && sourceUsername == s.User.Username
+	sessions := s.GetSessionsWithFriend(sourceMAC, sourceUsername)
+
+	// We are in a handshake, so the friend should exist already
+	if friend == nil {
+		friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
+		if len(friendDisplayName) == 0 {
+			// If we rejected a friend during the handshake, then don't respond back to the handshake
+			return
 		}
+		s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
+		friend = s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
+	}
+	var sess *Session
+	round := msg.Round
+	protoType := msg.ProtoType
+
+	// In a handshake, create a new session if there aren't the required number of sessions in either situation
+	if len(sessions) != 2 && messageYourself || (len(sessions) != 1 && !messageYourself) {
+		sess = NewSessionFromUserAndMessage(s.User, friend, protoType)
+		*(*s).Sessions = append(*(*s).Sessions, sess)
+	} else if len(sessions) == 2 && messageYourself {
+		// Communicating between yourself, rotate sessions based on round (even/odd)
+		sess = sessions[round%2]
+	} else {
+		sess = sessions[0]
+	}
+
+	dec, err := sess.Proto.Decrypt(msg.Secret)
+	switch errorType := err.(type) {
+	case protocol.OTRHandshakeStep:
+		// Send each part of the handshake message back and immediately return
+		for _, stepMessage := range dec {
+			reply := new(HandshakeMessage)
+			reply.NewPayload(s.User.MAC, s.User.IP, s.User.Username, sourceUsername)
+			reply.Secret = stepMessage
+			reply.ProtoType = protoType
+			reply.Round = round + 1
+			s.sendMessage(sourceIP, reply)
+		}
+		return
+	default:
+		// another type of error, which means err is probably not nil
+		if err != nil {
+			log.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
+		}
+	}
+}
+
+// Handles a chat message
+func (s *Server) handleChatMessage(msg *ChatMessage) {
+	sourceMAC, _, sourceUsername := msg.SourceID()
+	messageYourself := sourceMAC == s.User.MAC && sourceUsername == s.User.Username
+	sessions := s.GetSessionsWithFriend(sourceMAC, sourceUsername)
+	friend := s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
+
+	var sess *Session
+	// There are two sessions, so grab the one that doesn't have the same timestamp as you
+	if messageYourself {
+		sess = sessions[1]
+	} else {
+		// There should only be one session between A -> B if you aren't messaging yourself, so grab that
+		sess = sessions[0]
+	}
+	if db.GetSession(sess.Proto.GetSessionID()) == nil {
+		sess.Save()
+	}
+	dec, _ := sess.Proto.Decrypt(msg.Text)
+	if sess.Proto.IsActive() && dec[0] != nil {
+		// Print the decoded message and IP
+		fmt.Printf("%s: %s\n", friend.DisplayName, dec[0])
+
+		db.InsertMessage(sess.Proto.GetSessionID(), dec[0], core.GetFormattedTime(time.Now()), db.Received)
 	}
 }
 
