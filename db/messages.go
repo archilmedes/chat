@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"log"
+	"database/sql"
 )
 
 const (
@@ -35,33 +36,43 @@ func DeleteMessage(SSID uint64, message string, timestamp string, sentOrReceived
 
 // Returns all data in the messages table
 func QueryMessages() []DBMessage {
-	query := "SELECT * FROM " + messagesTableName
-	return ExecuteMessagesQuery(query)
+	query, err := DB.Prepare("SELECT * FROM messages")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for QueryMessages: %s", err)
+	}
+	results, err :=query.Query()
+	if err != nil {
+		fmt.Printf("Error executing QueryMessages query: %s", err)
+	}
+	return ExecuteMessagesQuery(results)
 }
 
 // Returns all messages for a given session identified by SSID
 func getSessionMessages(SSID uint64) []DBMessage {
-	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE SSID=%d", messagesTableName, SSID)
-	return ExecuteMessagesQuery(queryCommand)
+	query, err := DB.Prepare("SELECT * FROM messages WHERE SSID=?")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for getSessionMessages: %s", err)
+	}
+	results, err :=query.Query(SSID)
+	if err != nil {
+		fmt.Printf("Error executing getSessionMessages query: %s", err)
+	}
+	return ExecuteMessagesQuery(results)
 }
 
 // Executes the specified database command
-func ExecuteMessagesQuery(query string) []DBMessage {
-	results, err := DB.Query(query)
-	if err != nil {
-		log.Panicf("Failed to execute %s on messages table: %s", query, err)
-	}
+func ExecuteMessagesQuery(results *sql.Rows) []DBMessage {
 	var messages []DBMessage
 	msg := DBMessage{}
 	for results.Next() {
-		err = results.Scan(&msg.SSID, &msg.Text, &msg.Timestamp, &msg.SentOrReceived)
+		err := results.Scan(&msg.SSID, &msg.Text, &msg.Timestamp, &msg.SentOrReceived)
 		if err != nil {
-			log.Panicf("Failed to parse results from messages with query: %s;  %s", query, err)
+			log.Panicf("Failed to parse results from messages: %s", err)
 			panic(err)
 		}
 		messages = append(messages, msg)
 	}
-	err = results.Err()
+	err := results.Err()
 	if err != nil {
 		log.Panicf("Failed to get results from conversations query: %s", err)
 	}

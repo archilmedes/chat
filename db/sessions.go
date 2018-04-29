@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"database/sql"
 )
 
 // Stores a session between two users
@@ -28,8 +29,15 @@ func DeleteSession(SSID uint64) bool {
 
 // Gets all sessions
 func QuerySessions() []Session {
-	query := "SELECT * FROM " + sessionsTableName
-	return ExecuteSessionsQuery(query)
+	query, err := DB.Prepare("SELECT * FROM sessions")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for QuerySessions: %s", err)
+	}
+	results, err :=query.Query()
+	if err != nil {
+		fmt.Printf("Error executing QuerySessions query: %s", err)
+	}
+	return ExecuteSessionsQuery(results)
 }
 
 // Deletes the sessions and messages of the given user
@@ -40,14 +48,28 @@ func deleteSessionsWithMessages(username string) bool {
 
 // Get all sessions belonging to a user by the username
 func getUserSessions(username string) []Session {
-	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE Username=\"%s\" ORDER BY sessions.session_timestamp DESC", sessionsTableName, username)
-	return ExecuteSessionsQuery(queryCommand)
+	query, err := DB.Prepare("SELECT * FROM sessions WHERE username=? ORDER BY session_timestamp DESC")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for getUserSessions: %s", err)
+	}
+	results, err :=query.Query(username)
+	if err != nil {
+		fmt.Printf("Error executing getUserSessions query: %s", err)
+	}
+	return ExecuteSessionsQuery(results)
 }
 
 // Get the session corresponding to the session identifier
 func GetSession(SSID uint64) *Session {
-	queryCommand := fmt.Sprintf("SELECT * FROM %s WHERE SSID=%d", sessionsTableName, SSID)
-	sessions := ExecuteSessionsQuery(queryCommand)
+	query, err := DB.Prepare("SELECT * FROM sessions WHERE SSID=%d")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for GetSession: %s", err)
+	}
+	results, err :=query.Query(SSID)
+	if err != nil {
+		fmt.Printf("Error executing GetSession query: %s", err)
+	}
+	sessions := ExecuteSessionsQuery(results)
 	if len(sessions) == 0 {
 		return nil
 	}
@@ -55,21 +77,17 @@ func GetSession(SSID uint64) *Session {
 }
 
 // Executes the specified database command
-func ExecuteSessionsQuery(query string) []Session {
-	results, err := DB.Query(query)
-	if err != nil {
-		log.Panicf("Failed to execute %s on conversations table: %s", query, err)
-	}
+func ExecuteSessionsQuery(results *sql.Rows) []Session {
 	var sessions []Session
 	session := Session{}
 	for results.Next() {
-		err = results.Scan(&session.SSID, &session.Username, &session.FriendDisplayName, &session.ProtocolType, &session.ProtocolValue, &session.timestamp)
+		err := results.Scan(&session.SSID, &session.Username, &session.FriendDisplayName, &session.ProtocolType, &session.ProtocolValue, &session.timestamp)
 		if err != nil {
-			log.Panicf("Failed to parse results from conversations with query: %s;  %s", query, err)
+			log.Panicf("Failed to parse results from conversations: %s", err)
 		}
 		sessions = append(sessions, session)
 	}
-	err = results.Err()
+	err := results.Err()
 	if err != nil {
 		log.Panicf("Failed to get results from sessions query: %s", err)
 	}
