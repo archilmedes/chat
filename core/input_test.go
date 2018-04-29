@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 )
 
 func setupTests() *os.File {
@@ -41,4 +42,9 @@ func TestAcceptFriend(t *testing.T) {
 		bufioNewScanner = bufio.NewScanner
 	}()
 	assert.Equal(t, "archie", GetDisplayNameFromConsole("", ""))
+}
+
+func TestGetFormattedTime(t *testing.T) {
+	someTime := time.Unix(100, 1000)
+	assert.Equal(t, "1969-12-31 18:01:40.000001", GetFormattedTime(someTime))
 }

@@ -16,7 +16,12 @@ func startUpServer(t *testing.T) Server {
 	var server Server
 	mac, ip, _ := core.GetAddresses()
 	db.SetupEmptyTestDatabase()
-	assert.NoError(t, server.Start("Archil", mac, ip))
+
+	user := new(db.User)
+	user.Username = "archillin"
+	user.IP = ip
+	user.MAC = mac
+	assert.NoError(t, server.Start(user))
 	// Let time pass for handshake to complete
 	time.Sleep(2000 * time.Millisecond)
 	return server
@@ -45,7 +50,7 @@ func sendAFakeMessage(server Server) {
 	sessions := server.GetSessionsWithFriend(server.User.MAC, server.User.Username)
 
 	user1Proto := sessions[0].Proto
-	db.InsertMessage(user1Proto.GetSessionID(), []byte(fakeMessage), getFormattedTime(time.Now()), db.Sent)
+	db.InsertMessage(user1Proto.GetSessionID(), []byte(fakeMessage), core.GetFormattedTime(time.Now()), db.Sent)
 }
 
 func TestUser_GetConversationHistory(t *testing.T) {

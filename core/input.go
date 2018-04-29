@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 var Friending FRFlag = DONE
@@ -44,4 +45,10 @@ func GetDisplayNameFromConsole(ip string, username string) string {
 		return ""
 	}
 	return getDisplayName()
+}
+
+// Gets the formatted input time to save in the database
+func GetFormattedTime(t time.Time) string {
+	timestampParts := strings.Split(t.String(), " ")
+	return fmt.Sprintf("%s %s", timestampParts[0], timestampParts[1])
 }
