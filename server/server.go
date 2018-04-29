@@ -20,6 +20,7 @@ const (
 // Server holds the user and all of his sessions
 type Server struct {
 	User     *db.User
+	UI       *UI
 	Listener *net.TCPListener
 	Sessions *[]*Session
 }
@@ -162,7 +163,9 @@ func (s *Server) handleChatMessage(msg *ChatMessage) {
 	if sess.Proto.IsActive() && dec[0] != nil {
 		// Print the decoded message and IP
 		fmt.Printf("%s: %s\n", friend.DisplayName, dec[0])
-
+		chatMessage := new(ReceiveChat)
+		chatMessage.New(string(dec[0]), friend.DisplayName)
+		DisplayChatMessage(s.UI, chatMessage)
 		db.InsertMessage(sess.Proto.GetSessionID(), dec[0], core.GetFormattedTime(time.Now()), db.Received)
 	}
 }
@@ -202,14 +205,14 @@ func (s *Server) Start(user *db.User) error {
 	var err error
 	log.Println("Launching Server...")
 
-	(*s).User = user
+	s.User = user
 	ipAddr := fmt.Sprintf("%s:%d", user.IP, Port)
 	if (*s).Listener, err = setupServer(ipAddr); err != nil {
 		return err
 	}
 	// Initialize the session struct to a pointer
 	var sessions []*Session
-	(*s).Sessions = &sessions
+	s.Sessions = &sessions
 	go s.receive()
 	log.Printf("Listening on: '%s'", ipAddr)
 
