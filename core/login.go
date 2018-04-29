@@ -104,7 +104,10 @@ func createAccount(username, ip string) *db.User {
 			fmt.Println(err.Error())
 			continue
 		}
-		if password == string(bytePassword) && dbAddUser(username, password, ip) {
+		if password == string(bytePassword) {
+			if !dbAddUser(username, password, ip) {
+				log.Fatalf("Error adding user %s to the database\n", username)
+			}
 			return dbGetUser(username, password)
 		} else {
 			fmt.Println("Passwords do not match!")
