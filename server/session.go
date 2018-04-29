@@ -1,11 +1,10 @@
 package server
 
 import (
-	"fmt"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
-	"strings"
 	"time"
+	"github.com/wavyllama/chat/core"
 )
 
 // Struct for a messaging session between a user and his/her friend
@@ -37,15 +36,10 @@ func (s *Session) EndSession() bool {
 	return db.DeleteSession(s.Proto.GetSessionID())
 }
 
-func getFormattedTime(t time.Time) string {
-	timestampParts := strings.Split(t.String(), " ")
-	return fmt.Sprintf("%s %s", timestampParts[0], timestampParts[1])
-}
-
 // Saves a session to the database
 func (s *Session) Save() bool {
 	sessionID := s.Proto.GetSessionID()
 	bb := s.Proto.Serialize()
 
-	return db.InsertIntoSessions(sessionID, s.From.Username, s.To.DisplayName, s.Proto.ToType(), bb, getFormattedTime(s.StartTime))
+	return db.InsertIntoSessions(sessionID, s.From.Username, s.To.DisplayName, s.Proto.ToType(), bb, core.GetFormattedTime(s.StartTime))
 }

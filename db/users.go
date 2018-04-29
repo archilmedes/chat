@@ -24,21 +24,18 @@ func GetUser(username string, password string) *User {
 
 // Add new user to database
 func AddUser(username string, password string, ipAddress string) bool {
-	log.Println("Inserting data into users...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", SHA2(\"%s\", 256), \"%s\")", usersTableName, username, password, ipAddress)
 	return ExecuteChangeCommand(insertCommand, "Failed to add user")
 }
 
 // Update the IPv4 address of a user
 func UpdateUserIP(username string, ipAddress string) bool {
-	log.Println("Updating user's IP...")
 	updateCommand := fmt.Sprintf("UPDATE %s SET ipaddress=\"%s\" WHERE username=\"%s\"", usersTableName, ipAddress, username)
 	return ExecuteChangeCommand(updateCommand, "Failed to update user's IP")
 }
 
 // Update the password of a user
 func UpdateUserPassword(username string, password string) bool {
-	log.Println("Updating user's password...")
 	updateCommand := fmt.Sprintf("UPDATE %s SET password=SHA2(\"%s\", 256) WHERE username=\"%s\"", usersTableName, password, username)
 	return ExecuteChangeCommand(updateCommand, "Failed to update user's password")
 }
@@ -58,7 +55,6 @@ func deleteUserAndFriends(username string) bool {
 
 // Get all users
 func QueryUsers() []User {
-	log.Println("Retrieving data from users...")
 	query := "SELECT username, ipaddress FROM " + usersTableName
 	return ExecuteUsersQuery(query)
 }

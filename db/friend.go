@@ -20,7 +20,6 @@ func areFriends(username, friendDisplayName string) bool {
 
 // Add friend to the user's friend's table
 func addFriend(username, displayName, macAddress, ipAddress, friendUsername string) bool {
-	log.Println("Inserting data into friends...")
 	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", friendsTableName, username, displayName, macAddress, ipAddress, friendUsername)
 	return ExecuteChangeCommand(insertCommand, "Failed to add friend")
 }
@@ -39,7 +38,6 @@ func updateFriendIP(username, macAddress, ipAddress string) bool {
 
 // Get all friends
 func getFriends(username string) []Friend {
-	log.Println("Retrieving data from friends...")
 	query := fmt.Sprintf("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM %s WHERE username=\"%s\"", friendsTableName, username)
 	return executeFriendsQuery(query)
 }
