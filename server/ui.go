@@ -92,14 +92,12 @@ func setInputReader(ui *UI) {
 			handleSpecialString(ui, words)
 		} else {
 			if activeFriend != "" {
+				sendMessage := new(ReceiveChat)
+				sendMessage.Message = message
+				sendMessage.Time = core.GetFormattedTime(time.Now())
+				sendMessage.Sender = db.Self
+				DisplayChatMessage(ui, sendMessage)
 				err := ui.Program.SendChatMessage(activeFriend, message)
-				if activeFriend != db.Self {
-					sendMessage := new(ReceiveChat)
-					sendMessage.Message = message
-					sendMessage.Time = core.GetFormattedTime(time.Now())
-					sendMessage.Sender = db.Self
-					DisplayChatMessage(ui, sendMessage)
-				}
 				if err != nil {
 					log.Printf("Error sending message: %s\n", err)
 				}
@@ -123,10 +121,10 @@ func setPersonChange(ui *UI) {
 			if conv.Message.SentOrReceived == db.Sent {
 				sender = db.Self
 			} else {
-				if list.SelectedItem() == db.Self {
+				if conv.Session.FriendDisplayName == db.Self {
 					continue
 				}
-				sender = list.SelectedItem()
+				sender = conv.Session.FriendDisplayName
 			}
 			chatMessage.New(string(conv.Message.Text), sender, conv.Message.Timestamp)
 			DisplayChatMessage(ui, chatMessage)
@@ -195,14 +193,12 @@ func DisplayInfoMessage(ui *UI, m *InfoMessage) {
 }
 
 func DisplayChatMessage(ui *UI, m *ReceiveChat) {
-	if strings.ToLower(m.Sender) == strings.ToLower(activeFriend) {
-		ui.History.Append(tui.NewHBox(
-			tui.NewLabel(m.Time),
-			tui.NewPadder(1, 0, tui.NewLabel(fmt.Sprintf("<%s>", m.Sender))),
-			tui.NewLabel(m.Body()),
-			tui.NewSpacer(),
-		))
-	}
+	ui.History.Append(tui.NewHBox(
+		tui.NewLabel(m.Time),
+		tui.NewPadder(1, 0, tui.NewLabel(fmt.Sprintf("<%s>", m.Sender))),
+		tui.NewLabel(m.Body()),
+		tui.NewSpacer(),
+	))
 }
 
 func DisplayFriendRequest(ui *UI, m *FriendRequest) {
