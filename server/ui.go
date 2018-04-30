@@ -81,6 +81,7 @@ func handleSpecialString(ui *UI, words []string) {
 	}
 }
 
+// Handle user input
 func setInputReader(ui *UI) {
 	ui.Input.OnSubmit(func(e *tui.Entry) {
 		message := e.Text()
@@ -111,6 +112,7 @@ func setInputReader(ui *UI) {
 	})
 }
 
+// Show previous messages of friend upon choosing friend to chat with
 func setPersonChange(ui *UI) {
 	ui.List.OnSelectionChanged(func(list *tui.List) {
 		for i := 0; i < ui.History.Length(); i++ {
@@ -119,7 +121,7 @@ func setPersonChange(ui *UI) {
 		conversations := ui.Program.User.GetConversationHistory(list.SelectedItem())
 		for _, conv := range conversations {
 			chatMessage := new(ReceiveChat)
-			var sender string
+			var sender string // Get who sent the message
 			if conv.Message.SentOrReceived == db.Sent {
 				sender = db.Self
 			} else {
@@ -134,6 +136,7 @@ func setPersonChange(ui *UI) {
 	})
 }
 
+// Help from: https://github.com/marcusolsson/tui-go/tree/master/example/chat
 func NewUI(program *Server) (*UI, error) {
 	var ui = new(UI)
 	program.UI = ui
@@ -166,6 +169,8 @@ func NewUI(program *Server) (*UI, error) {
 	ui.Chat.SetSizePolicy(tui.Expanding, tui.Expanding)
 	setInputReader(ui)
 	setPersonChange(ui)
+	// Put all friends in sidebar
+	// Select self as current friend
 	for i, f := range friends {
 		if strings.ToLower(f.DisplayName) == db.Self {
 			ui.List.Select(i)
@@ -187,6 +192,7 @@ func NewUI(program *Server) (*UI, error) {
 	return ui, nil
 }
 
+// Write info message to UI
 func DisplayInfoMessage(ui *UI, m *InfoMessage) {
 	ui.History.Append(tui.NewHBox(
 		tui.NewLabel(m.Body()),
@@ -194,6 +200,7 @@ func DisplayInfoMessage(ui *UI, m *InfoMessage) {
 	))
 }
 
+// Write chat message to UI
 func DisplayChatMessage(ui *UI, m *ReceiveChat) {
 	ui.History.Append(tui.NewHBox(
 		tui.NewLabel(m.Time),
@@ -203,6 +210,7 @@ func DisplayChatMessage(ui *UI, m *ReceiveChat) {
 	))
 }
 
+// Write friend request to UI
 func DisplayFriendRequest(ui *UI, m *FriendRequest) {
 	ui.History.Append(tui.NewHBox(
 		tui.NewLabel(fmt.Sprintf("Friend request from %s@%s (':%s' or just ignore)",

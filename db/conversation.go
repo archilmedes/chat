@@ -3,9 +3,9 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
-	"database/sql"
 )
 
 // Stores a conversation between two users
@@ -20,7 +20,7 @@ func getConversationsWithFriend(username string, friendDisplayName string) []Con
 	if err != nil {
 		fmt.Printf("Error creating conversations prepared statement for GetConversationUsers: %s", err)
 	}
-	results, err :=query.Query(username, friendDisplayName, friendDisplayName, username)
+	results, err := query.Query(username, friendDisplayName, friendDisplayName, username)
 	if err != nil {
 		fmt.Printf("Error executing GetConversationUsers query: %s", err)
 	}

@@ -1,11 +1,11 @@
 package db
 
 import (
-	"github.com/stretchr/testify/assert"
-	"testing"
-	"github.com/wavyllama/chat/config"
-	"fmt"
 	"encoding/hex"
+	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/wavyllama/chat/config"
+	"testing"
 )
 
 func TestMessages(t *testing.T) {

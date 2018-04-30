@@ -1,10 +1,10 @@
 package db
 
 import (
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"log"
-	"database/sql"
 )
 
 // Stores a session between two users
@@ -47,7 +47,7 @@ func QuerySessions() []Session {
 	if err != nil {
 		fmt.Printf("Error creating sessions prepared statement for QuerySessions: %s", err)
 	}
-	results, err :=query.Query()
+	results, err := query.Query()
 	if err != nil {
 		fmt.Printf("Error executing QuerySessions query: %s", err)
 	}
@@ -73,7 +73,7 @@ func getUserSessions(username string) []Session {
 	if err != nil {
 		fmt.Printf("Error creating sessions prepared statement for getUserSessions: %s", err)
 	}
-	results, err :=query.Query(username)
+	results, err := query.Query(username)
 	if err != nil {
 		fmt.Printf("Error executing getUserSessions query: %s", err)
 	}
@@ -86,7 +86,7 @@ func GetSession(SSID uint64) *Session {
 	if err != nil {
 		fmt.Printf("Error creating sessions prepared statement for GetSession: %s", err)
 	}
-	results, err :=query.Query(SSID)
+	results, err := query.Query(SSID)
 	if err != nil {
 		fmt.Printf("Error executing GetSession query: %s", err)
 	}
