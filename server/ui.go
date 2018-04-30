@@ -144,7 +144,11 @@ func NewUI(program *Server) (*UI, error) {
 	friends := program.User.GetFriends()
 	ui.List = tui.NewList()
 	for i, f := range friends {
-		ui.List.AddItems(f.DisplayName)
+		friendName := f.DisplayName
+		if online, _ := program.User.IsFriendOnline(f.DisplayName); online {
+			friendName = fmt.Sprintf("%s (active)\n", friendName)
+		}
+		ui.List.AddItems(friendName)
 		if strings.ToLower(f.DisplayName) == db.Self {
 			ui.List.SetSelected(i)
 		}
