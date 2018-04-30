@@ -56,3 +56,11 @@ func TestUser_GetSessions(t *testing.T) {
 	user := getFakeUser()
 	assert.Equal(t, 0, len(user.GetSessions(Self)))
 }
+
+func TestUser_Delete(t *testing.T) {
+	user := getFakeUser()
+	user.Create("Password123")
+	startingUsers := len(QueryUsers())
+	user.Delete()
+	assert.Equal(t, startingUsers-1, len(QueryUsers()))
+}
