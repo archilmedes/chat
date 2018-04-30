@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 	friend      = ":friend"
 	displayName = "displayName"
 	unfriend    = ":delete"
+	deleteSelf  = ":deleteSelf"
 	chat        = ":chat"
 )
 
@@ -72,6 +74,12 @@ func handleSpecialString(ui *UI, words []string) {
 		}
 	Failure:
 		fmt.Printf("Format for commands: '%s %s'\n", chat, displayName)
+	case deleteSelf:
+		if !ui.Program.User.Delete() {
+			fmt.Printf("Failed to delete your account\n")
+		}
+		fmt.Println("Successfully deleted all of your data")
+		os.Exit(0)
 	default:
 		if len(words) == 1 {
 			ui.Program.AcceptedFriend(words[0][1:])
