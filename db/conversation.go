@@ -15,7 +15,7 @@ type Conversation struct {
 }
 
 // Gets all messages between the user and friend
-func GetConversationUsers(username string, friendDisplayName string) []Conversation {
+func GetConversationsWithFriend(username string, friendDisplayName string) []Conversation {
 	query, err := DB.Prepare("SELECT m.*, s.* FROM messages m, sessions s WHERE m.SSID = s.SSID AND m.SSID IN (SELECT s1.SSID FROM sessions s1 WHERE (s1.username=? AND s1.friend_display_name=?) OR (s1.friend_display_name=? AND s1.username=?) ORDER BY s.session_timestamp, m.message_timestamp)")
 	if err != nil {
 		fmt.Printf("Error creating conversations prepared statement for GetConversationUsers: %s", err)
