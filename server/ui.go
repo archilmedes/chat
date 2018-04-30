@@ -3,10 +3,12 @@ package server
 import (
 	"fmt"
 	"github.com/marcusolsson/tui-go"
+	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -50,14 +52,7 @@ func handleSpecialString(ui *UI, words []string) {
 				if curr == words[1] {
 					curr = db.Self
 				}
-				ui.List.RemoveItems()
-				friends := ui.Program.User.GetFriends()
-				for i, f := range friends {
-					ui.List.AddItems(f.DisplayName)
-					if f.DisplayName == curr {
-						ui.List.Select(i)
-					}
-				}
+				ui.List.RemoveItem(1)
 			} else {
 				fmt.Printf("Error deleting friend: %s\n", words[1])
 			}
@@ -98,6 +93,13 @@ func setInputReader(ui *UI) {
 		} else {
 			if activeFriend != "" {
 				err := ui.Program.SendChatMessage(activeFriend, message)
+				if activeFriend != db.Self {
+					sendMessage := new(ReceiveChat)
+					sendMessage.Message = message
+					sendMessage.Time = core.GetFormattedTime(time.Now())
+					sendMessage.Sender = db.Self
+					DisplayChatMessage(ui, sendMessage)
+				}
 				if err != nil {
 					log.Printf("Error sending message: %s\n", err)
 				}

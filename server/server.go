@@ -88,7 +88,7 @@ func (s *Server) handleFriendMessage(msg *FriendMessage) {
 
 func (s *Server) AcceptedFriend(displayName string) {
 	lower := strings.ToLower(displayName)
-	if lower == db.Self || !s.User.IsFriendsWith(lower) {
+	if lower == db.Self || s.User.IsFriendsWith(lower) {
 		// TODO: error
 	} else {
 		s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username)
