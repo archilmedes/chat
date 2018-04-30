@@ -84,7 +84,6 @@ func (s *Server) handleFriendMessage(msg *FriendMessage) {
 	request := new(FriendRequest)
 	request.New("", s.LastFriend.Username, s.LastFriend.IP)
 	DisplayFriendRequest(s.UI, request)
-	s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
 }
 
 func (s *Server) AcceptedFriend(displayName string) {

@@ -5,6 +5,7 @@ import (
 	"github.com/marcusolsson/tui-go"
 	"github.com/wavyllama/chat/db"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -64,12 +65,18 @@ func handleSpecialString(ui *UI, words []string) {
 			fmt.Printf("Format to delete a friend: '%s displayName\n", unfriend)
 		}
 	case chat:
-		if len(words) == 2 && ui.Program.User.IsFriendsWith(words[1]) {
-			activeFriend = words[1]
+		if len(words) == 2 {
+			nextFriend, err := strconv.Atoi(words[1])
+			if err != nil || nextFriend >= ui.List.Length() {
+				goto Failure
+			}
+			ui.List.Select(nextFriend)
+			activeFriend = ui.List.SelectedItem()
 			ui.Program.StartOTRSession(activeFriend)
-		} else {
-			fmt.Printf("Format for commands: '%s %s'\n", chat, displayName)
+			return
 		}
+	Failure:
+		fmt.Printf("Format for commands: '%s %s'\n", chat, displayName)
 	default:
 		if len(words) == 1 {
 			ui.Program.AcceptedFriend(words[0][1:])
@@ -201,5 +208,6 @@ func DisplayFriendRequest(ui *UI, m *FriendRequest) {
 	ui.History.Append(tui.NewHBox(
 		tui.NewLabel(fmt.Sprintf("Friend request from %s@%s (':%s' or just ignore)",
 			m.Username, m.IP, displayName)),
+		tui.NewSpacer(),
 	))
 }
