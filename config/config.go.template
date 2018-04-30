@@ -4,4 +4,5 @@ const(
 	Username = "root"
 	Password = ""
 	Port = "3306"
+	AESKey = "aaaaaaaaaaaaaaaa"
 )

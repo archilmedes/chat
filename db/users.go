@@ -6,6 +6,11 @@ import (
 	"database/sql"
 )
 
+func generateSalt(username string, password string) string {
+	saltAndPassword := fmt.Sprintf("%d%s%s%d", len(password), username, password, len(username))
+	return saltAndPassword
+}
+
 // Check if user has already created an account
 func UserExists(username string) bool {
 	query, err := DB.Prepare("SELECT username, ipaddress FROM users WHERE username=?")
@@ -22,11 +27,12 @@ func UserExists(username string) bool {
 
 // Get user from database
 func GetUser(username string, password string) *User {
-	query, err := DB.Prepare("SELECT username, ipaddress FROM users WHERE username=? and password=SHA2(?, 256)")
+	hashedPassword := generateSalt(username, password)
+	query, err := DB.Prepare("SELECT username, ipaddress FROM users WHERE username=? and password=SHA2(?,256)")
 	if err != nil {
 		fmt.Printf("Error creating users prepared statement for GetUser: %s", err)
 	}
-	results, err :=query.Query(username, password)
+	results, err :=query.Query(username, hashedPassword)
 	if err != nil {
 		fmt.Printf("Error executing GetUser query: %s", err)
 	}
@@ -39,11 +45,12 @@ func GetUser(username string, password string) *User {
 
 // Add new user to database
 func AddUser(username string, password string, ipAddress string) bool {
-	insertCommand, err := DB.Prepare("INSERT INTO users VALUES (?, SHA2(?, 256), ?)")
+	hashedPassword := generateSalt(username, password)
+	insertCommand, err := DB.Prepare("INSERT INTO users VALUES (?, SHA2(?,256), ?)")
 	if err != nil {
 		fmt.Printf("Error creating users prepared statement for AddUser: %s", err)
 	}
-	_, err = insertCommand.Exec(username, password, ipAddress)
+	_, err = insertCommand.Exec(username, hashedPassword, ipAddress)
 	if err != nil {
 		log.Panicf("Failed to add user: %s", err)
 	}
@@ -65,11 +72,12 @@ func UpdateUserIP(username string, ipAddress string) bool {
 
 // Update the password of a user
 func UpdateUserPassword(username string, password string) bool {
-	updateCommand, err := DB.Prepare("UPDATE users SET password=SHA2(?, 256) WHERE username=?")
+	hashedPassword := generateSalt(username, password)
+	updateCommand, err := DB.Prepare("UPDATE users SET password=SHA2(?,256) WHERE username=?")
 	if err != nil {
 		fmt.Printf("Error creating users prepared statement for UpdateUserPassword: %s", err)
 	}
-	_, err = updateCommand.Exec(password, password)
+	_, err = updateCommand.Exec(hashedPassword, username)
 	if err != nil {
 		log.Panicf("Failed to update user's password: %s", err)
 	}

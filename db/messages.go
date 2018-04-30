@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"log"
 	"database/sql"
+	"github.com/wavyllama/chat/config"
+	"crypto/aes"
+	"crypto/cipher"
+	"bytes"
 )
 
 const (
@@ -24,11 +28,12 @@ func InsertMessage(SSID uint64, message []byte, timestamp string, sentOrReceived
 	if sentOrReceived != Sent && sentOrReceived != Received {
 		log.Fatalf("Invalid entry for sent/received - must be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
+	encryptedMessages := AESEncrypt(string(message), []byte(db.AESKey))
 	insertCommand, err := DB.Prepare("INSERT INTO messages VALUES (?, ?, ?, ?)")
 	if err != nil {
 		fmt.Printf("Error creating messages prepared statement for InsertMessage: %s", err)
 	}
-	_, err = insertCommand.Exec(SSID, message, timestamp, sentOrReceived)
+	_, err = insertCommand.Exec(SSID, encryptedMessages, timestamp, sentOrReceived)
 	if err != nil {
 		log.Panicf("Failed to insert into messages: %s", err)
 	}
@@ -41,7 +46,8 @@ func DeleteMessage(SSID uint64, message string, timestamp string, sentOrReceived
 	if err != nil {
 		fmt.Printf("Error creating users prepared statement for UpdateUserIP: %s", err)
 	}
-	_, err = deleteCommand.Exec(SSID, message, timestamp, sentOrReceived)
+	encrypted_message := AESEncrypt(string(message), []byte(db.AESKey))
+	_, err = deleteCommand.Exec(SSID, encrypted_message, timestamp, sentOrReceived)
 	if err != nil {
 		log.Panicf("Failed to delete message: %s", err)
 	}
@@ -84,6 +90,7 @@ func ExecuteMessagesQuery(results *sql.Rows) []DBMessage {
 			log.Panicf("Failed to parse results from messages: %s", err)
 			panic(err)
 		}
+		msg.Text = []byte(AESDecrypt(msg.Text, []byte(db.AESKey)))
 		messages = append(messages, msg)
 	}
 	err := results.Err()
@@ -91,4 +98,46 @@ func ExecuteMessagesQuery(results *sql.Rows) []DBMessage {
 		log.Panicf("Failed to get results from conversations query: %s", err)
 	}
 	return messages
+}
+
+// Parts of AES encryption code from https://gist.github.com/saoin/b306746041b48a8366d0f63507a4e7f3
+func AESEncrypt(src string, key []byte) []byte {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		fmt.Println("key error1", err)
+	}
+	if src == "" {
+		fmt.Println("plain content empty")
+	}
+	ecb := cipher.NewCBCEncrypter(block, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	content := []byte(src)
+	content = pkcs5Padding(content, block.BlockSize())
+	crypted := make([]byte, len(content))
+	ecb.CryptBlocks(crypted, content)
+	return crypted
+}
+
+func AESDecrypt(crypt []byte, key []byte) []byte {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		fmt.Println("key error1", err)
+	}
+	if len(crypt) == 0 {
+		fmt.Println("plain content empty")
+	}
+	ecb := cipher.NewCBCDecrypter(block, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	decrypted := make([]byte, len(crypt))
+	ecb.CryptBlocks(decrypted, crypt)
+	return pkcs5Trimming(decrypted)
+}
+
+func pkcs5Padding(ciphertext []byte, blockSize int) []byte {
+	padding := blockSize - len(ciphertext)%blockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(ciphertext, padtext...)
+}
+
+func pkcs5Trimming(encrypt []byte) []byte {
+	padding := encrypt[len(encrypt)-1]
+	return encrypt[:len(encrypt)-int(padding)]
 }
