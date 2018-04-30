@@ -39,20 +39,41 @@ func GetUser(username string, password string) *User {
 
 // Add new user to database
 func AddUser(username string, password string, ipAddress string) bool {
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", SHA2(\"%s\", 256), \"%s\")", usersTableName, username, password, ipAddress)
-	return ExecuteChangeCommand(insertCommand, "Failed to add user")
+	insertCommand, err := DB.Prepare("INSERT INTO users VALUES (?, SHA2(?, 256), ?)")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for AddUser: %s", err)
+	}
+	_, err = insertCommand.Exec(username, password, ipAddress)
+	if err != nil {
+		log.Panicf("Failed to add user: %s", err)
+	}
+	return true
 }
 
 // Update the IPv4 address of a user
 func UpdateUserIP(username string, ipAddress string) bool {
-	updateCommand := fmt.Sprintf("UPDATE %s SET ipaddress=\"%s\" WHERE username=\"%s\"", usersTableName, ipAddress, username)
-	return ExecuteChangeCommand(updateCommand, "Failed to update user's IP")
+	updateCommand, err := DB.Prepare("UPDATE users SET ipaddress=? WHERE username=?")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for UpdateUserIP: %s", err)
+	}
+	_, err = updateCommand.Exec(ipAddress, username)
+	if err != nil {
+		log.Panicf("Failed to update user's IP: %s", err)
+	}
+	return true
 }
 
 // Update the password of a user
 func UpdateUserPassword(username string, password string) bool {
-	updateCommand := fmt.Sprintf("UPDATE %s SET password=SHA2(\"%s\", 256) WHERE username=\"%s\"", usersTableName, password, username)
-	return ExecuteChangeCommand(updateCommand, "Failed to update user's password")
+	updateCommand, err := DB.Prepare("UPDATE users SET password=SHA2(?, 256) WHERE username=?")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for UpdateUserPassword: %s", err)
+	}
+	_, err = updateCommand.Exec(password, password)
+	if err != nil {
+		log.Panicf("Failed to update user's password: %s", err)
+	}
+	return true
 }
 
 // Delete a user
@@ -64,8 +85,15 @@ func DeleteUser(username string) bool {
 
 // Deletes a user and their friends
 func deleteUserAndFriends(username string) bool {
-	deleteCommand := fmt.Sprintf("DELETE u, f FROM users u LEFT JOIN friends f ON u.username = f.username WHERE u.username=\"%s\"", username)
-	return ExecuteChangeCommand(deleteCommand, "Failed to delete user and friends")
+	deleteCommand, err := DB.Prepare("DELETE u, f FROM users u LEFT JOIN friends f ON u.username = f.username WHERE u.username=?")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for deleteUserAndFriends: %s", err)
+	}
+	_, err = deleteCommand.Exec(username)
+	if err != nil {
+		log.Panicf("Failed to delete user and friends: %s", err)
+	}
+	return true
 }
 
 // Get all users

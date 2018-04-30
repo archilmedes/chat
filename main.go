@@ -21,6 +21,7 @@ const (
 	reject      = ":reject"
 	displayName = ":displayName"
 	unfriend    = ":delete"
+	deleteSelf  = ":deleteSelf"
 )
 
 var activeFriend = ""
@@ -59,6 +60,13 @@ func handleSpecialString(program *server.Server, words []string) {
 			}
 		}
 		fmt.Printf("Format to delete a friend: '%s displayName\n", unfriend)
+	case deleteSelf:
+		if !program.User.Delete() {
+			fmt.Printf("Failed to delete your account\n")
+		}
+		fmt.Println("Successfully deleted all of your data")
+		runtime.Goexit()
+		os.Exit(0)
 	default:
 		if len(words) == 1 && program.User.IsFriendsWith(words[0][1:]) {
 			activeFriend = words[0][1:]

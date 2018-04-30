@@ -17,21 +17,35 @@ type Session struct {
 // Inserts data into the sessions table
 func InsertIntoSessions(SSID uint64, username string, friendMac string, protocolType string, protocolValue []byte, timestamp string) bool {
 	hexProtoValue := hex.EncodeToString(protocolValue)
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", \"%s\", UNHEX(\"%s\"), \"%s\")", sessionsTableName, SSID, username, friendMac, protocolType, hexProtoValue, timestamp)
-	return ExecuteChangeCommand(insertCommand, "Failed to insert into sessions")
+	insertCommand, err := DB.Prepare("INSERT INTO sessions VALUES (?, ?, ?, ?, UNHEX(?), ?)")
+	if err != nil {
+		fmt.Printf("Error creating sessions prepared statement for InsertIntoSessions: %s", err)
+	}
+	_, err = insertCommand.Exec(SSID, username, friendMac, protocolType, hexProtoValue, timestamp)
+	if err != nil {
+		log.Panicf("Failed to insert into sessions: %s", err)
+	}
+	return true
 }
 
 // Deletes a session
 func DeleteSession(SSID uint64) bool {
-	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE SSID =%d", sessionsTableName, SSID)
-	return ExecuteChangeCommand(deleteCommand, "Failed to delete session")
+	deleteCommand, err := DB.Prepare("DELETE FROM sessions WHERE SSID =?")
+	if err != nil {
+		fmt.Printf("Error creating sessions prepared statement for DeleteSession: %s", err)
+	}
+	_, err = deleteCommand.Exec(SSID)
+	if err != nil {
+		log.Panicf("Failed to delete session: %s", err)
+	}
+	return true
 }
 
 // Gets all sessions
 func QuerySessions() []Session {
 	query, err := DB.Prepare("SELECT * FROM sessions")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for QuerySessions: %s", err)
+		fmt.Printf("Error creating sessions prepared statement for QuerySessions: %s", err)
 	}
 	results, err :=query.Query()
 	if err != nil {
@@ -42,15 +56,22 @@ func QuerySessions() []Session {
 
 // Deletes the sessions and messages of the given user
 func deleteSessionsWithMessages(username string) bool {
-	deleteCommand := fmt.Sprintf("DELETE s, m FROM sessions s LEFT JOIN messages m ON s.SSID = m.SSID WHERE s.Username=\"%s\"", username)
-	return ExecuteChangeCommand(deleteCommand, "Failed to do large delete")
+	deleteCommand, err := DB.Prepare("DELETE s, m FROM sessions s LEFT JOIN messages m ON s.SSID = m.SSID WHERE s.username=?")
+	if err != nil {
+		fmt.Printf("Error creating sessions prepared statement for deleteSessionsWithMessages: %s", err)
+	}
+	_, err = deleteCommand.Exec(username)
+	if err != nil {
+		log.Panicf("Failed to do large delete: %s", err)
+	}
+	return true
 }
 
 // Get all sessions belonging to a user by the username
 func getUserSessions(username string) []Session {
 	query, err := DB.Prepare("SELECT * FROM sessions WHERE username=? ORDER BY session_timestamp DESC")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for getUserSessions: %s", err)
+		fmt.Printf("Error creating sessions prepared statement for getUserSessions: %s", err)
 	}
 	results, err :=query.Query(username)
 	if err != nil {
@@ -61,9 +82,9 @@ func getUserSessions(username string) []Session {
 
 // Get the session corresponding to the session identifier
 func GetSession(SSID uint64) *Session {
-	query, err := DB.Prepare("SELECT * FROM sessions WHERE SSID=%d")
+	query, err := DB.Prepare("SELECT * FROM sessions WHERE SSID=?")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for GetSession: %s", err)
+		fmt.Printf("Error creating sessions prepared statement for GetSession: %s", err)
 	}
 	results, err :=query.Query(SSID)
 	if err != nil {
