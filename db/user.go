@@ -85,12 +85,6 @@ func (u *User) IsFriendOnline(friendDisplayName string) (bool, time.Time) {
 }
 
 // Fetch conversations between another friend and decrypts the contents of the messages everything
-func (u *User) GetConversationHistory(friendDisplayName string) [][]byte {
-	converse := GetConversationUsers(u.Username, friendDisplayName)
-	var messages [][]byte
-	for _, c := range converse {
-		// No reason to initiate protocol from DB because messages are not stored encrypted
-		messages = append(messages, c.Message.Text)
-	}
-	return messages
+func (u *User) GetConversationHistory(friendDisplayName string) []Conversation {
+	return getConversationsWithFriend(u.Username, friendDisplayName)
 }

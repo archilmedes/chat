@@ -11,7 +11,7 @@ func TestConversations(t *testing.T) {
 }
 
 func ConversationsTestID(t *testing.T) {
-	conversations := GetConversationUsers("karateAMD", "10.192.345.987")
+	conversations := getConversationsWithFriend("karateAMD", "10.192.345.987")
 	assert.Equal(t, 3, len(conversations))
 	assert.Equal(t, uint64(34), conversations[0].Session.SSID)
 	assert.Equal(t, uint64(34), conversations[1].Message.SSID)
