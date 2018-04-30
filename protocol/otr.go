@@ -66,7 +66,8 @@ func (o *OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 			return wrapMessage(out), nil
 		}
 	case otr.NewKeys:
-		//fmt.Println("You are now in a secure session.")
+		// fmt.Println("You are now in a secure session.")
+
 		return wrapMessage(out), nil
 	case otr.ConversationEnded:
 		o.EndSession()

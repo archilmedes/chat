@@ -9,6 +9,7 @@ import (
 	"github.com/wavyllama/chat/protocol"
 	"log"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -19,10 +20,11 @@ const (
 
 // Server holds the user and all of his sessions
 type Server struct {
-	User     *db.User
-	UI       *UI
-	Listener *net.TCPListener
-	Sessions *[]*Session
+	User       *db.User
+	LastFriend *db.Friend
+	UI         *UI
+	Listener   *net.TCPListener
+	Sessions   *[]*Session
 }
 
 func init() {
@@ -78,15 +80,22 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 
 // Handles a friend message
 func (s *Server) handleFriendMessage(msg *FriendMessage) {
-	sourceMAC, sourceIP, sourceUsername := msg.SourceID()
+	s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username = msg.SourceID()
+	request := new(FriendRequest)
+	request.New("", s.LastFriend.Username, s.LastFriend.IP)
+	DisplayFriendRequest(s.UI, request)
+	s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
+}
 
-	friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
-	if len(friendDisplayName) != 0 {
-		s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
-		// Send a friend request back
-		s.SendFriendRequest(sourceIP, sourceUsername)
+func (s *Server) AcceptedFriend(displayName string) {
+	lower := strings.ToLower(displayName)
+	if lower == db.Self || s.User.IsFriendsWith(lower) {
+		// TODO: error
+		s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
+	} else {
+		s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username)
+		s.UI.List.AddItems(displayName)
 	}
-	// else friend request is rejected, so don't respond back
 }
 
 // Handles a handshake message
@@ -97,13 +106,7 @@ func (s *Server) handleHandshakeMessage(friend *db.Friend, msg *HandshakeMessage
 
 	// We are in a handshake, so the friend should exist already
 	if friend == nil {
-		friendDisplayName := s.getDisplayName(sourceUsername, sourceIP)
-		if len(friendDisplayName) == 0 {
-			// If we rejected a friend during the handshake, then don't respond back to the handshake
-			return
-		}
-		s.User.AddFriend(friendDisplayName, sourceMAC, sourceIP, sourceUsername)
-		friend = s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
+		return
 	}
 	var sess *Session
 	round := msg.Round
@@ -162,23 +165,11 @@ func (s *Server) handleChatMessage(msg *ChatMessage) {
 	dec, _ := sess.Proto.Decrypt(msg.Text)
 	if sess.Proto.IsActive() && dec[0] != nil {
 		// Print the decoded message and IP
+		currTime := time.Now()
 		chatMessage := new(ReceiveChat)
-		chatMessage.New(string(dec[0]), friend.DisplayName)
+		chatMessage.New(string(dec[0]), friend.DisplayName, core.GetFormattedTime(currTime))
 		DisplayChatMessage(s.UI, chatMessage)
-		db.InsertMessage(sess.Proto.GetSessionID(), dec[0], core.GetFormattedTime(time.Now()), db.Received)
-	}
-}
-
-func (s *Server) getDisplayName(sourceUsername string, sourceIP string) string {
-	fmt.Printf("You received a friend request from %s at %s\n", sourceUsername, sourceIP)
-	var friendDisplayName string
-	for {
-		friendDisplayName = core.GetDisplayNameFromConsole(sourceIP, sourceUsername)
-		if !s.User.IsFriendsWith(friendDisplayName) {
-			return friendDisplayName
-		}
-		fmt.Printf("You already have a friend named '%s'\n", friendDisplayName)
-		return s.getDisplayName(sourceUsername, sourceIP)
+		db.InsertMessage(sess.Proto.GetSessionID(), dec[0], core.GetFormattedTime(currTime), db.Received)
 	}
 }
 
@@ -205,6 +196,7 @@ func (s *Server) Start(user *db.User) error {
 	log.Println("Launching Server...")
 
 	s.User = user
+	s.LastFriend = new(db.Friend)
 	ipAddr := fmt.Sprintf("%s:%d", user.IP, Port)
 	if (*s).Listener, err = setupServer(ipAddr); err != nil {
 		return err

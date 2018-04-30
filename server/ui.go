@@ -13,11 +13,10 @@ const (
 	friend      = ":friend"
 	displayName = "displayName"
 	unfriend    = ":delete"
-	reject      = ":reject"
 	chat        = ":chat"
 )
 
-var activeFriend = ""
+var activeFriend = "me"
 
 type UI struct {
 	Program       *Server
@@ -72,10 +71,10 @@ func handleSpecialString(ui *UI, words []string) {
 			fmt.Printf("Format for commands: '%s %s'\n", chat, displayName)
 		}
 	default:
-		if len(words) == 1 && ui.Program.User.IsFriendsWith(words[0][1:]) {
-			activeFriend = words[0][1:]
-			ui.Program.StartOTRSession(activeFriend)
+		if len(words) == 1 {
+			ui.Program.AcceptedFriend(words[0][1:])
 		} else {
+			fmt.Printf("Format to accept friend request ':%s\n", displayName)
 		}
 	}
 }
@@ -108,15 +107,22 @@ func setPersonChange(ui *UI) {
 		for i := 0; i < ui.History.Length(); i++ {
 			ui.History.Remove(i)
 		}
-		// messages := ui.Program.User.GetConversationHistory(list.SelectedItem())
-		// TODO: WIP
-		/*
-			for _, message := range messages {
-				chatMessage := new(ReceiveChat)
-				chatMessage.New(string(message), )
-				DisplayChatMessage(ui, )
+		conversations := ui.Program.User.GetConversationHistory(list.SelectedItem())
+		fmt.Printf("Length of convos: %d\n", len(conversations))
+		for _, conv := range conversations {
+			chatMessage := new(ReceiveChat)
+			var sender string
+			if conv.Message.SentOrReceived == db.Sent {
+				sender = db.Self
+			} else {
+				if list.SelectedItem() == db.Self {
+					continue
+				}
+				sender = list.SelectedItem()
 			}
-		*/
+			chatMessage.New(string(conv.Message.Text), sender, conv.Message.Timestamp)
+			DisplayChatMessage(ui, chatMessage)
+		}
 	})
 }
 
@@ -152,6 +158,11 @@ func NewUI(program *Server) (*UI, error) {
 	ui.Chat.SetSizePolicy(tui.Expanding, tui.Expanding)
 	setInputReader(ui)
 	setPersonChange(ui)
+	for i, f := range friends {
+		if strings.ToLower(f.DisplayName) == db.Self {
+			ui.List.Select(i)
+		}
+	}
 	root := tui.NewHBox(sidebar, ui.Chat)
 	internalUI, err := tui.New(root)
 	if err != nil {
@@ -159,14 +170,13 @@ func NewUI(program *Server) (*UI, error) {
 	}
 	ui.UI = internalUI
 	internalUI.SetKeybinding("Esc", func() { ui.UI.Quit() })
+	showInfo := new(InfoMessage)
+	showInfo.New(fmt.Sprintf("Listening on: '%s:%d'", program.User.IP, Port))
+	DisplayInfoMessage(ui, showInfo)
 	if err := ui.UI.Run(); err != nil {
 		return nil, err
 	}
 	return ui, nil
-}
-
-func addFriend(ui *UI, newFriend string) {
-	ui.List.AddItems(newFriend)
 }
 
 func DisplayInfoMessage(ui *UI, m *InfoMessage) {
@@ -179,6 +189,7 @@ func DisplayInfoMessage(ui *UI, m *InfoMessage) {
 func DisplayChatMessage(ui *UI, m *ReceiveChat) {
 	if strings.ToLower(m.Sender) == strings.ToLower(activeFriend) {
 		ui.History.Append(tui.NewHBox(
+			tui.NewLabel(m.Time),
 			tui.NewPadder(1, 0, tui.NewLabel(fmt.Sprintf("<%s>", m.Sender))),
 			tui.NewLabel(m.Body()),
 			tui.NewSpacer(),
@@ -187,5 +198,8 @@ func DisplayChatMessage(ui *UI, m *ReceiveChat) {
 }
 
 func DisplayFriendRequest(ui *UI, m *FriendRequest) {
-	// TODO
+	ui.History.Append(tui.NewHBox(
+		tui.NewLabel(fmt.Sprintf("Friend request from %s@%s (':%s' or just ignore)",
+			m.Username, m.IP, displayName)),
+	))
 }

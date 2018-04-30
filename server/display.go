@@ -11,7 +11,7 @@ type InfoMessage struct {
 
 type ReceiveChat struct {
 	InfoMessage
-	Sender string
+	Sender, Time string
 }
 
 type FriendRequest struct {
@@ -31,9 +31,10 @@ func (m *InfoMessage) New(info string) {
 	m.createInfoMessage(info)
 }
 
-func (m *ReceiveChat) New(info, sender string) {
+func (m *ReceiveChat) New(info, sender, time string) {
 	m.createInfoMessage(info)
 	m.Sender = sender
+	m.Time = time
 }
 
 func (m *FriendRequest) New(info, username, ip string) {
