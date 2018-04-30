@@ -162,7 +162,6 @@ func (s *Server) handleChatMessage(msg *ChatMessage) {
 	dec, _ := sess.Proto.Decrypt(msg.Text)
 	if sess.Proto.IsActive() && dec[0] != nil {
 		// Print the decoded message and IP
-		fmt.Printf("%s: %s\n", friend.DisplayName, dec[0])
 		chatMessage := new(ReceiveChat)
 		chatMessage.New(string(dec[0]), friend.DisplayName)
 		DisplayChatMessage(s.UI, chatMessage)

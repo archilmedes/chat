@@ -3,9 +3,9 @@ package server
 import (
 	"fmt"
 	"github.com/marcusolsson/tui-go"
+	"github.com/wavyllama/chat/db"
 	"log"
 	"strings"
-	"time"
 )
 
 const (
@@ -24,6 +24,7 @@ type UI struct {
 	UI            tui.UI
 	Chat, History *tui.Box
 	Input         *tui.Entry
+	List          *tui.List
 }
 
 func handleSpecialString(ui *UI, words []string) {
@@ -44,7 +45,20 @@ func handleSpecialString(ui *UI, words []string) {
 		fmt.Printf("Format to add friend: '%s username@ipaddr'\n", friend)
 	case unfriend:
 		if len(words) == 2 {
-			if !ui.Program.User.DeleteFriend(words[1]) {
+			if ui.Program.User.DeleteFriend(words[1]) {
+				curr := ui.List.SelectedItem()
+				if curr == words[1] {
+					curr = db.Self
+				}
+				ui.List.RemoveItems()
+				friends := ui.Program.User.GetFriends()
+				for i, f := range friends {
+					ui.List.AddItems(f.DisplayName)
+					if f.DisplayName == curr {
+						ui.List.Select(i)
+					}
+				}
+			} else {
 				fmt.Printf("Error deleting friend: %s\n", words[1])
 			}
 		} else {
@@ -85,13 +99,44 @@ func setInputReader(ui *UI) {
 				fmt.Printf("Please set active friend: '%s %s'\n", chat, displayName)
 			}
 		}
+		ui.Input.SetText("")
+	})
+}
+
+func setPersonChange(ui *UI) {
+	ui.List.OnSelectionChanged(func(list *tui.List) {
+		for i := 0; i < ui.History.Length(); i++ {
+			ui.History.Remove(i)
+		}
+		// messages := ui.Program.User.GetConversationHistory(list.SelectedItem())
+		// TODO: WIP
+		/*
+			for _, message := range messages {
+				chatMessage := new(ReceiveChat)
+				chatMessage.New(string(message), )
+				DisplayChatMessage(ui, )
+			}
+		*/
 	})
 }
 
 func NewUI(program *Server) (*UI, error) {
-	var ui *UI
+	var ui = new(UI)
 	program.UI = ui
 	ui.Program = program
+	friends := program.User.GetFriends()
+	ui.List = tui.NewList()
+	for i, f := range friends {
+		ui.List.AddItems(f.DisplayName)
+		if strings.ToLower(f.DisplayName) == db.Self {
+			ui.List.SetSelected(i)
+		}
+	}
+	sidebar := tui.NewVBox(
+		tui.NewLabel("FRIENDS"),
+		ui.List,
+	)
+	sidebar.SetBorder(true)
 	ui.History = tui.NewVBox()
 	historyScroll := tui.NewScrollArea(ui.History)
 	historyScroll.SetAutoscrollToBottom(true)
@@ -106,7 +151,8 @@ func NewUI(program *Server) (*UI, error) {
 	ui.Chat = tui.NewVBox(historyBox, inputBox)
 	ui.Chat.SetSizePolicy(tui.Expanding, tui.Expanding)
 	setInputReader(ui)
-	root := tui.NewHBox(ui.Chat)
+	setPersonChange(ui)
+	root := tui.NewHBox(sidebar, ui.Chat)
 	internalUI, err := tui.New(root)
 	if err != nil {
 		return nil, err
@@ -119,6 +165,10 @@ func NewUI(program *Server) (*UI, error) {
 	return ui, nil
 }
 
+func addFriend(ui *UI, newFriend string) {
+	ui.List.AddItems(newFriend)
+}
+
 func DisplayInfoMessage(ui *UI, m *InfoMessage) {
 	ui.History.Append(tui.NewHBox(
 		tui.NewLabel(m.Body()),
@@ -129,7 +179,6 @@ func DisplayInfoMessage(ui *UI, m *InfoMessage) {
 func DisplayChatMessage(ui *UI, m *ReceiveChat) {
 	if strings.ToLower(m.Sender) == strings.ToLower(activeFriend) {
 		ui.History.Append(tui.NewHBox(
-			tui.NewLabel(time.Now().Format(time.RFC822)),
 			tui.NewPadder(1, 0, tui.NewLabel(fmt.Sprintf("<%s>", m.Sender))),
 			tui.NewLabel(m.Body()),
 			tui.NewSpacer(),
