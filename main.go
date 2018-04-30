@@ -65,7 +65,6 @@ func handleSpecialString(program *server.Server, words []string) {
 			fmt.Printf("Failed to delete your account\n")
 		}
 		fmt.Println("Successfully deleted all of your data")
-		runtime.Goexit()
 		os.Exit(0)
 	default:
 		if len(words) == 1 && program.User.IsFriendsWith(words[0][1:]) {
