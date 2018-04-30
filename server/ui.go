@@ -96,7 +96,9 @@ func setInputReader(ui *UI) {
 				sendMessage.Message = message
 				sendMessage.Time = core.GetFormattedTime(time.Now())
 				sendMessage.Sender = db.Self
-				DisplayChatMessage(ui, sendMessage)
+				if activeFriend != db.Self {
+					DisplayChatMessage(ui, sendMessage)
+				}
 				err := ui.Program.SendChatMessage(activeFriend, message)
 				if err != nil {
 					log.Printf("Error sending message: %s\n", err)
