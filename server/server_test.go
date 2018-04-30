@@ -62,7 +62,9 @@ func TestUser_GetConversationHistory(t *testing.T) {
 
 	sendAFakeMessage(server)
 
-	messages := server.User.GetConversationHistory(db.Self)
-	assert.Equal(t, []byte(fakeMessage), messages[0])
+	conversations := server.User.GetConversationHistory(db.Self)
+	assert.Equal(t, 1, len(conversations))
+	assert.Equal(t, []byte(fakeMessage), conversations[0].Message.Text)
+	assert.Equal(t, db.Sent, conversations[0].Message.SentOrReceived)
 	assert.NoError(t, server.Shutdown())
 }
