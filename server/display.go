@@ -1,19 +1,23 @@
 package server
 
+// Any message meant to be displayed in UI
 type DisplayMessage interface {
 	Body() string
 }
 
+// Message of just text information
 type InfoMessage struct {
 	DisplayMessage
 	Message string
 }
 
+// Chat message
 type ReceiveChat struct {
 	InfoMessage
 	Sender, Time string
 }
 
+// Friend request received
 type FriendRequest struct {
 	InfoMessage
 	Username, IP string

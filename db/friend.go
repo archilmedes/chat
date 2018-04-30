@@ -1,9 +1,9 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
-	"database/sql"
 )
 
 const Self = "me" // Display name for self.
@@ -18,7 +18,7 @@ func areFriends(username, friendDisplayName string) bool {
 	if err != nil {
 		fmt.Printf("Error creating friends prepared statement for areFriends: %s", err)
 	}
-	results, err :=query.Query(username, friendDisplayName)
+	results, err := query.Query(username, friendDisplayName)
 	if err != nil {
 		fmt.Printf("Error executing areFriends query: %s", err)
 	}
@@ -71,7 +71,7 @@ func getFriends(username string) []Friend {
 	if err != nil {
 		fmt.Printf("Error creating friends prepared statement for getFriends: %s", err)
 	}
-	results, err :=query.Query(username)
+	results, err := query.Query(username)
 	if err != nil {
 		fmt.Printf("Error executing getFriends query: %s", err)
 	}
@@ -91,7 +91,7 @@ func getFriendByDisplayName(username, friendDisplayName string) *Friend {
 	if err != nil {
 		fmt.Printf("Error creating friends prepared statement for fetFriendByDisplayName: %s", err)
 	}
-	results, err :=query.Query(username, friendDisplayName)
+	results, err := query.Query(username, friendDisplayName)
 	if err != nil {
 		fmt.Printf("Error executing getFriendByDisplayName query: %s", err)
 	}
@@ -104,7 +104,7 @@ func getFriendByUsernameAndMAC(username, friendUsername, friendMACAddress string
 	if err != nil {
 		fmt.Printf("Error creating friends prepared statement for getFriendByUsernameAndMAC: %s", err)
 	}
-	results, err :=query.Query(username, friendUsername, friendMACAddress)
+	results, err := query.Query(username, friendUsername, friendMACAddress)
 	if err != nil {
 		fmt.Printf("Error executing getFriendByUsernameAndMAC query: %s", err)
 	}

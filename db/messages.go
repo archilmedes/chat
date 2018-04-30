@@ -1,13 +1,13 @@
 package db
 
 import (
-	"fmt"
-	"log"
-	"database/sql"
-	"github.com/wavyllama/chat/config"
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"bytes"
+	"database/sql"
+	"fmt"
+	"github.com/wavyllama/chat/config"
+	"log"
 )
 
 const (
@@ -60,7 +60,7 @@ func QueryMessages() []DBMessage {
 	if err != nil {
 		fmt.Printf("Error creating messages prepared statement for QueryMessages: %s", err)
 	}
-	results, err :=query.Query()
+	results, err := query.Query()
 	if err != nil {
 		fmt.Printf("Error executing QueryMessages query: %s", err)
 	}
@@ -73,7 +73,7 @@ func getSessionMessages(SSID uint64) []DBMessage {
 	if err != nil {
 		fmt.Printf("Error creating messages prepared statement for getSessionMessages: %s", err)
 	}
-	results, err :=query.Query(SSID)
+	results, err := query.Query(SSID)
 	if err != nil {
 		fmt.Printf("Error executing getSessionMessages query: %s", err)
 	}

@@ -2,11 +2,11 @@ package server
 
 import (
 	"github.com/stretchr/testify/assert"
+	config "github.com/wavyllama/chat/config"
 	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"testing"
 	"time"
-	config "github.com/wavyllama/chat/config"
 )
 
 const (

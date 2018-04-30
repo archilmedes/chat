@@ -1,9 +1,9 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
-	"database/sql"
 )
 
 func generateSalt(username string, password string) string {
@@ -17,7 +17,7 @@ func UserExists(username string) bool {
 	if err != nil {
 		fmt.Printf("Error creating users prepared statement for UserExists: %s", err)
 	}
-	results, err :=query.Query(username)
+	results, err := query.Query(username)
 	if err != nil {
 		fmt.Printf("Error executing UserExists query: %s", err)
 	}
@@ -32,7 +32,7 @@ func GetUser(username string, password string) *User {
 	if err != nil {
 		fmt.Printf("Error creating users prepared statement for GetUser: %s", err)
 	}
-	results, err :=query.Query(username, hashedPassword)
+	results, err := query.Query(username, hashedPassword)
 	if err != nil {
 		fmt.Printf("Error executing GetUser query: %s", err)
 	}
@@ -110,7 +110,7 @@ func QueryUsers() []User {
 	if err != nil {
 		fmt.Printf("Error creating users prepared statement for QueryUsers: %s", err)
 	}
-	results, err :=query.Query()
+	results, err := query.Query()
 	if err != nil {
 		fmt.Printf("Error executing QueryUsers query: %s", err)
 	}
