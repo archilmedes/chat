@@ -6,6 +6,7 @@ import (
 	"github.com/wavyllama/chat/db"
 	"testing"
 	"time"
+	config "github.com/wavyllama/chat/config"
 )
 
 const (
@@ -64,7 +65,7 @@ func TestUser_GetConversationHistory(t *testing.T) {
 
 	conversations := server.User.GetConversationHistory(db.Self)
 	assert.Equal(t, 1, len(conversations))
-	assert.Equal(t, []byte(fakeMessage), conversations[0].Message.Text)
+	assert.Equal(t, []byte(fakeMessage), db.AESDecrypt(conversations[0].Message.Text, []byte(config.AESKey)))
 	assert.Equal(t, db.Sent, conversations[0].Message.SentOrReceived)
 	assert.NoError(t, server.Shutdown())
 }
