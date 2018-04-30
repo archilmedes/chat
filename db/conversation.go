@@ -14,7 +14,7 @@ type Conversation struct {
 }
 
 // Gets all messages between the user and friend
-func GetConversationUsers(username string, friendDisplayName string) []Conversation {
+func getConversationsWithFriend(username string, friendDisplayName string) []Conversation {
 	query := fmt.Sprintf("SELECT m.*, s.* FROM messages m, sessions s WHERE m.SSID = s.SSID AND m.SSID IN (SELECT s1.SSID FROM sessions s1 WHERE (s1.username=\"%s\" AND s1.friend_display_name=\"%s\") OR (s1.friend_display_name=\"%s\" AND s1.username=\"%s\") ORDER BY s.session_timestamp, m.message_timestamp)", username, friendDisplayName, friendDisplayName, username)
 	conversations := ExecuteConversationsQuery(query)
 	return conversations
