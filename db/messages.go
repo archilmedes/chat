@@ -24,21 +24,35 @@ func InsertMessage(SSID uint64, message []byte, timestamp string, sentOrReceived
 	if sentOrReceived != Sent && sentOrReceived != Received {
 		log.Fatalf("Invalid entry for sent/received - must be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (%d, \"%s\", \"%s\", %d)", messagesTableName, SSID, message, timestamp, sentOrReceived)
-	return ExecuteChangeCommand(insertCommand, "Failed to insert into messages")
+	insertCommand, err := DB.Prepare("INSERT INTO messages VALUES (?, ?, ?, ?)")
+	if err != nil {
+		fmt.Printf("Error creating messages prepared statement for InsertMessage: %s", err)
+	}
+	_, err = insertCommand.Exec(SSID, message, timestamp, sentOrReceived)
+	if err != nil {
+		log.Panicf("Failed to insert into messages: %s", err)
+	}
+	return true
 }
 
 // Removes a message from the messages table
 func DeleteMessage(SSID uint64, message string, timestamp string, sentOrReceived int) bool {
-	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE SSID=%d AND message=\"%s\" AND message_timestamp=\"%s\" AND sent_or_received=%d", messagesTableName, SSID, message, timestamp, sentOrReceived)
-	return ExecuteChangeCommand(deleteCommand, "Failed to delete message")
+	deleteCommand, err := DB.Prepare("DELETE FROM messages WHERE SSID=? AND message=? AND message_timestamp=? AND sent_or_received=?")
+	if err != nil {
+		fmt.Printf("Error creating users prepared statement for UpdateUserIP: %s", err)
+	}
+	_, err = deleteCommand.Exec(SSID, message, timestamp, sentOrReceived)
+	if err != nil {
+		log.Panicf("Failed to delete message: %s", err)
+	}
+	return true
 }
 
 // Returns all data in the messages table
 func QueryMessages() []DBMessage {
 	query, err := DB.Prepare("SELECT * FROM messages")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for QueryMessages: %s", err)
+		fmt.Printf("Error creating messages prepared statement for QueryMessages: %s", err)
 	}
 	results, err :=query.Query()
 	if err != nil {
@@ -51,7 +65,7 @@ func QueryMessages() []DBMessage {
 func getSessionMessages(SSID uint64) []DBMessage {
 	query, err := DB.Prepare("SELECT * FROM messages WHERE SSID=?")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for getSessionMessages: %s", err)
+		fmt.Printf("Error creating messages prepared statement for getSessionMessages: %s", err)
 	}
 	results, err :=query.Query(SSID)
 	if err != nil {

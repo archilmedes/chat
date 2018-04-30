@@ -16,7 +16,7 @@ type Friend struct {
 func areFriends(username, friendDisplayName string) bool {
 	query, err := DB.Prepare("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM friends WHERE username=? AND friend_display_name=?")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for areFriends: %s", err)
+		fmt.Printf("Error creating friends prepared statement for areFriends: %s", err)
 	}
 	results, err :=query.Query(username, friendDisplayName)
 	if err != nil {
@@ -28,27 +28,48 @@ func areFriends(username, friendDisplayName string) bool {
 
 // Add friend to the user's friend's table
 func addFriend(username, displayName, macAddress, ipAddress, friendUsername string) bool {
-	insertCommand := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", friendsTableName, username, displayName, macAddress, ipAddress, friendUsername)
-	return ExecuteChangeCommand(insertCommand, "Failed to add friend")
+	insertCommand, err := DB.Prepare("INSERT INTO friends VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		fmt.Printf("Error creating friends prepared statement for addFriend: %s", err)
+	}
+	_, err = insertCommand.Exec(username, displayName, macAddress, ipAddress, friendUsername)
+	if err != nil {
+		log.Panicf("Failed to add friend: %s", err)
+	}
+	return true
 }
 
 // Delete a friend by their displayName
 func deleteFriend(username, displayName string) bool {
-	deleteCommand := fmt.Sprintf("DELETE FROM %s WHERE username=\"%s\" AND friend_display_name= \"%s\"", friendsTableName, username, displayName)
-	return ExecuteChangeCommand(deleteCommand, "Failed to delete friend")
+	deleteCommand, err := DB.Prepare("DELETE FROM friends WHERE username=? AND friend_display_name= ?")
+	if err != nil {
+		fmt.Printf("Error creating friends prepared statement for deleteFriend: %s", err)
+	}
+	_, err = deleteCommand.Exec(username, displayName)
+	if err != nil {
+		log.Panicf("Failed to delete friend: %s", err)
+	}
+	return true
 }
 
 // Updates the user's IP Address
 func updateFriendIP(username, macAddress, ipAddress string) bool {
-	updateCommand := fmt.Sprintf("UPDATE %s SET friend_ip_address= \"%s\" WHERE username=\"%s\" AND friend_mac_address=\"%s\"", friendsTableName, ipAddress, username, macAddress)
-	return ExecuteChangeCommand(updateCommand, "Failed to update friend")
+	updateCommand, err := DB.Prepare("UPDATE friends SET friend_ip_address= ? WHERE username=? AND friend_mac_address=?")
+	if err != nil {
+		fmt.Printf("Error creating friends prepared statement for updateFriendIP: %s", err)
+	}
+	_, err = updateCommand.Exec(ipAddress, username, macAddress)
+	if err != nil {
+		log.Panicf("Failed to update friend: %s", err)
+	}
+	return true
 }
 
 // Get all friends
 func getFriends(username string) []Friend {
 	query, err := DB.Prepare("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM friends WHERE username=?")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for getFriends: %s", err)
+		fmt.Printf("Error creating friends prepared statement for getFriends: %s", err)
 	}
 	results, err :=query.Query(username)
 	if err != nil {
@@ -68,7 +89,7 @@ func getFirstFriend(friends []Friend) *Friend {
 func getFriendByDisplayName(username, friendDisplayName string) *Friend {
 	query, err := DB.Prepare("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM friends WHERE username=? AND friend_display_name=?")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for fetFriendByDisplayName: %s", err)
+		fmt.Printf("Error creating friends prepared statement for fetFriendByDisplayName: %s", err)
 	}
 	results, err :=query.Query(username, friendDisplayName)
 	if err != nil {
@@ -81,7 +102,7 @@ func getFriendByDisplayName(username, friendDisplayName string) *Friend {
 func getFriendByUsernameAndMAC(username, friendUsername, friendMACAddress string) *Friend {
 	query, err := DB.Prepare("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM friends WHERE username=? AND friend_username=? AND friend_mac_address=?")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for getFriendByUsernameAndMAC: %s", err)
+		fmt.Printf("Error creating friends prepared statement for getFriendByUsernameAndMAC: %s", err)
 	}
 	results, err :=query.Query(username, friendUsername, friendMACAddress)
 	if err != nil {
