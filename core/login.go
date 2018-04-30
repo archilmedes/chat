@@ -44,7 +44,7 @@ func getUsername(scanner *bufio.Scanner) string {
 	return ""
 }
 
-// Sign-in for returning user
+// Sign-in for returning User
 func signIn(username string) *db.User {
 	for counter := 0; counter < numTries; counter++ {
 		fmt.Print("Password: ")
@@ -81,7 +81,7 @@ func verifyPassword(try string) bool {
 	return lower && upper && num && 8 <= size && size <= 32
 }
 
-// Create an account for a new user
+// Create an account for a new User
 func createAccount(username, ip string) *db.User {
 	for counter := 0; counter < numTries; counter++ {
 		fmt.Print("Enter new password: ")
@@ -106,7 +106,7 @@ func createAccount(username, ip string) *db.User {
 		}
 		if password == string(bytePassword) {
 			if !dbAddUser(username, password, ip) {
-				log.Fatalf("Error adding user %s to the database\n", username)
+				log.Fatalf("Error adding User %s to the database\n", username)
 			}
 			return dbGetUser(username, password)
 		} else {
@@ -117,7 +117,7 @@ func createAccount(username, ip string) *db.User {
 	return nil
 }
 
-// Login user
+// Login User
 func Login(scanner *bufio.Scanner, ip string) *db.User {
 	username := getUsername(scanner)
 	var user *db.User
@@ -126,7 +126,7 @@ func Login(scanner *bufio.Scanner, ip string) *db.User {
 	} else {
 		user = createAccount(username, ip)
 	}
-	if user != nil{
+	if user != nil {
 		return user
 	} else {
 		return Login(scanner, ip)
