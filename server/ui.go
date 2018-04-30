@@ -115,7 +115,6 @@ func setPersonChange(ui *UI) {
 			ui.History.Remove(i)
 		}
 		conversations := ui.Program.User.GetConversationHistory(list.SelectedItem())
-		fmt.Printf("Length of convos: %d\n", len(conversations))
 		for _, conv := range conversations {
 			chatMessage := new(ReceiveChat)
 			var sender string
