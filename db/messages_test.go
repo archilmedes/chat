@@ -43,9 +43,7 @@ func updateMessage(query string) {
 
 func MessagesSetup(t *testing.T) {
 	updateMessages()
-	fmt.Println("Calling query")
 	messages := QueryMessages()
-	fmt.Println("After query")
 	assert.Equal(t, 8, len(messages))
 	assert.Equal(t, uint64(52), messages[3].SSID)
 	assert.Equal(t, 0, messages[3].SentOrReceived)

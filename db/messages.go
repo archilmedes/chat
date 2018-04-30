@@ -28,12 +28,12 @@ func InsertMessage(SSID uint64, message []byte, timestamp string, sentOrReceived
 	if sentOrReceived != Sent && sentOrReceived != Received {
 		log.Fatalf("Invalid entry for sent/received - must be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
-	encrypted_message := AESEncrypt(string(message), []byte(db.AESKey))
+	encryptedMessages := AESEncrypt(string(message), []byte(db.AESKey))
 	insertCommand, err := DB.Prepare("INSERT INTO messages VALUES (?, ?, ?, ?)")
 	if err != nil {
 		fmt.Printf("Error creating messages prepared statement for InsertMessage: %s", err)
 	}
-	_, err = insertCommand.Exec(SSID, encrypted_message, timestamp, sentOrReceived)
+	_, err = insertCommand.Exec(SSID, encryptedMessages, timestamp, sentOrReceived)
 	if err != nil {
 		log.Panicf("Failed to insert into messages: %s", err)
 	}
@@ -111,7 +111,7 @@ func AESEncrypt(src string, key []byte) []byte {
 	}
 	ecb := cipher.NewCBCEncrypter(block, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	content := []byte(src)
-	content = PKCS5Padding(content, block.BlockSize())
+	content = pkcs5Padding(content, block.BlockSize())
 	crypted := make([]byte, len(content))
 	ecb.CryptBlocks(crypted, content)
 	return crypted
@@ -128,16 +128,16 @@ func AESDecrypt(crypt []byte, key []byte) []byte {
 	ecb := cipher.NewCBCDecrypter(block, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	decrypted := make([]byte, len(crypt))
 	ecb.CryptBlocks(decrypted, crypt)
-	return PKCS5Trimming(decrypted)
+	return pkcs5Trimming(decrypted)
 }
 
-func PKCS5Padding(ciphertext []byte, blockSize int) []byte {
+func pkcs5Padding(ciphertext []byte, blockSize int) []byte {
 	padding := blockSize - len(ciphertext)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
 }
 
-func PKCS5Trimming(encrypt []byte) []byte {
+func pkcs5Trimming(encrypt []byte) []byte {
 	padding := encrypt[len(encrypt)-1]
 	return encrypt[:len(encrypt)-int(padding)]
 }
