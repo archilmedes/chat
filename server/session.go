@@ -1,10 +1,10 @@
 package server
 
 import (
+	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
 	"time"
-	"github.com/wavyllama/chat/core"
 )
 
 // Struct for a messaging session between a user and his/her friend
