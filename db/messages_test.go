@@ -3,6 +3,9 @@ package db
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"github.com/wavyllama/chat/config"
+	"fmt"
+	"encoding/hex"
 )
 
 func TestMessages(t *testing.T) {
@@ -12,12 +15,40 @@ func TestMessages(t *testing.T) {
 	DeleteMessageTest(t)
 }
 
+func updateMessages() {
+	query := fmt.Sprintf("UPDATE messages SET message=UNHEX(\"%s\") WHERE message_timestamp=\"2017-02-01 08:20:19.123456\"", hex.EncodeToString(AESEncrypt("Hello World", []byte(db.AESKey))))
+	updateMessage(query)
+	query = fmt.Sprintf("UPDATE messages SET message=UNHEX(\"%s\") WHERE message_timestamp=\"2018-02-14 11:11:11.111111\"", hex.EncodeToString(AESEncrypt("Hey Sameet, its Alice <3", []byte(db.AESKey))))
+	updateMessage(query)
+	query = fmt.Sprintf("UPDATE messages SET message=UNHEX(\"%s\") WHERE message_timestamp=\"2018-04-10 12:30:08.222222\"", hex.EncodeToString(AESEncrypt("Hey Andrew, I need help with 511, when are you free?", []byte(db.AESKey))))
+	updateMessage(query)
+	query = fmt.Sprintf("UPDATE messages SET message=UNHEX(\"%s\") WHERE message_timestamp=\"2018-03-28 18:04:10.333333\"", hex.EncodeToString(AESEncrypt("lul", []byte(db.AESKey))))
+	updateMessage(query)
+	query = fmt.Sprintf("UPDATE messages SET message=UNHEX(\"%s\") WHERE message_timestamp=\"2018-04-08 17:01:40.444444\"", hex.EncodeToString(AESEncrypt("I almost made my Mac a brick", []byte(db.AESKey))))
+	updateMessage(query)
+	query = fmt.Sprintf("UPDATE messages SET message=UNHEX(\"%s\") WHERE message_timestamp=\"2018-04-12 07:56:00.555555\"", hex.EncodeToString(AESEncrypt("Why did the chicken cross the road?", []byte(db.AESKey))))
+	updateMessage(query)
+	query = fmt.Sprintf("UPDATE messages SET message=UNHEX(\"%s\") WHERE message_timestamp=\"2018-04-12 07:59:13.666666\"", hex.EncodeToString(AESEncrypt("To get to the other side?", []byte(db.AESKey))))
+	updateMessage(query)
+	query = fmt.Sprintf("UPDATE messages SET message=UNHEX(\"%s\") WHERE message_timestamp=\"2018-04-08 17:59:02.777777\"", hex.EncodeToString(AESEncrypt("When are we playing Fortnite?", []byte(db.AESKey))))
+	updateMessage(query)
+}
+
+func updateMessage(query string) {
+	_, err := DB.Exec(query)
+	if err != nil {
+		fmt.Printf("Error with updating messages in tests: %s\n", err)
+	}
+}
+
 func MessagesSetup(t *testing.T) {
+	updateMessages()
+	fmt.Println("Calling query")
 	messages := QueryMessages()
+	fmt.Println("After query")
 	assert.Equal(t, 8, len(messages))
 	assert.Equal(t, uint64(52), messages[3].SSID)
 	assert.Equal(t, 0, messages[3].SentOrReceived)
-	assert.Equal(t, "2018-03-28 18:04:10.333333", messages[3].Timestamp)
 	assert.Equal(t, []byte("lul"), messages[3].Text)
 }
 

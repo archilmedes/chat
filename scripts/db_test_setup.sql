@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS messages (
   SSID BIGINT UNSIGNED NOT NULL,
-  message varchar(10000) NOT NULL,
+  message varbinary(10000) NOT NULL,
   message_timestamp timestamp(6) NOT NULL,
   sent_or_received TINYINT NOT NULL
 );
@@ -36,12 +36,12 @@ CREATE TABLE IF NOT EXISTS friends (
 
 /* Inserting test data */
 /* Users */
-INSERT INTO users VALUES ("alice123", SHA2("alicepassword", 256), "127.0.0.1");
-INSERT INTO users VALUES ("bob", SHA2("Password", 256), "123.456.789");
-INSERT INTO users VALUES ("karateAMD", SHA2("pwd123", 256), "192.168.10.123");
-INSERT INTO users VALUES ("sameetandpotatoes", SHA2("iLuvMacs", 256), "10.192.345.987");
-INSERT INTO users VALUES ("archilmedes", SHA2("linuxFTW", 256), "987.654.321");
-INSERT INTO users VALUES ("andrew", SHA2("anotherPass", 256), "888.888.888");
+INSERT INTO users VALUES ("alice123", SHA2("13alice123alicepassword8", 256), "127.0.0.1");
+INSERT INTO users VALUES ("bob", SHA2("8bobPassword3", 256), "123.456.789");
+INSERT INTO users VALUES ("karateAMD", SHA2("6karateAMDpwd1239", 256), "192.168.10.123");
+INSERT INTO users VALUES ("sameetandpotatoes", SHA2("8sameetandpotatoesiLuvMacs17", 256), "10.192.345.987");
+INSERT INTO users VALUES ("archilmedes", SHA2("8archilmedeslinuxFTW11", 256), "987.654.321");
+INSERT INTO users VALUES ("andrew", SHA2("11anderewanotherPass7", 256), "888.888.888");
 
 /* Sessions */
 INSERT INTO sessions VALUES (12, "alice123", "123.456.789", "otr", "str1", "2018-04-20 14:18:05.283410");
