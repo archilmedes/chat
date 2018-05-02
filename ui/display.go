@@ -1,4 +1,4 @@
-package server
+package ui
 
 // Any message meant to be displayed in UI
 type DisplayMessage interface {

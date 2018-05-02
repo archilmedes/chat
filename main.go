@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"github.com/wavyllama/chat/ui"
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 		log.Fatalf("main: %s", err.Error())
 	}
 	defer program.Shutdown()
-	if _, err = server.NewUI(program); err != nil {
+	if _, err = ui.NewUI(program); err != nil {
 		log.Fatalf("main: %s", err.Error())
 	}
 	sig := make(chan os.Signal, 1)

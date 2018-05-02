@@ -1,4 +1,4 @@
-package server
+package ui
 
 import (
 	"fmt"
@@ -10,7 +10,16 @@ import (
 	"strings"
 	"time"
 	"os"
+	"github.com/wavyllama/chat/server"
 )
+
+type UI struct {
+	Program       *server.Server
+	UI            tui.UI
+	Chat, History *tui.Box
+	Input         *tui.Entry
+	List          *tui.List
+}
 
 const (
 	exit        = ":exit"
@@ -23,15 +32,7 @@ const (
 
 var activeFriend = "me"
 
-type UI struct {
-	Program       *Server
-	UI            tui.UI
-	Chat, History *tui.Box
-	Input         *tui.Entry
-	List          *tui.List
-}
-
-func handleSpecialString(ui *UI, words []string) {
+func (ui *UI) handleSpecialString(words []string) {
 	switch words[0] {
 	case exit:
 		ui.UI.Quit()
@@ -90,7 +91,7 @@ func handleSpecialString(ui *UI, words []string) {
 }
 
 // Handle user input
-func setInputReader(ui *UI) {
+func (ui *UI) setInputReader() {
 	ui.Input.OnSubmit(func(e *tui.Entry) {
 		message := e.Text()
 		words := strings.Fields(message)
@@ -98,7 +99,7 @@ func setInputReader(ui *UI) {
 			return
 		}
 		if message[0] == ':' {
-			handleSpecialString(ui, words)
+			ui.handleSpecialString(words)
 		} else {
 			if activeFriend != "" {
 				sendMessage := new(ReceiveChat)
@@ -106,7 +107,7 @@ func setInputReader(ui *UI) {
 				sendMessage.Time = core.GetFormattedTime(time.Now())
 				sendMessage.Sender = db.Self
 				if activeFriend != db.Self {
-					DisplayChatMessage(ui, sendMessage)
+					ui.DisplayChatMessage(sendMessage)
 				}
 				err := ui.Program.SendChatMessage(activeFriend, message)
 				if err != nil {
@@ -121,7 +122,7 @@ func setInputReader(ui *UI) {
 }
 
 // Show previous messages of friend upon choosing friend to chat with
-func setPersonChange(ui *UI) {
+func (ui *UI) setPersonChange() {
 	ui.List.OnSelectionChanged(func(list *tui.List) {
 		for i := 0; i < ui.History.Length(); i++ {
 			ui.History.Remove(i)
@@ -139,15 +140,17 @@ func setPersonChange(ui *UI) {
 				sender = conv.Session.FriendDisplayName
 			}
 			chatMessage.New(string(conv.Message.Text), sender, conv.Message.Timestamp)
-			DisplayChatMessage(ui, chatMessage)
+			ui.DisplayChatMessage(chatMessage)
 		}
 	})
 }
 
 // Help from: https://github.com/marcusolsson/tui-go/tree/master/example/chat
-func NewUI(program *Server) (*UI, error) {
+func NewUI(program *server.Server) (*UI, error) {
 	var ui = new(UI)
-	program.UI = ui
+
+	program.InitUIHandlers(ui.onReceiveFriendRequest, ui.onAcceptFriend, ui.onReceiveChatMessage, ui.onProtocolFinish)
+
 	ui.Program = program
 	friends := program.User.GetFriends()
 	ui.List = tui.NewList()
@@ -179,8 +182,8 @@ func NewUI(program *Server) (*UI, error) {
 	inputBox.SetSizePolicy(tui.Expanding, tui.Maximum)
 	ui.Chat = tui.NewVBox(historyBox, inputBox)
 	ui.Chat.SetSizePolicy(tui.Expanding, tui.Expanding)
-	setInputReader(ui)
-	setPersonChange(ui)
+	ui.setInputReader()
+	ui.setPersonChange()
 	// Put all friends in sidebar
 	// Select self as current friend
 	for i, f := range friends {
@@ -196,8 +199,8 @@ func NewUI(program *Server) (*UI, error) {
 	ui.UI = internalUI
 	internalUI.SetKeybinding("Esc", func() { ui.UI.Quit() })
 	showInfo := new(InfoMessage)
-	showInfo.New(fmt.Sprintf("Listening on: '%s:%d'", program.User.IP, Port))
-	DisplayInfoMessage(ui, showInfo)
+	showInfo.New(fmt.Sprintf("Listening on: '%s:%d'", program.User.IP, server.Port))
+	ui.DisplayInfoMessage(showInfo)
 	if err := ui.UI.Run(); err != nil {
 		return nil, err
 	}
@@ -205,28 +208,58 @@ func NewUI(program *Server) (*UI, error) {
 }
 
 // Write info message to UI
-func DisplayInfoMessage(ui *UI, m *InfoMessage) {
-	ui.History.Append(tui.NewHBox(
-		tui.NewLabel(m.Body()),
-		tui.NewSpacer(),
-	))
+func (ui *UI) DisplayInfoMessage(m *InfoMessage) {
+	ui.UI.Update(func() {
+		ui.History.Append(tui.NewHBox(
+			tui.NewLabel(m.Body()),
+			tui.NewSpacer(),
+		))
+	})
 }
 
 // Write chat message to UI
-func DisplayChatMessage(ui *UI, m *ReceiveChat) {
-	ui.History.Append(tui.NewHBox(
-		tui.NewLabel(m.Time),
-		tui.NewPadder(1, 0, tui.NewLabel(fmt.Sprintf("<%s>", m.Sender))),
-		tui.NewLabel(m.Body()),
-		tui.NewSpacer(),
-	))
+func (ui *UI) DisplayChatMessage(m *ReceiveChat) {
+	ui.UI.Update(func() {
+		ui.History.Append(tui.NewHBox(
+			tui.NewLabel(m.Time),
+			tui.NewPadder(1, 0, tui.NewLabel(fmt.Sprintf("<%s>", m.Sender))),
+			tui.NewLabel(m.Body()),
+			tui.NewSpacer(),
+		))
+	})
 }
 
 // Write friend request to UI
-func DisplayFriendRequest(ui *UI, m *FriendRequest) {
-	ui.History.Append(tui.NewHBox(
-		tui.NewLabel(fmt.Sprintf("Friend request from %s@%s (':%s' or just ignore)",
-			m.Username, m.IP, displayName)),
-		tui.NewSpacer(),
-	))
+func (ui *UI) DisplayFriendRequest(m *FriendRequest) {
+	ui.UI.Update(func() {
+		ui.History.Append(tui.NewHBox(
+			tui.NewLabel(fmt.Sprintf("Friend request from %s@%s (':%s' or just ignore)",
+				m.Username, m.IP, displayName)),
+			tui.NewSpacer(),
+		))
+	})
+}
+
+func (ui *UI) onReceiveFriendRequest(m *server.FriendMessage) {
+	request := new(FriendRequest)
+	request.New("", ui.Program.LastFriend.Username, ui.Program.LastFriend.IP)
+	ui.DisplayFriendRequest(request)
+}
+
+func (ui *UI) onAcceptFriend(displayName string) {
+	ui.UI.Update(func() {
+		ui.List.AddItems(displayName)
+	})
+}
+
+func (ui *UI) onReceiveChatMessage(message []byte, friend *db.Friend, time time.Time) {
+	chatMessage := new(ReceiveChat)
+	chatMessage.New(string(message), friend.DisplayName, core.GetFormattedTime(time))
+	ui.DisplayChatMessage(chatMessage)
+}
+
+func (ui *UI) onProtocolFinish(messageToDisplay string) {
+	showInfo := new(InfoMessage)
+	showInfo.New(messageToDisplay)
+	ui.DisplayInfoMessage(showInfo)
 }

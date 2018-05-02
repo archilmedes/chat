@@ -15,7 +15,7 @@ import (
 type Protocol interface {
 	InitFromBytes([]byte) error
 	Encrypt(in []byte) ([][]byte, error)
-	Decrypt(cypher []byte) ([][]byte, error)
+	Decrypt(cypher []byte, onProtocolFinish func(messageToDisplay string)) ([][]byte, error)
 	IsEncrypted() bool
 	IsActive() bool
 	NewSession() (string, error)
@@ -29,6 +29,7 @@ type Protocol interface {
 type PlainProtocol struct {
 	Protocol
 	SessionID uint64
+	protocolFinished bool
 }
 
 const (
@@ -71,8 +72,13 @@ func (p *PlainProtocol) Encrypt(in []byte) ([][]byte, error) {
 }
 
 // Decrypts the message by just returning it
-func (p *PlainProtocol) Decrypt(dec []byte) ([][]byte, error) {
-	return wrapMessage(dec), nil
+func (p *PlainProtocol) Decrypt(dec []byte, onProtocolFinish func(messageToDisplay string)) ([][]byte, error) {
+	decrypted := wrapMessage(dec)
+	if !p.protocolFinished {
+		p.protocolFinished = true
+		onProtocolFinish("Plain (unencrypted) protocol completed. You may now chat.")
+	}
+	return decrypted, nil
 }
 
 // Always returns false as a plain protocol is never encrypted
@@ -90,6 +96,7 @@ func (p *PlainProtocol) NewSession() (string, error) {
 	var n uint64
 	err := binary.Read(rand.Reader, binary.LittleEndian, &n)
 	p.SessionID = n
+	p.protocolFinished = true
 	return "", err
 }
 
@@ -100,6 +107,7 @@ func (p *PlainProtocol) GetSessionID() uint64 {
 // Ends a plain protocol session
 func (p *PlainProtocol) EndSession() {
 	p.SessionID = 0
+	p.protocolFinished = false
 }
 
 // Serialize the protocol to save in a database

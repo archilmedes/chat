@@ -22,15 +22,29 @@ const (
 type Server struct {
 	User       *db.User
 	LastFriend *db.Friend
-	UI         *UI
 	Listener   *net.TCPListener
 	Sessions   *[]*Session
+
+	onReceiveFriendMessage func(m *FriendMessage)
+	onAcceptFriend func(displayName string)
+	onReceiveChatMessage func(message []byte, friend *db.Friend, time time.Time)
+	onProtocolFinish func(messageToDisplay string)
 }
 
 func init() {
 	gob.Register(&FriendMessage{})
 	gob.Register(&HandshakeMessage{})
 	gob.Register(&ChatMessage{})
+}
+
+func (s *Server) InitUIHandlers(onReceiveFriendMessage func(m *FriendMessage),
+								onAcceptFriend func(displayName string),
+								onReceiveChatMessage func(message []byte, friend *db.Friend, time time.Time),
+								onProtocolFinish func(messageToDisplay string)) {
+	s.onReceiveFriendMessage = onReceiveFriendMessage
+	s.onAcceptFriend = onAcceptFriend
+	s.onReceiveChatMessage = onReceiveChatMessage
+	s.onProtocolFinish = onProtocolFinish
 }
 
 // Setup listener for the server
@@ -80,10 +94,10 @@ func (s *Server) handleConnection(conn *net.TCPConn) {
 
 // Handles a friend message
 func (s *Server) handleFriendMessage(msg *FriendMessage) {
+	// Set the last friend request you received
 	s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username = msg.SourceID()
-	request := new(FriendRequest)
-	request.New("", s.LastFriend.Username, s.LastFriend.IP)
-	DisplayFriendRequest(s.UI, request)
+	// Display it on the UI
+	s.onReceiveFriendMessage(msg)
 }
 
 func (s *Server) AcceptedFriend(displayName string) {
@@ -93,7 +107,7 @@ func (s *Server) AcceptedFriend(displayName string) {
 	} else {
 		s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username)
 		s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
-		s.UI.List.AddItems(displayName)
+		s.onAcceptFriend(displayName)
 	}
 }
 
@@ -122,7 +136,7 @@ func (s *Server) handleHandshakeMessage(friend *db.Friend, msg *HandshakeMessage
 		sess = sessions[0]
 	}
 
-	dec, err := sess.Proto.Decrypt(msg.Secret)
+	dec, err := sess.Proto.Decrypt(msg.Secret, s.onProtocolFinish)
 	switch errorType := err.(type) {
 	case protocol.OTRHandshakeStep:
 		// Send each part of the handshake message back and immediately return
@@ -150,6 +164,10 @@ func (s *Server) handleChatMessage(msg *ChatMessage) {
 	sessions := s.GetSessionsWithFriend(sourceMAC, sourceUsername)
 	friend := s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
 
+	if len(sessions) == 0 || friend == nil {
+		log.Panicln("No session or no friend from msg")
+	}
+
 	var sess *Session
 	// There are two sessions, so grab the one that doesn't have the same timestamp as you
 	if messageYourself {
@@ -161,13 +179,11 @@ func (s *Server) handleChatMessage(msg *ChatMessage) {
 	if db.GetSession(sess.Proto.GetSessionID()) == nil {
 		sess.Save()
 	}
-	dec, _ := sess.Proto.Decrypt(msg.Text)
+	dec, _ := sess.Proto.Decrypt(msg.Text, s.onProtocolFinish)
 	if sess.Proto.IsActive() && dec[0] != nil {
 		// Print the decoded message and IP
 		currTime := time.Now()
-		chatMessage := new(ReceiveChat)
-		chatMessage.New(string(dec[0]), friend.DisplayName, core.GetFormattedTime(currTime))
-		DisplayChatMessage(s.UI, chatMessage)
+		s.onReceiveChatMessage(dec[0], friend, currTime)
 		db.InsertMessage(sess.Proto.GetSessionID(), dec[0], core.GetFormattedTime(currTime), db.Received)
 	}
 }

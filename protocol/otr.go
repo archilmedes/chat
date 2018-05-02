@@ -50,7 +50,7 @@ func (o *OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
 }
 
 // Decrypt the message and handle OTR protocol
-func (o *OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
+func (o *OTRProtocol) Decrypt(in []byte, onProtocolFinish func(messageToDisplay string)) ([][]byte, error) {
 	out, encrypted, secChange, msgToPeer, err := o.Conv.Receive(in)
 	if err != nil {
 		log.Fatal(err)
@@ -66,8 +66,7 @@ func (o *OTRProtocol) Decrypt(in []byte) ([][]byte, error) {
 			return wrapMessage(out), nil
 		}
 	case otr.NewKeys:
-		// fmt.Println("You are now in a secure session.")
-
+		onProtocolFinish("OTR protocol completed. You are now in a secure session.")
 		return wrapMessage(out), nil
 	case otr.ConversationEnded:
 		o.EndSession()
