@@ -18,7 +18,7 @@ func TestPlainProtocol_Encrypt(t *testing.T) {
 func TestPlainProtocol_Decrypt(t *testing.T) {
 	p := new(PlainProtocol)
 	cypher := []byte(message)
-	msg, err := p.Decrypt(cypher)
+	msg, err := p.Decrypt(cypher, onProtocolComplete)
 	assert.Nil(t, err)
 	assert.Equal(t, msg[0], cypher)
 }

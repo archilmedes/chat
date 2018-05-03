@@ -37,7 +37,7 @@ func SetupTestDatabase() {
 func SetupEmptyTestDatabase() {
 	cmd := exec.Command("sh", "../scripts/db_test_setup.sh", conf.Username, conf.Password)
 	createDatabase(testDatabaseName, cmd)
-	clearDatabase()
+	ClearDatabase()
 }
 
 // Sets up the database
@@ -58,7 +58,7 @@ func createDatabase(dbName string, cmd *exec.Cmd) {
 }
 
 // Clears all rows in all tables of the database
-func clearDatabase() {
+func ClearDatabase() {
 	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", usersTableName), "Could not truncate table")
 	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", messagesTableName), "Could not truncate table")
 	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", friendsTableName), "Could not truncate table")

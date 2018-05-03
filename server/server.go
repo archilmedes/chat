@@ -7,22 +7,28 @@ import (
 	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
+	"github.com/gorilla/websocket"
 	"log"
-	"net"
 	"strings"
 	"time"
+	"net/http"
 )
 
 const (
 	Port    uint16 = 4242
 	Network        = "tcp"
+	receiveMessageURL = "/"
+	localhost = "0.0.0.0"
 )
+
+var clients = make(map[*websocket.Conn]bool)
+var upgrader = websocket.Upgrader{}
 
 // Server holds the user and all of his sessions
 type Server struct {
 	User       *db.User
 	LastFriend *db.Friend
-	Listener   *net.TCPListener
+	Listener   *http.Server
 	Sessions   *[]*Session
 
 	onReceiveFriendMessage func(m *FriendMessage)
@@ -47,22 +53,25 @@ func (s *Server) InitUIHandlers(onReceiveFriendMessage func(m *FriendMessage),
 	s.onProtocolFinish = onProtocolFinish
 }
 
-// Setup listener for the server
-func setupServer(address string) (*net.TCPListener, error) {
-	tcpAddr, err := net.ResolveTCPAddr(Network, address)
-	if err != nil {
-		return nil, err
-	}
-	return net.ListenTCP(Network, tcpAddr)
-}
-
-// Handle receiving messages from a TCPConn
-func (s *Server) handleConnection(conn *net.TCPConn) {
-	defer conn.Close()
-	decoder := gob.NewDecoder(conn)
+func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	var msg Message
-	if err := decoder.Decode(&msg); err != nil {
-		log.Panicf("Error decoding message: %s", err.Error())
+
+	var wsupgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+
+	conn, err := wsupgrader.Upgrade(w, r, nil)
+
+	_, reader, err := conn.NextReader()
+	if err != nil {
+		panic(err)
+	}
+
+	dec := gob.NewDecoder(reader)
+
+	if err = dec.Decode(&msg); err != nil {
+		panic(err)
 	}
 
 	sourceMAC, _, sourceUsername := msg.SourceID()
@@ -188,46 +197,36 @@ func (s *Server) handleChatMessage(msg *ChatMessage) {
 	}
 }
 
-// Function that continuously polls for new messages being sent to the server
-func (s *Server) receive() {
-	for {
-		if conn, err := (*(*s).Listener).AcceptTCP(); err == nil {
-			go s.handleConnection(conn)
-		}
-	}
-}
-
-func initDialer(address string) (*net.TCPConn, error) {
-	tcpAddr, err := net.ResolveTCPAddr(Network, address)
+func initDialer(address string) (*websocket.Conn, error) {
+	var dialer *websocket.Dialer
+	conn, _, err := dialer.Dial(fmt.Sprintf("ws://%s/ws", address), http.Header{})
 	if err != nil {
 		return nil, err
 	}
-	return net.DialTCP(Network, nil, tcpAddr)
+	return conn, nil
 }
 
 // Start up server
 func (s *Server) Start(user *db.User) error {
-	var err error
 	log.Println("Launching Server...")
 
 	s.User = user
 	s.LastFriend = new(db.Friend)
-	ipAddr := fmt.Sprintf("%s:%d", user.IP, Port)
-	if (*s).Listener, err = setupServer(ipAddr); err != nil {
-		return err
-	}
+	//ipAddr := fmt.Sprintf("%s:%d", user.IP, Port)
+
+	srv := &http.Server{Addr: fmt.Sprintf(":%d", Port)}
+
+	http.HandleFunc("/ws", s.handleMessage)
+	go srv.ListenAndServe()
+	(*s).Listener = srv
 	// Initialize the session struct to a pointer
 	var sessions []*Session
 	s.Sessions = &sessions
-	go s.receive()
-	log.Printf("Listening on: '%s'", ipAddr)
 
 	// Updates the IP address of the user and create a friend for yourself
 	if s.User.GetFriendByDisplayName(db.Self) == nil {
-		// TODO To communicate with yourself, start server on localhost instead, fix UpdateMyIP below
-		s.User.AddFriend(db.Self, user.MAC, user.IP, user.Username)
+		s.User.AddFriend(db.Self, user.MAC, localhost, user.Username)
 	}
-
 	s.StartOTRSession(db.Self)
 
 	return nil
@@ -245,11 +244,15 @@ func (s *Server) sendMessage(destIp string, msg Message) error {
 	if err != nil {
 		return err
 	}
-	encoder := gob.NewEncoder(dialer)
-	if err := encoder.Encode(&msg); err != nil {
+	w, err := dialer.NextWriter(websocket.BinaryMessage)
+	if err != nil {
 		return err
 	}
-	return nil
+	enc := gob.NewEncoder(w)
+	if err = enc.Encode(&msg); err != nil {
+		return err
+	}
+	return w.Close()
 }
 
 // Get all sessions that a user talks to an IP
@@ -323,7 +326,13 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 	}
 	(*chatMsg).Text = cyp[0]
 
-	chatMsg.NewPayload(s.User.MAC, s.User.IP, s.User.Username, friend.Username)
+	sourceIP := s.User.IP
+	// If messaging yourself, use your local IP
+	if friend.IP == sourceIP {
+		sourceIP = localhost
+	}
+
+	chatMsg.NewPayload(s.User.MAC, localhost, s.User.Username, friend.Username)
 	bytes := []byte(message)
 	(*chatMsg).Text = bytes
 

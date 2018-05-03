@@ -6,6 +6,10 @@ import (
 	"testing"
 )
 
+func onProtocolComplete(msg string) {
+
+}
+
 func TestOTRProtocol_EndSession(t *testing.T) {
 	o := NewOTRProtocol()
 	o.EndSession()
@@ -26,12 +30,12 @@ func createOTRLink(t *testing.T, alice *OTRProtocol, bob *OTRProtocol) {
 		var err error
 		bMsg = [][]byte{}
 		for _, msg := range aMsg {
-			bMsg, err = bob.Decrypt(msg)
+			bMsg, err = bob.Decrypt(msg, onProtocolComplete)
 			assert.Error(t, OTRHandshakeStep{}, err)
 		}
 		aMsg = [][]byte{}
 		for _, msg := range bMsg {
-			aMsg, err = alice.Decrypt(msg)
+			aMsg, err = alice.Decrypt(msg, onProtocolComplete)
 			assert.Error(t, OTRHandshakeStep{}, err)
 		}
 	}
@@ -51,7 +55,7 @@ func TestOTRProtocol_SendAndReceiveMessages(t *testing.T) {
 	assert.Nil(t, err)
 
 	for _, msg := range cyp {
-		out, err := sameet.Decrypt(msg)
+		out, err := sameet.Decrypt(msg, onProtocolComplete)
 		assert.Nil(t, err)
 		assert.Equal(t, testMessage, string(out[0]), "Strings should be equivalent")
 	}

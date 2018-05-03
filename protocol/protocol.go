@@ -28,8 +28,9 @@ type Protocol interface {
 // Type of protocol that just lets text pass through without applying any encryption
 type PlainProtocol struct {
 	Protocol
-	SessionID uint64
-	protocolFinished bool
+	SessionID        uint64
+	// TODO this should be private?
+	ProtocolFinished bool
 }
 
 const (
@@ -74,8 +75,8 @@ func (p *PlainProtocol) Encrypt(in []byte) ([][]byte, error) {
 // Decrypts the message by just returning it
 func (p *PlainProtocol) Decrypt(dec []byte, onProtocolFinish func(messageToDisplay string)) ([][]byte, error) {
 	decrypted := wrapMessage(dec)
-	if !p.protocolFinished {
-		p.protocolFinished = true
+	if !p.ProtocolFinished {
+		p.ProtocolFinished = true
 		onProtocolFinish("Plain (unencrypted) protocol completed. You may now chat.")
 	}
 	return decrypted, nil
@@ -96,7 +97,7 @@ func (p *PlainProtocol) NewSession() (string, error) {
 	var n uint64
 	err := binary.Read(rand.Reader, binary.LittleEndian, &n)
 	p.SessionID = n
-	p.protocolFinished = true
+	p.ProtocolFinished = true
 	return "", err
 }
 
@@ -107,7 +108,7 @@ func (p *PlainProtocol) GetSessionID() uint64 {
 // Ends a plain protocol session
 func (p *PlainProtocol) EndSession() {
 	p.SessionID = 0
-	p.protocolFinished = false
+	p.ProtocolFinished = false
 }
 
 // Serialize the protocol to save in a database

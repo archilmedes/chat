@@ -4,17 +4,21 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/wavyllama/chat/core"
-	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/server"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"github.com/wavyllama/chat/ui"
+	"github.com/wavyllama/chat/db"
 )
 
 func main() {
 	db.SetupDatabase()
+	if len(os.Args) == 2 && (os.Args[1] == "--reset" || os.Args[1] == "-r") {
+		db.ClearDatabase()
+	}
+
 	mac, ip, err := core.GetAddresses()
 	if err != nil {
 		fmt.Printf("getAddresses: %s", err.Error())
@@ -24,8 +28,7 @@ func main() {
 	// Update the IP anyways
 	user.IP = ip
 	user.MAC = mac
-	// Update the IP in the database
-	user.UpdateMyIP()
+
 	var program = new(server.Server)
 	if err := program.Start(user); err != nil {
 		log.Fatalf("main: %s", err.Error())
