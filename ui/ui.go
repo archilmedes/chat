@@ -124,9 +124,13 @@ func (ui *UI) setInputReader() {
 // Show previous messages of friend upon choosing friend to chat with
 func (ui *UI) setPersonChange() {
 	ui.List.OnSelectionChanged(func(list *tui.List) {
-		for i := 0; i < ui.History.Length(); i++ {
-			ui.History.Remove(i)
-		}
+		// clear history
+		ui.UI.Update(func() {
+			for i := 0; i < ui.History.Length(); i++ {
+				ui.History.Remove(i)
+			}
+		})
+
 		conversations := ui.Program.User.GetConversationHistory(list.SelectedItem())
 		for _, conv := range conversations {
 			chatMessage := new(ReceiveChat)
@@ -182,11 +186,10 @@ func NewUI(program *server.Server) (*UI, error) {
 	inputBox.SetSizePolicy(tui.Expanding, tui.Maximum)
 	ui.Chat = tui.NewVBox(historyBox, inputBox)
 	ui.Chat.SetSizePolicy(tui.Expanding, tui.Expanding)
-	ui.setInputReader()
-	ui.setPersonChange()
+
 	// Put all friends in sidebar
-	// Select self as current friend
 	for i, f := range friends {
+		// Select self as current friend
 		if strings.ToLower(f.DisplayName) == db.Self {
 			ui.List.Select(i)
 		}
@@ -198,12 +201,19 @@ func NewUI(program *server.Server) (*UI, error) {
 	}
 	ui.UI = internalUI
 	internalUI.SetKeybinding("Esc", func() { ui.UI.Quit() })
-	showInfo := new(InfoMessage)
-	showInfo.New(fmt.Sprintf("Listening on: '%s:%d'", program.User.IP, server.Port))
-	ui.DisplayInfoMessage(showInfo)
+
+	// Set event handlers
+	ui.setInputReader()
+	ui.setPersonChange()
+
 	if err := ui.UI.Run(); err != nil {
 		return nil, err
 	}
+
+	showInfo := new(InfoMessage)
+	showInfo.New(fmt.Sprintf("Listening on: '%s:%d'", program.User.IP, server.Port))
+	ui.DisplayInfoMessage(showInfo)
+
 	return ui, nil
 }
 
