@@ -58,7 +58,7 @@ func TestServer_Start(t *testing.T) {
 //	msg := []byte("Hello world")
 //	cyp, _ := sessions[0].Proto.Encrypt(msg)
 //
-//	msgBack, _ := sessions[1].Proto.Decrypt(cyp[0], onProtocolFinish)
+//	msgBack, _ := sessions[1].Proto.Decrypt(cyp[0], onInfoReceive)
 //	assert.Equal(t, msgBack[0], msg)
 //	assert.NoError(t, server.Shutdown())
 //}

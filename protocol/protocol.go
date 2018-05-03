@@ -15,7 +15,7 @@ import (
 type Protocol interface {
 	InitFromBytes([]byte) error
 	Encrypt(in []byte) ([][]byte, error)
-	Decrypt(cypher []byte, onProtocolFinish func(messageToDisplay string)) ([][]byte, error)
+	Decrypt(cypher []byte, onInfoReceive func(messageToDisplay string)) ([][]byte, error)
 	IsEncrypted() bool
 	IsActive() bool
 	NewSession() (string, error)

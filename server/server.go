@@ -16,13 +16,8 @@ import (
 
 const (
 	Port    uint16 = 4242
-	Network        = "tcp"
-	receiveMessageURL = "/"
 	localhost = "0.0.0.0"
 )
-
-var clients = make(map[*websocket.Conn]bool)
-var upgrader = websocket.Upgrader{}
 
 // Server holds the user and all of his sessions
 type Server struct {
@@ -32,9 +27,9 @@ type Server struct {
 	Sessions   *[]*Session
 
 	onReceiveFriendMessage func(m *FriendMessage)
-	onAcceptFriend func(displayName string)
-	onReceiveChatMessage func(message []byte, friend *db.Friend, time time.Time)
-	onProtocolFinish func(messageToDisplay string)
+	onAcceptFriend         func(displayName string)
+	onReceiveChatMessage   func(message []byte, friend *db.Friend, time time.Time)
+	onInfoReceive          func(messageToDisplay string)
 }
 
 func init() {
@@ -43,14 +38,24 @@ func init() {
 	gob.Register(&ChatMessage{})
 }
 
+func InitServer() (*Server) {
+	server := Server{}
+	// Init no-op function handlers
+	server.onReceiveFriendMessage = func(m *FriendMessage) {}
+	server.onAcceptFriend = func(displayName string) {}
+	server.onReceiveChatMessage = func(message []byte, friend *db.Friend, time time.Time) {}
+	server.onInfoReceive = func(messageToDisplay string) {}
+	return &server
+}
+
 func (s *Server) InitUIHandlers(onReceiveFriendMessage func(m *FriendMessage),
 								onAcceptFriend func(displayName string),
 								onReceiveChatMessage func(message []byte, friend *db.Friend, time time.Time),
-								onProtocolFinish func(messageToDisplay string)) {
+								onInfoReceive func(messageToDisplay string)) {
 	s.onReceiveFriendMessage = onReceiveFriendMessage
 	s.onAcceptFriend = onAcceptFriend
 	s.onReceiveChatMessage = onReceiveChatMessage
-	s.onProtocolFinish = onProtocolFinish
+	s.onInfoReceive = onInfoReceive
 }
 
 func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
@@ -78,8 +83,9 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	if sourceMAC == "" || sourceUsername == "" {
 		log.Panicln("Received ill-formatted message")
 	}
+
 	if msg.DestID() != s.User.Username {
-		fmt.Println("Received a message but it was not for me.")
+		log.Panicln("Received a message but it was not for me.")
 		return
 	}
 	sessions := s.GetSessionsWithFriend(sourceMAC, sourceUsername)
@@ -145,7 +151,7 @@ func (s *Server) handleHandshakeMessage(friend *db.Friend, msg *HandshakeMessage
 		sess = sessions[0]
 	}
 
-	dec, err := sess.Proto.Decrypt(msg.Secret, s.onProtocolFinish)
+	dec, err := sess.Proto.Decrypt(msg.Secret, s.onInfoReceive)
 	switch errorType := err.(type) {
 	case protocol.OTRHandshakeStep:
 		// Send each part of the handshake message back and immediately return
@@ -188,7 +194,7 @@ func (s *Server) handleChatMessage(msg *ChatMessage) {
 	if db.GetSession(sess.Proto.GetSessionID()) == nil {
 		sess.Save()
 	}
-	dec, _ := sess.Proto.Decrypt(msg.Text, s.onProtocolFinish)
+	dec, _ := sess.Proto.Decrypt(msg.Text, s.onInfoReceive)
 	if sess.Proto.IsActive() && dec[0] != nil {
 		// Print the decoded message and IP
 		currTime := time.Now()
@@ -272,7 +278,7 @@ func (s *Server) GetSessionsWithFriend(friendMAC string, friendUsername string) 
 func (s *Server) StartOTRSession(displayName string) error {
 	friend := s.User.GetFriendByDisplayName(displayName)
 	if friend == nil {
-		fmt.Printf("You do not have a friend named '%s'\n", displayName)
+		return errors.New(fmt.Sprintf("You do not have a friend named '%s'\n", displayName))
 	}
 	sessions := s.GetSessionsWithFriend(friend.MAC, friend.Username)
 	if len(sessions) != 0 {

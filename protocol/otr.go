@@ -50,13 +50,20 @@ func (o *OTRProtocol) Encrypt(in []byte) ([][]byte, error) {
 }
 
 // Decrypt the message and handle OTR protocol
-func (o *OTRProtocol) Decrypt(in []byte, onProtocolFinish func(messageToDisplay string)) ([][]byte, error) {
+func (o *OTRProtocol) Decrypt(in []byte, onInfoReceive func(messageToDisplay string)) ([][]byte, error) {
+	encryptedBefore := o.IsActive()
 	out, encrypted, secChange, msgToPeer, err := o.Conv.Receive(in)
+	// If we just entered an encrypted session, relay it back to UI
+	if !encryptedBefore && o.IsActive() {
+		onInfoReceive("<OTR>: Protocol completed. You are now in a secure session.")
+	}
+
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Respond to handshake if handshake is established with the message to send back
 	if len(msgToPeer) > 0 {
+		onInfoReceive("<OTR>: Handshaking.")
 		return msgToPeer, OTRHandshakeStep{}
 	}
 	switch secChange {
@@ -66,7 +73,6 @@ func (o *OTRProtocol) Decrypt(in []byte, onProtocolFinish func(messageToDisplay 
 			return wrapMessage(out), nil
 		}
 	case otr.NewKeys:
-		onProtocolFinish("OTR protocol completed. You are now in a secure session.")
 		return wrapMessage(out), nil
 	case otr.ConversationEnded:
 		o.EndSession()

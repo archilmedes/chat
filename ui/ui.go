@@ -5,11 +5,9 @@ import (
 	"github.com/marcusolsson/tui-go"
 	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
-	"log"
 	"strconv"
 	"strings"
 	"time"
-	"os"
 	"github.com/wavyllama/chat/server"
 )
 
@@ -28,10 +26,22 @@ const (
 	unfriend    = ":delete"
 	deleteSelf  = ":deleteSelf"
 	chat        = ":chat"
+	errorPrefix = "Error"
 )
 
-var activeFriend = "me"
+var activeFriend = db.Self
 
+// Updates the history in the same thread. Use with caution! Must be wrapped inside a UI.Update, or used in an event handler
+func (ui *UI) displayMessage(message string) {
+	ui.History.Append(tui.NewHBox(
+		tui.NewLabel(message),
+		tui.NewSpacer(),
+	))
+}
+
+// Handles special input for commands
+// Since this function is only called when a string that is a command is typed, it does not have to be executed in a
+// separate thread to update UI
 func (ui *UI) handleSpecialString(words []string) {
 	switch words[0] {
 	case exit:
@@ -40,53 +50,59 @@ func (ui *UI) handleSpecialString(words []string) {
 		if len(words) == 2 {
 			friendInfo := strings.Split(words[1], "@")
 			if len(friendInfo) == 2 {
+				ui.displayMessage(fmt.Sprintf("Sent friend request to %s", friendInfo))
 				err := ui.Program.SendFriendRequest(friendInfo[1], friendInfo[0])
 				if err != nil {
-					log.Printf("Error sending friend request: %s\n", err)
+					ui.displayMessage(fmt.Sprintf("Error sending friend request: %s", err))
 				}
 				return
 			}
 		}
-		fmt.Printf("Format to add friend: '%s username@ipaddr'\n", friend)
+		ui.displayMessage(fmt.Sprintf("Format to add friend: '%s username@ipaddr'", friend))
 	case unfriend:
-		if len(words) == 2 {
-			if ui.Program.User.DeleteFriend(words[1]) {
-				curr := ui.List.SelectedItem()
-				if curr == words[1] {
-					curr = db.Self
-				}
-				ui.List.RemoveItem(1)
-			} else {
-				fmt.Printf("Error deleting friend: %s\n", words[1])
+		if len(words) != 2 {
+			ui.displayMessage(fmt.Sprintf("Format to delete a friend: '%s displayName", unfriend))
+			return
+		}
+		if ui.Program.User.DeleteFriend(words[1]) {
+			// TODO fix this logic
+			curr := ui.List.SelectedItem()
+			if curr == words[1] {
+				curr = db.Self
 			}
+			ui.List.RemoveItem(1)
 		} else {
-			fmt.Printf("Format to delete a friend: '%s displayName\n", unfriend)
+			ui.displayMessage("Error deleting friend")
 		}
 	case chat:
 		if len(words) == 2 {
 			nextFriend, err := strconv.Atoi(words[1])
-			if err != nil || nextFriend >= ui.List.Length() {
-				goto Failure
+			if err != nil || nextFriend < 0 || nextFriend >= ui.List.Length() {
+				ui.displayMessage("You entered a number outside the list of your friends.")
+				return
 			}
 			ui.List.Select(nextFriend)
 			activeFriend = ui.List.SelectedItem()
-			ui.Program.StartOTRSession(activeFriend)
+			err = ui.Program.StartOTRSession(activeFriend)
+			if err != nil {
+				ui.displayMessage(fmt.Sprintf("%s %s\n", errorPrefix, err.Error()))
+			}
 			return
 		}
-	Failure:
-		fmt.Printf("Format for commands: '%s %s'\n", chat, displayName)
+		ui.displayMessage(fmt.Sprintf("Format for commands: '%s %s'", chat, displayName))
 	case deleteSelf:
 		if !ui.Program.User.Delete() {
-			fmt.Printf("Failed to delete your account\n")
+			ui.displayMessage(fmt.Sprintf("%s: Failed to delete your account", errorPrefix))
 		}
-		fmt.Println("Successfully deleted all of your data")
-		os.Exit(0)
+		ui.displayMessage("Successfully deleted all of your data")
+		ui.UI.Quit()
 	default:
+		// TODO this should not be default?
 		if len(words) == 1 {
 			ui.Program.AcceptedFriend(words[0][1:])
-		} else {
-			fmt.Printf("Format to accept friend request ':%s\n", displayName)
+			return
 		}
+		ui.displayMessage(fmt.Sprintf("Format to accept friend request ':%s", displayName))
 	}
 }
 
@@ -107,14 +123,14 @@ func (ui *UI) setInputReader() {
 				sendMessage.Time = core.GetFormattedTime(time.Now())
 				sendMessage.Sender = db.Self
 				if activeFriend != db.Self {
-					ui.DisplayChatMessage(sendMessage)
+					ui.displayChatMessage(sendMessage)
 				}
 				err := ui.Program.SendChatMessage(activeFriend, message)
 				if err != nil {
-					log.Printf("Error sending message: %s\n", err)
+					ui.displayMessage(fmt.Sprintf("%s %s\n", errorPrefix, err.Error()))
 				}
 			} else {
-				fmt.Printf("Please set active friend: '%s %s'\n", chat, displayName)
+				ui.displayMessage(fmt.Sprintf("Please set active friend: '%s %s'\n", chat, displayName))
 			}
 		}
 		ui.Input.SetText("")
@@ -144,7 +160,7 @@ func (ui *UI) setPersonChange() {
 				sender = conv.Session.FriendDisplayName
 			}
 			chatMessage.New(string(conv.Message.Text), sender, conv.Message.Timestamp)
-			ui.DisplayChatMessage(chatMessage)
+			ui.displayChatMessage(chatMessage)
 		}
 	})
 }
@@ -152,8 +168,6 @@ func (ui *UI) setPersonChange() {
 // Help from: https://github.com/marcusolsson/tui-go/tree/master/example/chat
 func NewUI(program *server.Server) (*UI, error) {
 	var ui = new(UI)
-
-	program.InitUIHandlers(ui.onReceiveFriendRequest, ui.onAcceptFriend, ui.onReceiveChatMessage, ui.onProtocolFinish)
 
 	ui.Program = program
 	friends := program.User.GetFriends()
@@ -205,30 +219,25 @@ func NewUI(program *server.Server) (*UI, error) {
 	// Set event handlers
 	ui.setInputReader()
 	ui.setPersonChange()
+	program.InitUIHandlers(ui.onReceiveFriendRequest, ui.onAcceptFriend, ui.onReceiveChatMessage, ui.onInfoMessage)
 
 	if err := ui.UI.Run(); err != nil {
 		return nil, err
 	}
 
-	showInfo := new(InfoMessage)
-	showInfo.New(fmt.Sprintf("Listening on: '%s:%d'", program.User.IP, server.Port))
-	ui.DisplayInfoMessage(showInfo)
-
+	ui.onInfoMessage(fmt.Sprintf("Listening on: '%s:%d'", program.User.IP, server.Port))
 	return ui, nil
 }
 
 // Write info message to UI
-func (ui *UI) DisplayInfoMessage(m *InfoMessage) {
+func (ui *UI) displayInfoMessage(m *InfoMessage) {
 	ui.UI.Update(func() {
-		ui.History.Append(tui.NewHBox(
-			tui.NewLabel(m.Body()),
-			tui.NewSpacer(),
-		))
+		ui.displayMessage(m.Body())
 	})
 }
 
 // Write chat message to UI
-func (ui *UI) DisplayChatMessage(m *ReceiveChat) {
+func (ui *UI) displayChatMessage(m *ReceiveChat) {
 	ui.UI.Update(func() {
 		ui.History.Append(tui.NewHBox(
 			tui.NewLabel(m.Time),
@@ -240,20 +249,17 @@ func (ui *UI) DisplayChatMessage(m *ReceiveChat) {
 }
 
 // Write friend request to UI
-func (ui *UI) DisplayFriendRequest(m *FriendRequest) {
+func (ui *UI) displayFriendRequest(m *FriendRequest) {
 	ui.UI.Update(func() {
-		ui.History.Append(tui.NewHBox(
-			tui.NewLabel(fmt.Sprintf("Friend request from %s@%s (':%s' or just ignore)",
-				m.Username, m.IP, displayName)),
-			tui.NewSpacer(),
-		))
+		ui.displayMessage(fmt.Sprintf("Friend request from %s@%s (':%s' or just ignore)",
+						  m.Username, m.IP, displayName))
 	})
 }
 
 func (ui *UI) onReceiveFriendRequest(m *server.FriendMessage) {
 	request := new(FriendRequest)
 	request.New("", ui.Program.LastFriend.Username, ui.Program.LastFriend.IP)
-	ui.DisplayFriendRequest(request)
+	ui.displayFriendRequest(request)
 }
 
 func (ui *UI) onAcceptFriend(displayName string) {
@@ -265,11 +271,15 @@ func (ui *UI) onAcceptFriend(displayName string) {
 func (ui *UI) onReceiveChatMessage(message []byte, friend *db.Friend, time time.Time) {
 	chatMessage := new(ReceiveChat)
 	chatMessage.New(string(message), friend.DisplayName, core.GetFormattedTime(time))
-	ui.DisplayChatMessage(chatMessage)
+	ui.displayChatMessage(chatMessage)
 }
 
-func (ui *UI) onProtocolFinish(messageToDisplay string) {
+func (ui *UI) onInfoMessage(messageToDisplay string) {
 	showInfo := new(InfoMessage)
 	showInfo.New(messageToDisplay)
-	ui.DisplayInfoMessage(showInfo)
+	ui.displayInfoMessage(showInfo)
+}
+
+func (ui *UI) onErrorReceived(errorDescription string) {
+	ui.onInfoMessage(fmt.Sprintf("%s: %s\n", errorPrefix, errorDescription))
 }

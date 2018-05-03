@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/wavyllama/chat/core"
-	"github.com/wavyllama/chat/server"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"github.com/wavyllama/chat/ui"
 	"github.com/wavyllama/chat/db"
+	"github.com/wavyllama/chat/server"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 	user.IP = ip
 	user.MAC = mac
 
-	var program = new(server.Server)
+	var program = server.InitServer()
 	if err := program.Start(user); err != nil {
 		log.Fatalf("main: %s", err.Error())
 	}
