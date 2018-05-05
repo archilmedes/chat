@@ -3,38 +3,8 @@ DROP DATABASE IF EXISTS otrmessengertest;
 CREATE DATABASE IF NOT EXISTS otrmessengertest;
 USE otrmessengertest;
 
-/* Table Setup*/
-CREATE TABLE IF NOT EXISTS sessions (
-  SSID BIGINT UNSIGNED NOT NULL PRIMARY KEY,
-  username varchar(30) NOT NULL,
-  friend_display_name varchar(30) NOT NULL,
-  protocol_type varchar(8) NOT NULL,
-  protocol varbinary(10000) NOT NULL,
-  session_timestamp timestamp(6) NOT NULL
-);
+source ../scripts/db_schema.sql
 
-CREATE TABLE IF NOT EXISTS users (
-  username varchar(30) NOT NULL,
-  password varchar(256) NOT NULL,
-  ipaddress varchar(18) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS messages (
-  SSID BIGINT UNSIGNED NOT NULL,
-  message varbinary(10000) NOT NULL,
-  message_timestamp timestamp(6) NOT NULL,
-  sent_or_received TINYINT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS friends (
-  username varchar(30) NOT NULL,
-  friend_display_name varchar(30) NOT NULL,
-  friend_mac_address varchar(18) NOT NULL,
-  friend_ip_address varchar(18) NOT NULL,
-  friend_username varchar(30) NOT NULL
-);
-
-/* Inserting test data */
 /* Users */
 INSERT INTO users VALUES ("alice123", SHA2("13alice123alicepassword8", 256), "127.0.0.1");
 INSERT INTO users VALUES ("bob", SHA2("8bobPassword3", 256), "123.456.789");

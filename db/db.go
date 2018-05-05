@@ -23,29 +23,30 @@ var DB *sql.DB
 
 // Sets up the database - called at startup
 func SetupDatabase() {
-	cmd := exec.Command("sh", "scripts/db_setup.sh", conf.Username, conf.Password)
+	cmd := exec.Command("mysql", fmt.Sprintf("-u%s", conf.Username), fmt.Sprintf("-p%s", conf.Password), "-e", "source ../scripts/db_setup.sql")
 	createDatabase(databaseName, cmd)
 }
 
 // Sets up the test database
 func SetupTestDatabase() {
-	cmd := exec.Command("sh", "../scripts/db_test_setup.sh", conf.Username, conf.Password)
+	cmd := exec.Command("mysql", fmt.Sprintf("-u%s", conf.Username), fmt.Sprintf("-p%s", conf.Password), "-e", "source ../scripts/db_test_setup.sql")
 	createDatabase(testDatabaseName, cmd)
 }
 
 // Sets up an empty test database
 func SetupEmptyTestDatabase() {
-	cmd := exec.Command("sh", "../scripts/db_test_setup.sh", conf.Username, conf.Password)
-	createDatabase(testDatabaseName, cmd)
+	SetupTestDatabase()
 	ClearDatabase()
 }
 
-// Sets up the database
+// Runs the command and connects to the database
 func createDatabase(dbName string, cmd *exec.Cmd) {
-	err := cmd.Run()
-	if err != nil {
-		log.Fatalf("Error running script: %s", err)
+	var err error
+	if err = cmd.Start(); err != nil { //Use start, not run
+		fmt.Println("An error occured: ", err) //replace with logger, or anything you want
 	}
+	cmd.Wait()
+
 	connectionString := formConnectionString(dbName)
 	DB, err = connectToDatabase(connectionString)
 	if err != nil {
