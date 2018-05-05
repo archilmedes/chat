@@ -226,9 +226,7 @@ func NewUI(program *server.Server) (*UI, error) {
 
 // Runs the UI
 func (ui *UI) Run() error {
-	if err := ui.Program.Start(); err != nil {
-		return err
-	}
+	go ui.Program.Start()
 	return ui.UI.Run()
 }
 

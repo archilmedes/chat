@@ -12,11 +12,12 @@ import (
 	"strings"
 	"time"
 	"net/http"
+	"os/exec"
 )
 
 const (
 	Port    uint16 = 4242
-	localhost = "0.0.0.0"
+	localhost = "localhost"
 )
 
 // Server holds the user and all of his sessions
@@ -24,6 +25,7 @@ type Server struct {
 	User       *db.User
 	LastFriend *db.Friend
 	Listener   *http.Server
+	Tunnel *exec.Cmd
 	Sessions   *[]*Session
 
 	onReceiveFriendMessage func(m *FriendMessage)
@@ -229,23 +231,38 @@ func initDialer(address string) (*websocket.Conn, error) {
 
 // Start up server
 func (s *Server) Start() error {
-	log.Println("Launching Server...")
+	// TODO wait until UI has started somehow?
+	(*s).onInfoReceive("Launching server ...")
 
 	fullAddr := fmt.Sprintf("%s:%d", localhost, Port)
 	srv := &http.Server{Addr: fullAddr}
 	http.HandleFunc("/ws", s.handleMessage)
 	go srv.ListenAndServe()
 	(*s).Listener = srv
-
-	//s.onInfoReceive(fmt.Sprintf("Listening on: %s", fullAddr))
+	url, cmd, err := core.SetupTunnel(Port, (*s).User.Username, (*s).User.MAC)
+	if err != nil {
+		log.Panicln(err)
+	}
+	(*s).onInfoReceive(fmt.Sprintf("Your public url is: %s\n", url))
+	(*s).Tunnel = cmd
+	(*s).User.IP = url
 	s.StartOTRSession(db.Self)
 	return nil
 }
 
 // End server connection
 func (s *Server) Shutdown() error {
-	log.Println("Shutting Down Server...")
-	return (*s).Listener.Close()
+	log.Println("Shutting down server...")
+	if (*s).Tunnel != nil {
+		if err := (*s).Tunnel.Process.Kill(); err != nil {
+			return err
+		}
+		log.Println("Killed reverse-proxy tunnel")
+	}
+	if (*s).Listener != nil {
+		return (*s).Listener.Close()
+	}
+	return nil
 }
 
 // Sends a formatted Message object with the server, after an active session between the two users have been established

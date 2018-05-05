@@ -6,6 +6,12 @@
 cp config/config.go.template config/config.go
 ```
 
+You also need npm. We use localtunnel to create a reverse proxy to forward requests on a websocket without a central server. Install with:
+
+```
+npm install -g localtunnel
+```
+
 Fill in `config/config.go` with your mysql database credentials.
 
 ## Running the application
@@ -41,11 +47,3 @@ chmod +x scripts/generate_docs
 ```
 
 It starts up a godoc server and downloads the `chat` package html, css, and js relevant to the package.
-
-#### Database Migrations
-
-Every schema change, the database will need to be "migrated". This can be done by dropping and recreating the database with the following script.
-
-```
-sh db/db_setup.sh [mysql username] [mysql password]
-```

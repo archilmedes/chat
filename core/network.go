@@ -4,6 +4,11 @@ import (
 	"errors"
 	"net"
 	"runtime"
+	"os/exec"
+	"bufio"
+	"strings"
+	"strconv"
+	"fmt"
 )
 
 // Get MAC and public IPv4 addresses
@@ -39,4 +44,26 @@ func GetAddresses() (string, string, error) { // MAC address, IPv4 address, erro
 	}
 errOccurred:
 	return mac, ip, errors.New("cannot find MAC and IPv4 addresses")
+}
+
+func SetupTunnel(port uint16, username, mac string) (string, *exec.Cmd, error) {
+	macNoComma := strings.Replace(mac, ":", "", -1)
+	subDomain := fmt.Sprintf("%s-%s", username, macNoComma)
+	cmd := exec.Command("lt", "--port", strconv.Itoa(int(port)), "--subdomain", subDomain)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return "", cmd, err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return "", cmd, err
+	}
+
+	output := bufio.NewScanner(stdout)
+	var url string
+	for output.Scan() {
+		url = strings.Split(output.Text(), "your url is: ")[1]
+		return url, cmd, output.Err()
+	}
+	return "", cmd, errors.New("could not run the command")
 }
