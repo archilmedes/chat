@@ -38,13 +38,24 @@ func init() {
 	gob.Register(&ChatMessage{})
 }
 
-func InitServer() (*Server) {
+func InitServer(user *db.User) (*Server) {
 	server := Server{}
 	// Init no-op function handlers
 	server.onReceiveFriendMessage = func(m *FriendMessage) {}
 	server.onAcceptFriend = func(displayName string) {}
 	server.onReceiveChatMessage = func(message []byte, friend *db.Friend, time time.Time) {}
 	server.onInfoReceive = func(messageToDisplay string) {}
+
+	// Initialize the session struct to a pointer
+	var sessions []*Session
+	server.Sessions = &sessions
+
+	server.User = user
+	server.LastFriend = new(db.Friend)
+
+	// Updates the IP address of the user and create a friend for yourself
+	server.User.DeleteFriend(db.Self)
+	server.User.AddFriend(db.Self, user.MAC, localhost, user.Username)
 	return &server
 }
 
@@ -157,7 +168,11 @@ func (s *Server) handleHandshakeMessage(friend *db.Friend, msg *HandshakeMessage
 		// Send each part of the handshake message back and immediately return
 		for _, stepMessage := range dec {
 			reply := new(HandshakeMessage)
-			reply.NewPayload(s.User.MAC, s.User.IP, s.User.Username, sourceUsername)
+			sourceIP = s.User.IP
+			if messageYourself {
+				sourceIP = localhost
+			}
+			reply.NewPayload(s.User.MAC, sourceIP, s.User.Username, sourceUsername)
 			reply.Secret = stepMessage
 			reply.ProtoType = protoType
 			reply.Round = round + 1
@@ -213,28 +228,17 @@ func initDialer(address string) (*websocket.Conn, error) {
 }
 
 // Start up server
-func (s *Server) Start(user *db.User) error {
+func (s *Server) Start() error {
 	log.Println("Launching Server...")
 
-	s.User = user
-	s.LastFriend = new(db.Friend)
-	//ipAddr := fmt.Sprintf("%s:%d", user.IP, Port)
-
-	srv := &http.Server{Addr: fmt.Sprintf(":%d", Port)}
-
+	fullAddr := fmt.Sprintf("%s:%d", localhost, Port)
+	srv := &http.Server{Addr: fullAddr}
 	http.HandleFunc("/ws", s.handleMessage)
 	go srv.ListenAndServe()
 	(*s).Listener = srv
-	// Initialize the session struct to a pointer
-	var sessions []*Session
-	s.Sessions = &sessions
 
-	// Updates the IP address of the user and create a friend for yourself
-	if s.User.GetFriendByDisplayName(db.Self) == nil {
-		s.User.AddFriend(db.Self, user.MAC, localhost, user.Username)
-	}
+	//s.onInfoReceive(fmt.Sprintf("Listening on: %s", fullAddr))
 	s.StartOTRSession(db.Self)
-
 	return nil
 }
 
@@ -246,7 +250,11 @@ func (s *Server) Shutdown() error {
 
 // Sends a formatted Message object with the server, after an active session between the two users have been established
 func (s *Server) sendMessage(destIp string, msg Message) error {
-	dialer, err := initDialer(fmt.Sprintf("%s:%d", destIp, Port))
+	addr := fmt.Sprintf("%s:%d", destIp, Port)
+	if destIp != localhost {
+		addr = destIp
+	}
+	dialer, err := initDialer(addr)
 	if err != nil {
 		return err
 	}
@@ -254,6 +262,7 @@ func (s *Server) sendMessage(destIp string, msg Message) error {
 	if err != nil {
 		return err
 	}
+
 	enc := gob.NewEncoder(w)
 	if err = enc.Encode(&msg); err != nil {
 		return err
@@ -292,15 +301,21 @@ func (s *Server) StartOTRSession(displayName string) error {
 		return err
 	}
 
+	// If messaging yourself, use your local IP as the sender too
+	sourceIP := s.User.IP
+	if displayName == db.Self {
+		sourceIP = localhost
+	}
+
 	msg := new(HandshakeMessage)
-	msg.NewPayload(s.User.MAC, s.User.IP, s.User.Username, friend.Username)
+	msg.NewPayload(s.User.MAC, sourceIP, s.User.Username, friend.Username)
 	msg.Secret = []byte(firstMessage)
 	msg.ProtoType = proto.ToType()
 	msg.Round = 0
 
 	err = s.sendMessage(friend.IP, msg)
 	if err != nil {
-		log.Printf("Error starting OTR session: %s\n", err)
+		log.Printf("Error starting OTR session: %s\n", err.Error())
 	}
 	return err
 }
@@ -333,12 +348,12 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 	(*chatMsg).Text = cyp[0]
 
 	sourceIP := s.User.IP
-	// If messaging yourself, use your local IP
-	if friend.IP == sourceIP {
+	// If messaging yourself, use your local IP as the sender too
+	if friend.IP == localhost {
 		sourceIP = localhost
 	}
 
-	chatMsg.NewPayload(s.User.MAC, localhost, s.User.Username, friend.Username)
+	chatMsg.NewPayload(s.User.MAC, sourceIP, s.User.Username, friend.Username)
 	bytes := []byte(message)
 	(*chatMsg).Text = bytes
 

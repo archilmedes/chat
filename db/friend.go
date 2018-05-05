@@ -46,9 +46,9 @@ func deleteFriend(username, displayName string) bool {
 		fmt.Printf("Error creating friends prepared statement for deleteFriend: %s", err)
 	}
 	_, err = deleteCommand.Exec(username, displayName)
-	if err != nil {
-		log.Panicf("Failed to delete friend: %s", err)
-	}
+	//if err != nil {
+	//	log.Panicf("Failed to delete friend: %s", err)
+	//}
 	return true
 }
 

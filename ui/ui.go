@@ -221,12 +221,15 @@ func NewUI(program *server.Server) (*UI, error) {
 	ui.setPersonChange()
 	program.InitUIHandlers(ui.onReceiveFriendRequest, ui.onAcceptFriend, ui.onReceiveChatMessage, ui.onInfoMessage)
 
-	if err := ui.UI.Run(); err != nil {
-		return nil, err
-	}
-
-	ui.onInfoMessage(fmt.Sprintf("Listening on: '%s:%d'", program.User.IP, server.Port))
 	return ui, nil
+}
+
+// Runs the UI
+func (ui *UI) Run() error {
+	if err := ui.Program.Start(); err != nil {
+		return err
+	}
+	return ui.UI.Run()
 }
 
 // Write info message to UI

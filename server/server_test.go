@@ -12,24 +12,7 @@ const (
 	fakeMessage = "Hello world"
 )
 
-func onReceiveFriendRequest(m *FriendMessage) {
-}
-
-func onAcceptFriend(displayName string) {
-
-}
-
-func onReceiveChatMessage(message []byte, friend *db.Friend, time time.Time) {
-
-}
-
-func onProtocolFinish(messageToDisplay string) {
-
-}
-
-func startUpServer(t *testing.T) Server {
-	var server Server
-	server.InitUIHandlers(onReceiveFriendRequest, onAcceptFriend, onReceiveChatMessage, onProtocolFinish)
+func startUpServer(t *testing.T) *Server {
 	mac, ip, _ := core.GetAddresses()
 	db.SetupEmptyTestDatabase()
 
@@ -37,7 +20,8 @@ func startUpServer(t *testing.T) Server {
 	user.Username = "archillin"
 	user.IP = ip
 	user.MAC = mac
-	assert.NoError(t, server.Start(user))
+	server := InitServer(user)
+	assert.NoError(t, server.Start())
 	// Let time pass for handshake to complete
 	time.Sleep(2000 * time.Millisecond)
 	return server

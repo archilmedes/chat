@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/wavyllama/chat/core"
 	"log"
 	"os"
@@ -17,11 +16,12 @@ func main() {
 	db.SetupDatabase()
 	if len(os.Args) == 2 && (os.Args[1] == "--reset" || os.Args[1] == "-r") {
 		db.ClearDatabase()
+		log.Println("Database cleared")
 	}
 
 	mac, ip, err := core.GetAddresses()
 	if err != nil {
-		fmt.Printf("getAddresses: %s", err.Error())
+		log.Panicf("getAddresses: %s\n", err.Error())
 	}
 
 	user := core.Login(bufio.NewScanner(os.Stdin), ip)
@@ -29,14 +29,17 @@ func main() {
 	user.IP = ip
 	user.MAC = mac
 
-	var program = server.InitServer()
-	if err := program.Start(user); err != nil {
-		log.Fatalf("main: %s", err.Error())
-	}
+	var program = server.InitServer(user)
 	defer program.Shutdown()
-	if _, err = ui.NewUI(program); err != nil {
+	var uiCmpt *ui.UI
+	if uiCmpt, err = ui.NewUI(program); err != nil {
 		log.Fatalf("main: %s", err.Error())
 	}
+
+	if err = uiCmpt.Run(); err != nil {
+		log.Fatalf("UI Run: %s\n", err.Error())
+	}
+
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
