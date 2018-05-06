@@ -4,20 +4,21 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
-	"github.com/gorilla/websocket"
 	"log"
-	"strings"
-	"time"
 	"net/http"
 	"os/exec"
+	"strings"
+	"time"
+	"encoding/json"
 )
 
 const (
-	Port    uint16 = 4242
-	localhost = "localhost"
+	Port      uint16 = 4242
+	localhost        = "localhost"
 )
 
 // Server holds the user and all of his sessions
@@ -25,7 +26,7 @@ type Server struct {
 	User       *db.User
 	LastFriend *db.Friend
 	Listener   *http.Server
-	Tunnel *exec.Cmd
+	Tunnel     *exec.Cmd
 	Sessions   *[]*Session
 
 	onReceiveFriendMessage func(m *FriendMessage)
@@ -40,7 +41,7 @@ func init() {
 	gob.Register(&ChatMessage{})
 }
 
-func InitServer(user *db.User) (*Server) {
+func InitServer(user *db.User) *Server {
 	server := Server{}
 	// Init no-op function handlers
 	server.onReceiveFriendMessage = func(m *FriendMessage) {}
@@ -62,9 +63,9 @@ func InitServer(user *db.User) (*Server) {
 }
 
 func (s *Server) InitUIHandlers(onReceiveFriendMessage func(m *FriendMessage),
-								onAcceptFriend func(displayName string),
-								onReceiveChatMessage func(message []byte, friend *db.Friend, time time.Time),
-								onInfoReceive func(messageToDisplay string)) {
+	onAcceptFriend func(displayName string),
+	onReceiveChatMessage func(message []byte, friend *db.Friend, time time.Time),
+	onInfoReceive func(messageToDisplay string)) {
 	s.onReceiveFriendMessage = onReceiveFriendMessage
 	s.onAcceptFriend = onAcceptFriend
 	s.onReceiveChatMessage = onReceiveChatMessage
@@ -129,13 +130,16 @@ func (s *Server) handleFriendMessage(msg *FriendMessage) {
 }
 
 func (s *Server) AcceptedFriend(displayName string) {
-	lower := strings.ToLower(displayName)
-	if lower == db.Self || s.User.IsFriendsWith(lower) {
-		// TODO: error
+	if strings.ToLower(displayName) == db.Self {
+		s.onInfoReceive("Error accepting friend: 'me' is a reserved word for talking to yourself")
+	} else if s.User.IsFriendsWith(displayName) {
+		s.onInfoReceive(fmt.Sprintf("You already have a friend named %s", displayName))
 	} else {
+		res, _ := json.Marshal(&s.LastFriend)
+		log.Println(res)
 		s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username)
-		s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
 		s.onAcceptFriend(displayName)
+		s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
 	}
 }
 
@@ -231,7 +235,6 @@ func initDialer(address string) (*websocket.Conn, error) {
 
 // Start up server
 func (s *Server) Start() error {
-	// TODO wait until UI has started somehow?
 	(*s).onInfoReceive("Launching server ...")
 
 	fullAddr := fmt.Sprintf("%s:%d", localhost, Port)

@@ -65,10 +65,10 @@ func (u *User) IsFriendOnline(friendDisplayName string) (bool, time.Time) {
 	if friend == nil {
 		return false, time.Time{}
 	}
+	// If the friend is online now, then they are available now
 	out, _ := exec.Command("ping", friend.IP, "-c 5", "-i 3", "-w 10").Output()
 	friendOnline := !strings.Contains(string(out), "Destination Host Unreachable")
-	// If the friend is online now, then they are available now
-	if friendOnline || friend.DisplayName == Self {
+	if friend.DisplayName == Self || friendOnline {
 		return true, time.Now()
 	}
 
@@ -78,10 +78,10 @@ func (u *User) IsFriendOnline(friendDisplayName string) (bool, time.Time) {
 	messages := getSessionMessages(sessions[len(sessions)-1].SSID)
 	for i := len(messages) - 1; i >= 0; i-- {
 		if messages[i].SentOrReceived == Received {
-			lastSeenTime, _ = time.Parse(time.RFC3339, messages[i].Timestamp)
+			lastSeenTime = messages[i].Timestamp
 		}
 	}
-	return friendOnline, lastSeenTime
+	return false, lastSeenTime
 }
 
 // Fetch conversations between another friend and decrypts the contents of the messages everything

@@ -28,7 +28,7 @@ type Protocol interface {
 // Type of protocol that just lets text pass through without applying any encryption
 type PlainProtocol struct {
 	Protocol
-	SessionID        uint64
+	SessionID uint64
 	// TODO this should be private?
 	ProtocolFinished bool
 }

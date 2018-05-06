@@ -16,3 +16,5 @@ chat.exe
 
 # Ignore docs folder
 docs
+
+chat-debug.log

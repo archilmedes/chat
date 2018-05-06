@@ -8,5 +8,5 @@ import (
 
 func TestGetFormattedTime(t *testing.T) {
 	someTime := time.Unix(100, 1000)
-	assert.Equal(t, "1969-12-31 18:01:40.000001", GetFormattedTime(someTime))
+	assert.Equal(t, "1969-12-31 18:01:40", GetFormattedTime(someTime))
 }

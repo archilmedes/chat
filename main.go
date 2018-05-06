@@ -3,13 +3,13 @@ package main
 import (
 	"bufio"
 	"github.com/wavyllama/chat/core"
+	"github.com/wavyllama/chat/db"
+	"github.com/wavyllama/chat/server"
+	"github.com/wavyllama/chat/ui"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"github.com/wavyllama/chat/ui"
-	"github.com/wavyllama/chat/db"
-	"github.com/wavyllama/chat/server"
 )
 
 func main() {

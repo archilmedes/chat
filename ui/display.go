@@ -1,5 +1,7 @@
 package ui
 
+import "time"
+
 // Any message meant to be displayed in UI
 type DisplayMessage interface {
 	Body() string
@@ -14,7 +16,8 @@ type InfoMessage struct {
 // Chat message
 type ReceiveChat struct {
 	InfoMessage
-	Sender, Time string
+	Sender string
+	Time time.Time
 }
 
 // Friend request received
@@ -31,18 +34,16 @@ func (m *InfoMessage) createInfoMessage(info string) {
 	m.Message = info
 }
 
-func (m *InfoMessage) New(info string) {
-	m.createInfoMessage(info)
+func NewInfoMessage(info string) *InfoMessage {
+	return &InfoMessage{Message: info}
 }
 
-func (m *ReceiveChat) New(info, sender, time string) {
-	m.createInfoMessage(info)
-	m.Sender = sender
-	m.Time = time
+func NewReceiveChatMessage(info, sender string, time time.Time) *ReceiveChat {
+	return &ReceiveChat{InfoMessage: *NewInfoMessage(info),
+						Sender: sender, Time: time}
 }
 
-func (m *FriendRequest) New(info, username, ip string) {
-	m.createInfoMessage(info)
-	m.Username = username
-	m.IP = ip
+func NewFriendRequestMessage(info, username, ip string) *FriendRequest {
+	return &FriendRequest{InfoMessage: *NewInfoMessage(info),
+							Username: username, IP: ip}
 }

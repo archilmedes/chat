@@ -6,11 +6,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
+	"github.com/wavyllama/chat/config"
 )
 
 // Stores a conversation between two users
 type Conversation struct {
-	Message DBMessage
+	Message Message
 	Session Session
 }
 
@@ -33,10 +35,15 @@ func ExecuteConversationsQuery(results *sql.Rows) []Conversation {
 	var conversations []Conversation
 	convo := Conversation{}
 	for results.Next() {
-		err := results.Scan(&convo.Message.SSID, &convo.Message.Text, &convo.Message.Timestamp, &convo.Message.SentOrReceived, &convo.Session.SSID, &convo.Session.Username, &convo.Session.FriendDisplayName, &convo.Session.ProtocolType, &convo.Session.ProtocolValue, &convo.Session.timestamp)
+		var timestamp string
+		var encMsgText []byte
+		err := results.Scan(&convo.Message.SSID, &encMsgText, &timestamp, &convo.Message.SentOrReceived, &convo.Session.SSID, &convo.Session.Username, &convo.Session.FriendDisplayName, &convo.Session.ProtocolType, &convo.Session.ProtocolValue, &convo.Session.timestamp)
 		if err != nil {
 			log.Panicf("Failed to parse results from conversations:  %s", err)
 		}
+		parsedTime, _ := time.Parse("2006-01-02 15:04:05", timestamp)
+		convo.Message.Timestamp = parsedTime
+		convo.Message.Text = AESDecrypt(encMsgText, []byte(db.AESKey))
 		conversations = append(conversations, convo)
 	}
 	err := results.Err()

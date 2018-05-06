@@ -1,14 +1,16 @@
 package core
 
 import (
-	"errors"
-	"net"
-	"runtime"
-	"os/exec"
 	"bufio"
-	"strings"
-	"strconv"
+	"errors"
 	"fmt"
+	"net"
+	"net/http"
+	"os/exec"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // Get MAC and public IPv4 addresses
@@ -46,6 +48,7 @@ errOccurred:
 	return mac, ip, errors.New("cannot find MAC and IPv4 addresses")
 }
 
+// Sets up a reverse-proxy tunnel
 func SetupTunnel(port uint16, username, mac string) (string, *exec.Cmd, error) {
 	macNoComma := strings.Replace(mac, ":", "", -1)
 	subDomain := fmt.Sprintf("%s-%s", username, macNoComma)
@@ -66,4 +69,14 @@ func SetupTunnel(port uint16, username, mac string) (string, *exec.Cmd, error) {
 		return url, cmd, output.Err()
 	}
 	return "", cmd, errors.New("could not run the command")
+}
+
+// Pings an IP to see if it's currently online
+func IsIPOnline(ip string) bool {
+	timeout := time.Duration(1 * time.Second)
+	client := http.Client{
+		Timeout: timeout,
+	}
+	resp, err := client.Get(ip)
+	return err != nil && resp != nil
 }
