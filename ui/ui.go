@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"github.com/marcusolsson/tui-go"
+	conf "github.com/wavyllama/chat/config"
 	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/server"
@@ -29,7 +30,6 @@ const (
 	deleteSelf  = ":deleteSelf"
 	chat        = ":chat"
 	errorPrefix = "Error"
-	logFile     = "chat-debug.log"
 )
 
 var logger *log.Logger
@@ -37,7 +37,7 @@ var f *os.File
 var activeFriend = db.Self
 
 func init() {
-	f, _ = os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, _ = os.OpenFile(conf.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	logger = log.New(f, "UI: ", log.LstdFlags)
 	tui.SetLogger(logger)
 }

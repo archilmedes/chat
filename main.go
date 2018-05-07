@@ -13,6 +13,8 @@ import (
 )
 
 func main() {
+	defer db.DeleteLogger()
+
 	db.SetupDatabase()
 	if len(os.Args) == 2 && (os.Args[1] == "--reset" || os.Args[1] == "-r") {
 		db.ClearDatabase()

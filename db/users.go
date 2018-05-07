@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 )
 
 func generateSalt(username string, password string) string {
@@ -15,11 +14,11 @@ func generateSalt(username string, password string) string {
 func UserExists(username string) bool {
 	query, err := DB.Prepare("SELECT username, ipaddress FROM users WHERE username=?")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for UserExists: %s", err)
+		Logger.Printf("Error creating users prepared statement for UserExists: %s", err)
 	}
 	results, err := query.Query(username)
 	if err != nil {
-		fmt.Printf("Error executing UserExists query: %s", err)
+		Logger.Printf("Error executing UserExists query: %s", err)
 	}
 	users := ExecuteUsersQuery(results)
 	return len(users) > 0
@@ -30,11 +29,11 @@ func GetUser(username string, password string) *User {
 	hashedPassword := generateSalt(username, password)
 	query, err := DB.Prepare("SELECT username, ipaddress FROM users WHERE username=? and password=SHA2(?,256)")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for GetUser: %s", err)
+		Logger.Printf("Error creating users prepared statement for GetUser: %s", err)
 	}
 	results, err := query.Query(username, hashedPassword)
 	if err != nil {
-		fmt.Printf("Error executing GetUser query: %s", err)
+		Logger.Printf("Error executing GetUser query: %s", err)
 	}
 	users := ExecuteUsersQuery(results)
 	if len(users) == 0 {
@@ -48,11 +47,11 @@ func AddUser(username string, password string, ipAddress string) bool {
 	hashedPassword := generateSalt(username, password)
 	insertCommand, err := DB.Prepare("INSERT INTO users VALUES (?, SHA2(?,256), ?)")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for AddUser: %s", err)
+		Logger.Printf("Error creating users prepared statement for AddUser: %s", err)
 	}
 	_, err = insertCommand.Exec(username, hashedPassword, ipAddress)
 	if err != nil {
-		log.Panicf("Failed to add user: %s", err)
+		Logger.Panicf("Failed to add user: %s", err)
 	}
 	return true
 }
@@ -61,11 +60,11 @@ func AddUser(username string, password string, ipAddress string) bool {
 func UpdateUserIP(username string, ipAddress string) bool {
 	updateCommand, err := DB.Prepare("UPDATE users SET ipaddress=? WHERE username=?")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for UpdateUserIP: %s", err)
+		Logger.Printf("Error creating users prepared statement for UpdateUserIP: %s", err)
 	}
 	_, err = updateCommand.Exec(ipAddress, username)
 	if err != nil {
-		log.Panicf("Failed to update user's IP: %s", err)
+		Logger.Panicf("Failed to update user's IP: %s", err)
 	}
 	return true
 }
@@ -75,11 +74,11 @@ func UpdateUserPassword(username string, password string) bool {
 	hashedPassword := generateSalt(username, password)
 	updateCommand, err := DB.Prepare("UPDATE users SET password=SHA2(?,256) WHERE username=?")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for UpdateUserPassword: %s", err)
+		Logger.Printf("Error creating users prepared statement for UpdateUserPassword: %s", err)
 	}
 	_, err = updateCommand.Exec(hashedPassword, username)
 	if err != nil {
-		log.Panicf("Failed to update user's password: %s", err)
+		Logger.Panicf("Failed to update user's password: %s", err)
 	}
 	return true
 }
@@ -88,6 +87,7 @@ func UpdateUserPassword(username string, password string) bool {
 func DeleteUser(username string) bool {
 	sessionsAndMessages := deleteSessionsWithMessages(username)
 	friendsAndUser := deleteUserAndFriends(username)
+	Logger.Printf("Deleted user %s", username)
 	return sessionsAndMessages && friendsAndUser
 }
 
@@ -95,11 +95,11 @@ func DeleteUser(username string) bool {
 func deleteUserAndFriends(username string) bool {
 	deleteCommand, err := DB.Prepare("DELETE u, f FROM users u LEFT JOIN friends f ON u.username = f.username WHERE u.username=?")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for deleteUserAndFriends: %s", err)
+		Logger.Printf("Error creating users prepared statement for deleteUserAndFriends: %s", err)
 	}
 	_, err = deleteCommand.Exec(username)
 	if err != nil {
-		log.Panicf("Failed to delete user and friends: %s", err)
+		Logger.Panicf("Failed to delete user and friends: %s", err)
 	}
 	return true
 }
@@ -108,11 +108,11 @@ func deleteUserAndFriends(username string) bool {
 func QueryUsers() []User {
 	query, err := DB.Prepare("SELECT username, ipaddress FROM users")
 	if err != nil {
-		fmt.Printf("Error creating users prepared statement for QueryUsers: %s", err)
+		Logger.Printf("Error creating users prepared statement for QueryUsers: %s", err)
 	}
 	results, err := query.Query()
 	if err != nil {
-		fmt.Printf("Error executing QueryUsers query: %s", err)
+		Logger.Printf("Error executing QueryUsers query: %s", err)
 	}
 	return ExecuteUsersQuery(results)
 }
@@ -124,13 +124,13 @@ func ExecuteUsersQuery(results *sql.Rows) []User {
 	for results.Next() {
 		err := results.Scan(&user.Username, &user.IP)
 		if err != nil {
-			log.Panicf("Failed to parse results from conversations: %s", err)
+			Logger.Panicf("Failed to parse results from conversations: %s", err)
 		}
 		users = append(users, user)
 	}
 	err := results.Err()
 	if err != nil {
-		log.Panicf("Failed to get results from users query: %s", err)
+		Logger.Panicf("Failed to get results from users query: %s", err)
 	}
 	return users
 }

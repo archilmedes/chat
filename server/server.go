@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
+	conf "github.com/wavyllama/chat/config"
 	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
@@ -20,7 +21,6 @@ import (
 const (
 	Port      uint16 = 4242
 	localhost        = "localhost"
-	logFile     = "chat-debug.log"
 )
 
 var logger *log.Logger
@@ -45,7 +45,7 @@ func init() {
 	gob.Register(&HandshakeMessage{})
 	gob.Register(&ChatMessage{})
 
-	f, _ = os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, _ = os.OpenFile(conf.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	logger = log.New(f, "Server: ", log.LstdFlags)
 }
 
@@ -149,7 +149,9 @@ func (s *Server) AcceptedFriend(displayName string) {
 	} else {
 		res, _ := json.Marshal(&s.LastFriend)
 		logger.Println(string(res))
-		s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username)
+		if !s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username) {
+			logger.Fatalln("Failed to add friend")
+		}
 		//s.onAcceptFriend(displayName)
 		err := s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
 		if err != nil {

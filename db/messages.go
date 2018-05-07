@@ -5,9 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"database/sql"
-	"fmt"
 	"github.com/wavyllama/chat/config"
-	"log"
 	"time"
 )
 
@@ -27,16 +25,16 @@ type Message struct {
 // Inserts a message into the messages table
 func InsertMessage(SSID uint64, message []byte, timestamp string, sentOrReceived int) bool {
 	if sentOrReceived != Sent && sentOrReceived != Received {
-		log.Fatalf("Invalid entry for sent/received - must be 0 or 1. Instead, received a %d", sentOrReceived)
+		Logger.Fatalf("Invalid entry for sent/received - must be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
 	encryptedMessages := AESEncrypt(string(message), []byte(db.AESKey))
 	insertCommand, err := DB.Prepare("INSERT INTO messages VALUES (?, ?, ?, ?)")
 	if err != nil {
-		fmt.Printf("Error creating messages prepared statement for InsertMessage: %s", err)
+		Logger.Printf("Error creating messages prepared statement for InsertMessage: %s", err)
 	}
 	_, err = insertCommand.Exec(SSID, encryptedMessages, timestamp, sentOrReceived)
 	if err != nil {
-		log.Panicf("Failed to insert into messages: %s", err)
+		Logger.Panicf("Failed to insert into messages: %s", err)
 	}
 	return true
 }
@@ -45,12 +43,12 @@ func InsertMessage(SSID uint64, message []byte, timestamp string, sentOrReceived
 func DeleteMessage(SSID uint64, message string, timestamp string, sentOrReceived int) bool {
 	deleteCommand, err := DB.Prepare("DELETE FROM messages WHERE SSID=? AND message=? AND message_timestamp=? AND sent_or_received=?")
 	if err != nil {
-		log.Fatalf("Error creating users prepared statement for UpdateUserIP: %s", err)
+		Logger.Fatalf("Error creating users prepared statement for UpdateUserIP: %s", err)
 	}
 	enc := AESEncrypt(string(message), []byte(db.AESKey))
 	_, err = deleteCommand.Exec(SSID, enc, timestamp, sentOrReceived)
 	if err != nil {
-		log.Printf("Failed to delete message: %s", err)
+		Logger.Printf("Failed to delete message: %s", err)
 	}
 	return true
 }
@@ -59,11 +57,11 @@ func DeleteMessage(SSID uint64, message string, timestamp string, sentOrReceived
 func QueryMessages() []Message {
 	query, err := DB.Prepare("SELECT * FROM messages")
 	if err != nil {
-		log.Fatalf("Error creating messages prepared statement for QueryMessages: %s", err)
+		Logger.Fatalf("Error creating messages prepared statement for QueryMessages: %s", err)
 	}
 	results, err := query.Query()
 	if err != nil {
-		log.Printf("Error executing QueryMessages query: %s", err)
+		Logger.Printf("Error executing QueryMessages query: %s", err)
 	}
 	return ExecuteMessagesQuery(results)
 }
@@ -72,11 +70,11 @@ func QueryMessages() []Message {
 func getSessionMessages(SSID uint64) []Message {
 	query, err := DB.Prepare("SELECT * FROM messages WHERE SSID=?")
 	if err != nil {
-		log.Fatalf("Error creating messages prepared statement for getSessionMessages: %s", err)
+		Logger.Fatalf("Error creating messages prepared statement for getSessionMessages: %s", err)
 	}
 	results, err := query.Query(SSID)
 	if err != nil {
-		log.Printf("Error executing getSessionMessages query: %s", err)
+		Logger.Printf("Error executing getSessionMessages query: %s", err)
 	}
 	return ExecuteMessagesQuery(results)
 }
@@ -90,7 +88,7 @@ func ExecuteMessagesQuery(results *sql.Rows) []Message {
 
 		err := results.Scan(&msg.SSID, &msg.Text, &timestamp, &msg.SentOrReceived)
 		if err != nil {
-			log.Panicf("Failed to parse results from messages: %s", err)
+			Logger.Panicf("Failed to parse results from messages: %s", err)
 			panic(err)
 		}
 		parsedTime, _ := time.Parse("2006-01-02 15:04:05", timestamp)
@@ -100,7 +98,7 @@ func ExecuteMessagesQuery(results *sql.Rows) []Message {
 	}
 	err := results.Err()
 	if err != nil {
-		log.Panicf("Failed to get results from conversations query: %s", err)
+		Logger.Panicf("Failed to get results from conversations query: %s", err)
 	}
 	return messages
 }
@@ -109,10 +107,10 @@ func ExecuteMessagesQuery(results *sql.Rows) []Message {
 func AESEncrypt(src string, key []byte) []byte {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		log.Fatalf("Error with key: %s", err.Error())
+		Logger.Fatalf("Error with key: %s", err.Error())
 	}
 	if src == "" {
-		log.Fatalf("plain content empty")
+		Logger.Fatalf("plain content empty")
 	}
 	ecb := cipher.NewCBCEncrypter(block, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	content := []byte(src)
@@ -125,10 +123,10 @@ func AESEncrypt(src string, key []byte) []byte {
 func AESDecrypt(crypt []byte, key []byte) []byte {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		log.Fatalf("Error with key: %s", err.Error())
+		Logger.Fatalf("Error with key: %s", err.Error())
 	}
 	if len(crypt) == 0 {
-		fmt.Println("plain content empty")
+		Logger.Println("plain content empty")
 	}
 	ecb := cipher.NewCBCDecrypter(block, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	decrypted := make([]byte, len(crypt))

@@ -8,6 +8,7 @@ import (
 	"log"
 	"os/exec"
 	"bytes"
+	"os"
 )
 
 const (
@@ -20,7 +21,14 @@ const (
 	numTables         = 4
 )
 
+var Logger *log.Logger
+var f *os.File
 var DB *sql.DB
+
+func init() {
+	f, _ = os.OpenFile(conf.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	Logger = log.New(f, "DB: ", log.LstdFlags)
+}
 
 // Sets up the database - called at startup
 func SetupDatabase() {
@@ -40,13 +48,17 @@ func SetupEmptyTestDatabase() {
 	emptyDatabase()
 }
 
+func DeleteLogger() error {
+	return f.Close()
+}
+
 // Runs the command and connects to the database
 func createDatabase(dbName string, cmd *exec.Cmd) {
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		log.Panicf("%s: %s", err, stderr.String())
+		Logger.Panicf("%s: %s", err, stderr.String())
 	}
 
 	connectionString := formConnectionString(dbName)
@@ -56,7 +68,7 @@ func createDatabase(dbName string, cmd *exec.Cmd) {
 	}
 	numTablesCreated := len(ShowTables())
 	if numTablesCreated != numTables {
-		log.Panicf("Tables were not created properly: expected %d and got %d", numTables, numTablesCreated)
+		Logger.Panicf("Tables were not created properly: expected %d and got %d", numTables, numTablesCreated)
 	}
 }
 
@@ -89,7 +101,7 @@ func formConnectionString(dbName string) string {
 func ShowTables() []string {
 	results, err := DB.Query("SHOW TABLES")
 	if err != nil {
-		log.Panicf("Failed to display tables: %s", err)
+		Logger.Panicf("Failed to display tables: %s", err)
 	}
 	var tables []string
 	var str string
@@ -97,7 +109,7 @@ func ShowTables() []string {
 		err = results.Scan(&str)
 		tables = append(tables, str)
 		if err != nil {
-			log.Panicf("Failed to store results: %s", err)
+			Logger.Panicf("Failed to store results: %s", err)
 		}
 	}
 	return tables
@@ -107,7 +119,7 @@ func ShowTables() []string {
 func ExecuteChangeCommand(command string, errorMessage string) bool {
 	_, err := DB.Exec(command)
 	if err != nil {
-		log.Panicf("Failed to execute change command: %s: %s\n", errorMessage, err)
+		Logger.Panicf("Failed to execute change command: %s: %s\n", errorMessage, err)
 	}
 	return true
 }

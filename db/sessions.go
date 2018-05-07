@@ -3,8 +3,6 @@ package db
 import (
 	"database/sql"
 	"encoding/hex"
-	"fmt"
-	"log"
 )
 
 // Stores a session between two users
@@ -19,11 +17,11 @@ func InsertIntoSessions(SSID uint64, username string, friendMac string, protocol
 	hexProtoValue := hex.EncodeToString(protocolValue)
 	insertCommand, err := DB.Prepare("INSERT INTO sessions VALUES (?, ?, ?, ?, UNHEX(?), ?)")
 	if err != nil {
-		fmt.Printf("Error creating sessions prepared statement for InsertIntoSessions: %s", err)
+		Logger.Printf("Error creating sessions prepared statement for InsertIntoSessions: %s", err)
 	}
 	_, err = insertCommand.Exec(SSID, username, friendMac, protocolType, hexProtoValue, timestamp)
 	if err != nil {
-		log.Panicf("Failed to insert into sessions: %s", err)
+		Logger.Panicf("Failed to insert into sessions: %s", err)
 	}
 	return true
 }
@@ -32,11 +30,11 @@ func InsertIntoSessions(SSID uint64, username string, friendMac string, protocol
 func DeleteSession(SSID uint64) bool {
 	deleteCommand, err := DB.Prepare("DELETE FROM sessions WHERE SSID =?")
 	if err != nil {
-		fmt.Printf("Error creating sessions prepared statement for DeleteSession: %s", err)
+		Logger.Printf("Error creating sessions prepared statement for DeleteSession: %s", err)
 	}
 	_, err = deleteCommand.Exec(SSID)
 	if err != nil {
-		log.Panicf("Failed to delete session: %s", err)
+		Logger.Panicf("Failed to delete session: %s", err)
 	}
 	return true
 }
@@ -45,11 +43,11 @@ func DeleteSession(SSID uint64) bool {
 func QuerySessions() []Session {
 	query, err := DB.Prepare("SELECT * FROM sessions")
 	if err != nil {
-		fmt.Printf("Error creating sessions prepared statement for QuerySessions: %s", err)
+		Logger.Printf("Error creating sessions prepared statement for QuerySessions: %s", err)
 	}
 	results, err := query.Query()
 	if err != nil {
-		fmt.Printf("Error executing QuerySessions query: %s", err)
+		Logger.Printf("Error executing QuerySessions query: %s", err)
 	}
 	return ExecuteSessionsQuery(results)
 }
@@ -58,11 +56,11 @@ func QuerySessions() []Session {
 func deleteSessionsWithMessages(username string) bool {
 	deleteCommand, err := DB.Prepare("DELETE s, m FROM sessions s LEFT JOIN messages m ON s.SSID = m.SSID WHERE s.username=?")
 	if err != nil {
-		fmt.Printf("Error creating sessions prepared statement for deleteSessionsWithMessages: %s", err)
+		Logger.Printf("Error creating sessions prepared statement for deleteSessionsWithMessages: %s", err)
 	}
 	_, err = deleteCommand.Exec(username)
 	if err != nil {
-		log.Panicf("Failed to do large delete: %s", err)
+		Logger.Panicf("Failed to do large delete: %s", err)
 	}
 	return true
 }
@@ -71,11 +69,11 @@ func deleteSessionsWithMessages(username string) bool {
 func getUserSessions(username string) []Session {
 	query, err := DB.Prepare("SELECT * FROM sessions WHERE username=? ORDER BY session_timestamp DESC")
 	if err != nil {
-		fmt.Printf("Error creating sessions prepared statement for getUserSessions: %s", err)
+		Logger.Printf("Error creating sessions prepared statement for getUserSessions: %s", err)
 	}
 	results, err := query.Query(username)
 	if err != nil {
-		fmt.Printf("Error executing getUserSessions query: %s", err)
+		Logger.Printf("Error executing getUserSessions query: %s", err)
 	}
 	return ExecuteSessionsQuery(results)
 }
@@ -84,11 +82,11 @@ func getUserSessions(username string) []Session {
 func GetSession(SSID uint64) *Session {
 	query, err := DB.Prepare("SELECT * FROM sessions WHERE SSID=?")
 	if err != nil {
-		fmt.Printf("Error creating sessions prepared statement for GetSession: %s", err)
+		Logger.Printf("Error creating sessions prepared statement for GetSession: %s", err)
 	}
 	results, err := query.Query(SSID)
 	if err != nil {
-		fmt.Printf("Error executing GetSession query: %s", err)
+		Logger.Printf("Error executing GetSession query: %s", err)
 	}
 	sessions := ExecuteSessionsQuery(results)
 	if len(sessions) == 0 {
@@ -104,13 +102,13 @@ func ExecuteSessionsQuery(results *sql.Rows) []Session {
 	for results.Next() {
 		err := results.Scan(&session.SSID, &session.Username, &session.FriendDisplayName, &session.ProtocolType, &session.ProtocolValue, &session.timestamp)
 		if err != nil {
-			log.Panicf("Failed to parse results from conversations: %s", err)
+			Logger.Panicf("Failed to parse results from conversations: %s", err)
 		}
 		sessions = append(sessions, session)
 	}
 	err := results.Err()
 	if err != nil {
-		log.Panicf("Failed to get results from sessions query: %s", err)
+		Logger.Panicf("Failed to get results from sessions query: %s", err)
 	}
 	return sessions
 }

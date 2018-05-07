@@ -2,8 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
 )
 
 const Self = "me" // Display name for self.
@@ -16,11 +14,11 @@ type Friend struct {
 func areFriends(username, friendDisplayName string) bool {
 	query, err := DB.Prepare("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM friends WHERE username=? AND friend_display_name=?")
 	if err != nil {
-		fmt.Printf("Error creating friends prepared statement for areFriends: %s", err)
+		Logger.Printf("Error creating friends prepared statement for areFriends: %s", err)
 	}
 	results, err := query.Query(username, friendDisplayName)
 	if err != nil {
-		fmt.Printf("Error executing areFriends query: %s", err)
+		Logger.Printf("Error executing areFriends query: %s", err)
 	}
 	friends := executeFriendsQuery(results)
 	return len(friends) > 0
@@ -30,11 +28,11 @@ func areFriends(username, friendDisplayName string) bool {
 func addFriend(username, displayName, macAddress, ipAddress, friendUsername string) bool {
 	insertCommand, err := DB.Prepare("INSERT INTO friends VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
-		fmt.Printf("Error creating friends prepared statement for addFriend: %s", err)
+		Logger.Printf("Error creating friends prepared statement for addFriend: %s", err)
 	}
 	_, err = insertCommand.Exec(username, displayName, macAddress, ipAddress, friendUsername)
 	if err != nil {
-		log.Panicf("Failed to add friend: %s", err)
+		Logger.Panicf("Failed to add friend: %s", err)
 	}
 	return true
 }
@@ -43,11 +41,11 @@ func addFriend(username, displayName, macAddress, ipAddress, friendUsername stri
 func deleteFriend(username, displayName string) bool {
 	deleteCommand, err := DB.Prepare("DELETE FROM friends WHERE username=? AND friend_display_name= ?")
 	if err != nil {
-		fmt.Printf("Error creating friends prepared statement for deleteFriend: %s", err)
+		Logger.Printf("Error creating friends prepared statement for deleteFriend: %s", err)
 	}
 	_, err = deleteCommand.Exec(username, displayName)
 	//if err != nil {
-	//	log.Panicf("Failed to delete friend: %s", err)
+	//	Logger.Panicf("Failed to delete friend: %s", err)
 	//}
 	return true
 }
@@ -56,11 +54,11 @@ func deleteFriend(username, displayName string) bool {
 func updateFriendIP(username, macAddress, ipAddress string) bool {
 	updateCommand, err := DB.Prepare("UPDATE friends SET friend_ip_address= ? WHERE username=? AND friend_mac_address=?")
 	if err != nil {
-		fmt.Printf("Error creating friends prepared statement for updateFriendIP: %s", err)
+		Logger.Printf("Error creating friends prepared statement for updateFriendIP: %s", err)
 	}
 	_, err = updateCommand.Exec(ipAddress, username, macAddress)
 	if err != nil {
-		log.Panicf("Failed to update friend: %s", err)
+		Logger.Panicf("Failed to update friend: %s", err)
 	}
 	return true
 }
@@ -69,11 +67,11 @@ func updateFriendIP(username, macAddress, ipAddress string) bool {
 func getFriends(username string) []Friend {
 	query, err := DB.Prepare("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM friends WHERE username=?")
 	if err != nil {
-		fmt.Printf("Error creating friends prepared statement for getFriends: %s", err)
+		Logger.Printf("Error creating friends prepared statement for getFriends: %s", err)
 	}
 	results, err := query.Query(username)
 	if err != nil {
-		fmt.Printf("Error executing getFriends query: %s", err)
+		Logger.Printf("Error executing getFriends query: %s", err)
 	}
 	return executeFriendsQuery(results)
 }
@@ -89,11 +87,11 @@ func getFirstFriend(friends []Friend) *Friend {
 func getFriendByDisplayName(username, friendDisplayName string) *Friend {
 	query, err := DB.Prepare("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM friends WHERE username=? AND friend_display_name=?")
 	if err != nil {
-		fmt.Printf("Error creating friends prepared statement for fetFriendByDisplayName: %s", err)
+		Logger.Printf("Error creating friends prepared statement for fetFriendByDisplayName: %s", err)
 	}
 	results, err := query.Query(username, friendDisplayName)
 	if err != nil {
-		fmt.Printf("Error executing getFriendByDisplayName query: %s", err)
+		Logger.Printf("Error executing getFriendByDisplayName query: %s", err)
 	}
 	return getFirstFriend(executeFriendsQuery(results))
 }
@@ -102,11 +100,11 @@ func getFriendByDisplayName(username, friendDisplayName string) *Friend {
 func getFriendByUsernameAndMAC(username, friendUsername, friendMACAddress string) *Friend {
 	query, err := DB.Prepare("SELECT friend_display_name, friend_mac_address, friend_ip_address, friend_username FROM friends WHERE username=? AND friend_username=? AND friend_mac_address=?")
 	if err != nil {
-		fmt.Printf("Error creating friends prepared statement for getFriendByUsernameAndMAC: %s", err)
+		Logger.Printf("Error creating friends prepared statement for getFriendByUsernameAndMAC: %s", err)
 	}
 	results, err := query.Query(username, friendUsername, friendMACAddress)
 	if err != nil {
-		fmt.Printf("Error executing getFriendByUsernameAndMAC query: %s", err)
+		Logger.Printf("Error executing getFriendByUsernameAndMAC query: %s", err)
 	}
 	return getFirstFriend(executeFriendsQuery(results))
 }
@@ -118,13 +116,13 @@ func executeFriendsQuery(results *sql.Rows) []Friend {
 	for results.Next() {
 		err := results.Scan(&friend.DisplayName, &friend.MAC, &friend.IP, &friend.Username)
 		if err != nil {
-			log.Panicf("Failed to parse results from friends:  %s", err)
+			Logger.Panicf("Failed to parse results from friends:  %s", err)
 		}
 		friends = append(friends, friend)
 	}
 	err := results.Err()
 	if err != nil {
-		log.Panicf("Failed to get results from conversations query: %s", err)
+		Logger.Panicf("Failed to get results from conversations query: %s", err)
 	}
 	return friends
 }
