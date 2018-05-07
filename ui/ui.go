@@ -6,11 +6,11 @@ import (
 	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/server"
-	"log"
-	"os"
 	"strconv"
 	"strings"
 	"time"
+	"os"
+	"log"
 )
 
 type UI struct {
@@ -32,7 +32,15 @@ const (
 	logFile     = "chat-debug.log"
 )
 
+var logger *log.Logger
+var f *os.File
 var activeFriend = db.Self
+
+func init() {
+	f, _ = os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	logger = log.New(f, "UI: ", log.LstdFlags)
+	tui.SetLogger(logger)
+}
 
 // Updates the history in the same thread. Use with caution! Must be wrapped inside a UI.Update, or used in an event handler
 func (ui *UI) displayMessage(message string) {
@@ -48,7 +56,7 @@ func (ui *UI) displayMessage(message string) {
 func (ui *UI) handleSpecialString(words []string) {
 	switch words[0] {
 	case exit:
-		ui.UI.Quit()
+		ui.quitUI()
 	case friend:
 		if len(words) == 2 {
 			friendInfo := strings.Split(words[1], "@")
@@ -93,8 +101,11 @@ func (ui *UI) handleSpecialString(words []string) {
 			}
 			ui.List.Select(nextFriend)
 			activeFriend = ui.List.SelectedItem()
+			// TODO display conversation history with them
+			logger.Printf("Switch to friend %s\n", activeFriend)
 			err = ui.Program.StartOTRSession(activeFriend)
 			if err != nil {
+				logger.Println(err.Error())
 				ui.displayMessage(fmt.Sprintf("%s %s\n", errorPrefix, err.Error()))
 			}
 			return
@@ -102,18 +113,27 @@ func (ui *UI) handleSpecialString(words []string) {
 		ui.displayMessage(fmt.Sprintf("Format for commands: '%s %s'", chat, displayName))
 	case deleteSelf:
 		if !ui.Program.User.Delete() {
-			ui.displayMessage(fmt.Sprintf("%s: Failed to delete your account", errorPrefix))
+			errorString := fmt.Sprintf("%s: Failed to delete your account", errorPrefix)
+			logger.Println(errorString)
+			ui.displayMessage(errorString)
 		}
 		ui.displayMessage("Successfully deleted all of your data")
-		ui.UI.Quit()
+		ui.quitUI()
 	default:
-		log.Printf("Display name is %s", words[0][1:])
 		if len(words) == 1 {
-			ui.Program.AcceptedFriend(words[0][1:])
+			friendDisplay := words[0][1:]
+			logger.Printf("Accept friend %s", friendDisplay)
+			ui.Program.AcceptedFriend(friendDisplay)
 			return
 		}
 		ui.displayMessage(fmt.Sprintf("Format to accept friend request ':%s", displayName))
 	}
+}
+
+func (ui *UI) quitUI() {
+	logger.Println("Quit UI")
+	f.Close()
+	ui.UI.Quit()
 }
 
 // Handle user input
@@ -149,6 +169,7 @@ func (ui *UI) setInputReader() {
 
 func (ui *UI) displayConversationsWithFriend(displayName string) {
 	conversations := ui.Program.User.GetConversationHistory(displayName)
+	logger.Printf("Number of conversations with %s: %d", displayName, len(conversations))
 	for _, conv := range conversations {
 		var sender string // Get who sent the message
 		if conv.Message.SentOrReceived == db.Sent {
@@ -172,7 +193,9 @@ func (ui *UI) setPersonChange() {
 				ui.History.Remove(i)
 			}
 		})
-		ui.displayConversationsWithFriend(ui.List.SelectedItem())
+		friendDisplay := ui.List.SelectedItem()
+		logger.Printf("Switch active friend to %s\n", friendDisplay)
+		ui.displayConversationsWithFriend(friendDisplay)
 	})
 }
 
@@ -225,18 +248,12 @@ func NewUI(program *server.Server) (*UI, error) {
 		return nil, err
 	}
 	ui.UI = internalUI
-	internalUI.SetKeybinding("Esc", func() { ui.UI.Quit() })
+	internalUI.SetKeybinding("Esc", func() { ui.quitUI() })
 
 	// Set event handlers
 	ui.setInputReader()
 	ui.setPersonChange()
 	program.InitUIHandlers(ui.onReceiveFriendRequest, ui.onAcceptFriend, ui.onReceiveChatMessage, ui.onInfoMessage)
-
-	f, _ := os.Create(logFile)
-	defer f.Close()
-
-	logger := log.New(f, "", log.LstdFlags)
-	tui.SetLogger(logger)
 
 	return ui, nil
 }
@@ -244,6 +261,7 @@ func NewUI(program *server.Server) (*UI, error) {
 // Runs the UI
 func (ui *UI) Run() error {
 	go func() {
+		logger.Println("Starting server")
 		ui.Program.Start()
 		ui.displayConversationsWithFriend(db.Self)
 	}()
@@ -261,8 +279,8 @@ func (ui *UI) displayInfoMessage(m *InfoMessage) {
 func (ui *UI) displayChatMessage(m *ReceiveChat) {
 	ui.UI.Update(func() {
 		ui.History.Append(tui.NewHBox(
-			tui.NewLabel(m.Time.Format("3:04PM")),
-			tui.NewPadder(1, 0, tui.NewLabel(fmt.Sprintf("<%s>", m.Sender))),
+			tui.NewLabel(m.Time.Format("3:04 PM")),
+			tui.NewPadder(1, 0, tui.NewLabel(fmt.Sprintf("%s:", m.Sender))),
 			tui.NewLabel(m.Body()),
 			tui.NewSpacer(),
 		))
@@ -272,7 +290,7 @@ func (ui *UI) displayChatMessage(m *ReceiveChat) {
 // Write friend request to UI
 func (ui *UI) displayFriendRequest(m *FriendRequest) {
 	ui.UI.Update(func() {
-		ui.displayMessage(fmt.Sprintf("Friend request from %s@%s (':%s' or just ignore)",
+		ui.displayMessage(fmt.Sprintf("Friend request from %s@%s (':%s' or just ignore to reject)",
 			m.Username, m.IP, displayName))
 	})
 }

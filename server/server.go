@@ -66,6 +66,7 @@ func (s *Server) InitUIHandlers(onReceiveFriendMessage func(m *FriendMessage),
 	onAcceptFriend func(displayName string),
 	onReceiveChatMessage func(message []byte, friend *db.Friend, time time.Time),
 	onInfoReceive func(messageToDisplay string)) {
+
 	s.onReceiveFriendMessage = onReceiveFriendMessage
 	s.onAcceptFriend = onAcceptFriend
 	s.onReceiveChatMessage = onReceiveChatMessage

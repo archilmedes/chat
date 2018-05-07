@@ -47,3 +47,13 @@ chmod +x scripts/generate_docs
 ```
 
 It starts up a godoc server and downloads the `chat` package html, css, and js relevant to the package.
+
+### Database Migration
+
+If the database schema changes, run this command to re-generate the database
+
+```
+mysql -u root -p -e "source scripts/db_setup.sql"
+```
+
+Enter your mysql password when it prompts you

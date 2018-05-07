@@ -7,6 +7,7 @@ import (
 	conf "github.com/wavyllama/chat/config"
 	"log"
 	"os/exec"
+	"bytes"
 )
 
 const (
@@ -23,7 +24,7 @@ var DB *sql.DB
 
 // Sets up the database - called at startup
 func SetupDatabase() {
-	cmd := exec.Command("mysql", fmt.Sprintf("-u%s", conf.Username), fmt.Sprintf("-p%s", conf.Password), "-e", "source ../scripts/db_setup.sql")
+	cmd := exec.Command("mysql", fmt.Sprintf("-u%s", conf.Username), fmt.Sprintf("-p%s", conf.Password), "-e", "source scripts/db_setup.sql")
 	createDatabase(databaseName, cmd)
 }
 
@@ -41,11 +42,12 @@ func SetupEmptyTestDatabase() {
 
 // Runs the command and connects to the database
 func createDatabase(dbName string, cmd *exec.Cmd) {
-	var err error
-	if err = cmd.Start(); err != nil { //Use start, not run
-		fmt.Println("An error occured: ", err) //replace with logger, or anything you want
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		log.Panicf("%s: %s", err, stderr.String())
 	}
-	cmd.Wait()
 
 	connectionString := formConnectionString(dbName)
 	DB, err = connectToDatabase(connectionString)
