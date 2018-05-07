@@ -5,4 +5,5 @@ const(
 	Password = ""
 	Port = "3306"
 	AESKey = "aaaaaaaaaaaaaaaa"
+	LogFile = "chat-debug.log"
 )

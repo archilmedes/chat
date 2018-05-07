@@ -123,8 +123,7 @@ func (ui *UI) handleSpecialString(words []string) {
 		if len(words) == 1 {
 			friendDisplay := words[0][1:]
 			logger.Printf("Accept friend %s", friendDisplay)
-			ui.onInfoMessage(fmt.Sprintf("Accept friend %s", friendDisplay))
-			ui.Program.AcceptedFriend(friendDisplay)
+			ui.displayMessage(ui.Program.AcceptedFriend(friendDisplay))
 			return
 		}
 		ui.displayMessage(fmt.Sprintf("Format to accept friend request ':%s", displayName))
@@ -147,6 +146,7 @@ func (ui *UI) setInputReader() {
 		}
 		if message[0] == ':' {
 			ui.handleSpecialString(words)
+			logger.Println("Finished handling special string")
 		} else {
 			if activeFriend != "" {
 				sendMessage := new(ReceiveChat)

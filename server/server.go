@@ -141,22 +141,23 @@ func (s *Server) handleFriendMessage(msg *FriendMessage) {
 	s.onReceiveFriendMessage(msg)
 }
 
-func (s *Server) AcceptedFriend(displayName string) {
+// Accepts friend, returns message for the user
+func (s *Server) AcceptedFriend(displayName string) string {
 	if strings.ToLower(displayName) == db.Self {
-		s.onInfoReceive("Error accepting friend: 'me' is a reserved word for talking to yourself")
+		return "Error accepting friend: 'me' is a reserved word for talking to yourself"
 	} else if s.User.IsFriendsWith(displayName) {
-		s.onInfoReceive(fmt.Sprintf("You already have a friend named %s", displayName))
+		return fmt.Sprintf("You already have a friend named %s", displayName)
 	} else {
 		res, _ := json.Marshal(&s.LastFriend)
 		logger.Println(string(res))
 		if !s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username) {
-			logger.Fatalln("Failed to add friend")
+			return "Failed to add friend"
 		}
-		//s.onAcceptFriend(displayName)
 		err := s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
 		if err != nil {
-			logger.Printf("Error sending friend request: %s\n", err.Error())
+			return fmt.Sprintf("Error sending friend request: %s\n", err.Error())
 		}
+		return fmt.Sprintf("Added friend %s", displayName)
 	}
 }
 
