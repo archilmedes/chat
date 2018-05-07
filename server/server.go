@@ -8,18 +8,23 @@ import (
 	"github.com/wavyllama/chat/core"
 	"github.com/wavyllama/chat/db"
 	"github.com/wavyllama/chat/protocol"
-	"log"
 	"net/http"
 	"os/exec"
 	"strings"
 	"time"
+	"os"
+	"log"
 	"encoding/json"
 )
 
 const (
 	Port      uint16 = 4242
 	localhost        = "localhost"
+	logFile     = "chat-debug.log"
 )
+
+var logger *log.Logger
+var f *os.File
 
 // Server holds the user and all of his sessions
 type Server struct {
@@ -39,8 +44,12 @@ func init() {
 	gob.Register(&FriendMessage{})
 	gob.Register(&HandshakeMessage{})
 	gob.Register(&ChatMessage{})
+
+	f, _ = os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	logger = log.New(f, "Server: ", log.LstdFlags)
 }
 
+// Creates a new server for a given user
 func InitServer(user *db.User) *Server {
 	server := Server{}
 	// Init no-op function handlers
@@ -59,6 +68,8 @@ func InitServer(user *db.User) *Server {
 	// Updates the IP address of the user and create a friend for yourself
 	server.User.DeleteFriend(db.Self)
 	server.User.AddFriend(db.Self, user.MAC, localhost, user.Username)
+
+	// TODO should also allocate port based on availability, and localtunnel should be based on that
 	return &server
 }
 
@@ -96,11 +107,11 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 
 	sourceMAC, _, sourceUsername := msg.SourceID()
 	if sourceMAC == "" || sourceUsername == "" {
-		log.Panicln("Received ill-formatted message")
+		logger.Panicln("Received ill-formatted message")
 	}
 
 	if msg.DestID() != s.User.Username {
-		log.Panicln("Received a message but it was not for me.")
+		logger.Panicln("Received a message but it was not for me.")
 		return
 	}
 	sessions := s.GetSessionsWithFriend(sourceMAC, sourceUsername)
@@ -136,11 +147,14 @@ func (s *Server) AcceptedFriend(displayName string) {
 	} else if s.User.IsFriendsWith(displayName) {
 		s.onInfoReceive(fmt.Sprintf("You already have a friend named %s", displayName))
 	} else {
-		res, _ := json.Marshal(&s.LastFriend)
-		log.Println(res)
 		s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username)
+		res, _ := json.Marshal(&s.LastFriend)
+		logger.Println(string(res))
 		s.onAcceptFriend(displayName)
-		s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
+		err := s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
+		if err != nil {
+			logger.Printf("Error sending friend request: %s\n", err.Error())
+		}
 	}
 }
 
@@ -189,7 +203,7 @@ func (s *Server) handleHandshakeMessage(friend *db.Friend, msg *HandshakeMessage
 	default:
 		// another type of error, which means err is probably not nil
 		if err != nil {
-			log.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
+			logger.Panicf("ReceiveMessage: %s, Error Type: %s", err.Error(), errorType)
 		}
 	}
 }
@@ -202,7 +216,7 @@ func (s *Server) handleChatMessage(msg *ChatMessage) {
 	friend := s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
 
 	if len(sessions) == 0 || friend == nil {
-		log.Panicln("No session or no friend from msg")
+		logger.Panicln("No session or no friend from msg")
 	}
 
 	var sess *Session
@@ -245,7 +259,7 @@ func (s *Server) Start() error {
 	(*s).Listener = srv
 	url, cmd, err := core.SetupTunnel(Port, (*s).User.Username, (*s).User.MAC)
 	if err != nil {
-		log.Panicln(err)
+		logger.Panicln(err)
 	}
 	(*s).onInfoReceive(fmt.Sprintf("Your public url is: %s\n", url))
 	(*s).Tunnel = cmd
@@ -256,12 +270,12 @@ func (s *Server) Start() error {
 
 // End server connection
 func (s *Server) Shutdown() error {
-	log.Println("Shutting down server...")
+	logger.Println("Shutting down server...")
 	if (*s).Tunnel != nil {
 		if err := (*s).Tunnel.Process.Kill(); err != nil {
 			return err
 		}
-		log.Println("Killed reverse-proxy tunnel")
+		logger.Println("Killed reverse-proxy tunnel")
 	}
 	if (*s).Listener != nil {
 		return (*s).Listener.Close()
@@ -308,7 +322,9 @@ func (s *Server) GetSessionsWithFriend(friendMAC string, friendUsername string) 
 func (s *Server) StartOTRSession(displayName string) error {
 	friend := s.User.GetFriendByDisplayName(displayName)
 	if friend == nil {
-		return errors.New(fmt.Sprintf("You do not have a friend named '%s'\n", displayName))
+		friendDNE := fmt.Sprintf("You do not have a friend named '%s'\n", displayName)
+		logger.Println(friendDNE)
+		return errors.New(friendDNE)
 	}
 	sessions := s.GetSessionsWithFriend(friend.MAC, friend.Username)
 	if len(sessions) != 0 {
@@ -318,7 +334,7 @@ func (s *Server) StartOTRSession(displayName string) error {
 	proto := new(protocol.OTRProtocol)
 	firstMessage, err := proto.NewSession()
 	if err != nil {
-		log.Printf("StartOTRSession: Error starting new session: %s", err)
+		logger.Printf("StartOTRSession: Error starting new session: %s", err)
 		return err
 	}
 
@@ -336,7 +352,7 @@ func (s *Server) StartOTRSession(displayName string) error {
 
 	err = s.sendMessage(friend.IP, msg)
 	if err != nil {
-		log.Printf("Error starting OTR session: %s\n", err.Error())
+		logger.Printf("Error starting OTR session: %s\n", err.Error())
 	}
 	return err
 }
@@ -355,11 +371,15 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 
 	friend := s.User.GetFriendByDisplayName(friendDisplayName)
 	if friend == nil {
-		return errors.New(fmt.Sprintf("Friend with display name '%s' does not exist", friendDisplayName))
+		friendDNE := fmt.Sprintf("Friend with display name '%s' does not exist", friendDisplayName)
+		logger.Println(friendDNE)
+		return errors.New(friendDNE)
 	}
 	sessions := s.GetSessionsWithFriend(friend.MAC, friend.Username)
 	if len(sessions) == 0 {
-		return errors.New(fmt.Sprintf("Cannot communicate with '%s' without an active session\n", friendDisplayName))
+		friendNoSession := fmt.Sprintf("Cannot communicate with '%s' without an active session\n", friendDisplayName)
+		logger.Println(friendNoSession)
+		return errors.New(friendNoSession)
 	}
 	userSession := sessions[0]
 	cyp, err := userSession.Proto.Encrypt(chatMsg.Text)

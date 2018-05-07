@@ -70,8 +70,8 @@ func emptyDatabase() {
 
 // Reset both production and test database
 func ClearDatabase() {
-	ExecuteChangeCommand(fmt.Sprintf("DROP DATABASE %s", databaseName), "Could not drop database")
-	ExecuteChangeCommand(fmt.Sprintf("DROP DATABASE %s", testDatabaseName), "Could not drop database")
+	ExecuteChangeCommand(fmt.Sprintf("DROP DATABASE IF EXISTS %s", databaseName), "Could not drop database")
+	ExecuteChangeCommand(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDatabaseName), "Could not drop database")
 }
 
 // Connects to a database

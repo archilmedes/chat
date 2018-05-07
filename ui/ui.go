@@ -123,6 +123,7 @@ func (ui *UI) handleSpecialString(words []string) {
 		if len(words) == 1 {
 			friendDisplay := words[0][1:]
 			logger.Printf("Accept friend %s", friendDisplay)
+			ui.onInfoMessage(fmt.Sprintf("Accept friend %s", friendDisplay))
 			ui.Program.AcceptedFriend(friendDisplay)
 			return
 		}
