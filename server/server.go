@@ -147,10 +147,10 @@ func (s *Server) AcceptedFriend(displayName string) {
 	} else if s.User.IsFriendsWith(displayName) {
 		s.onInfoReceive(fmt.Sprintf("You already have a friend named %s", displayName))
 	} else {
-		s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username)
 		res, _ := json.Marshal(&s.LastFriend)
 		logger.Println(string(res))
-		s.onAcceptFriend(displayName)
+		s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username)
+		//s.onAcceptFriend(displayName)
 		err := s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
 		if err != nil {
 			logger.Printf("Error sending friend request: %s\n", err.Error())
@@ -297,7 +297,8 @@ func (s *Server) sendMessage(destIp string, msg Message) error {
 	if err != nil {
 		return err
 	}
-
+	res, _ := json.Marshal(&msg)
+	logger.Println(string(res))
 	enc := gob.NewEncoder(w)
 	if err = enc.Encode(&msg); err != nil {
 		return err
