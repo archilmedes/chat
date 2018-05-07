@@ -57,7 +57,6 @@ func (o *OTRProtocol) Decrypt(in []byte, onInfoReceive func(messageToDisplay str
 	if !encryptedBefore && o.IsActive() {
 		onInfoReceive("<OTR>: Protocol completed. You are now in a secure session.")
 	}
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -78,7 +77,7 @@ func (o *OTRProtocol) Decrypt(in []byte, onInfoReceive func(messageToDisplay str
 		o.EndSession()
 		return wrapMessage(out), nil
 	default:
-		log.Fatal("<OTR> SMP not implemented")
+		log.Fatal("<OTR>: SMP not implemented")
 	}
 
 	return wrapMessage(out), nil

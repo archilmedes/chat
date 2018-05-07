@@ -14,7 +14,10 @@ const (
 
 func getGenericMessage() Message {
 	msg := new(GenericMessage)
-	msg.NewPayload(sourceMAC, sourceIP, sourceUsername, destUsername)
+	(*msg).SourceMAC = sourceMAC
+	(*msg).SourceIP = sourceIP
+	(*msg).SourceUsername = sourceUsername
+	(*msg).DestUsername = destUsername
 	return msg
 }
 

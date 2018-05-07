@@ -12,6 +12,7 @@ import (
 	"time"
 	"os"
 	"log"
+	"encoding/json"
 )
 
 type UI struct {
@@ -95,6 +96,7 @@ func (ui *UI) handleSpecialString(words []string) {
 	case chat:
 		if len(words) == 2 {
 			nextFriend, err := strconv.Atoi(words[1])
+			logger.Printf("next friend %d\n", nextFriend)
 			if err != nil || nextFriend < 0 || nextFriend >= ui.List.Length() {
 				ui.displayMessage("You entered a number outside the list of your friends.")
 				return
@@ -154,7 +156,13 @@ func (ui *UI) setInputReader() {
 				sendMessage.Time = time.Now()
 				sendMessage.Sender = db.Self
 				if activeFriend != db.Self {
-					ui.displayChatMessage(sendMessage)
+					//ui.displayChatMessage(sendMessage)
+					ui.History.Append(tui.NewHBox(
+						tui.NewLabel(sendMessage.Time.Format("3:04 PM")),
+						tui.NewPadder(1, 0, tui.NewLabel(fmt.Sprintf("%s:", sendMessage.Sender))),
+						tui.NewLabel(sendMessage.Body()),
+						tui.NewSpacer(),
+					))
 				}
 				err := ui.Program.SendChatMessage(activeFriend, message)
 				if err != nil {
@@ -181,7 +189,14 @@ func (ui *UI) displayConversationsWithFriend(displayName string) {
 			}
 			sender = conv.Session.FriendDisplayName
 		}
-		ui.displayChatMessage(NewReceiveChatMessage(string(conv.Message.Text), sender, conv.Message.Timestamp))
+		// TODO refactor so it's not in a UI.update
+		m := NewReceiveChatMessage(string(conv.Message.Text), sender, conv.Message.Timestamp)
+		ui.History.Append(tui.NewHBox(
+			tui.NewLabel(m.Time.Format("3:04 PM")),
+			tui.NewPadder(1, 0, tui.NewLabel(fmt.Sprintf("%s:", m.Sender))),
+			tui.NewLabel(m.Body()),
+			tui.NewSpacer(),
+		))
 	}
 }
 
@@ -189,11 +204,9 @@ func (ui *UI) displayConversationsWithFriend(displayName string) {
 func (ui *UI) setPersonChange() {
 	ui.List.OnSelectionChanged(func(list *tui.List) {
 		// clear history
-		ui.UI.Update(func() {
-			for i := 0; i < ui.History.Length(); i++ {
-				ui.History.Remove(i)
-			}
-		})
+		for i := 0; i < ui.History.Length(); i++ {
+			ui.History.Remove(i)
+		}
 		friendDisplay := ui.List.SelectedItem()
 		logger.Printf("Switch active friend to %s\n", friendDisplay)
 		ui.displayConversationsWithFriend(friendDisplay)
@@ -209,9 +222,10 @@ func NewUI(program *server.Server) (*UI, error) {
 	ui.List = tui.NewList()
 	for i, f := range friends {
 		friendName := f.DisplayName
-		if online, _ := program.User.IsFriendOnline(f.DisplayName); online {
-			friendName = fmt.Sprintf("%s (active)\n", friendName)
-		}
+		// TODO fix later
+		//if online, _ := program.User.IsFriendOnline(f.DisplayName); online {
+		//	friendName = fmt.Sprintf("%s (active)\n", friendName)
+		//}
 		ui.List.AddItems(friendName)
 		if strings.ToLower(f.DisplayName) == db.Self {
 			ui.List.SetSelected(i)
@@ -278,6 +292,8 @@ func (ui *UI) displayInfoMessage(m *InfoMessage) {
 
 // Write chat message to UI
 func (ui *UI) displayChatMessage(m *ReceiveChat) {
+	res, _ := json.Marshal(&m)
+	logger.Println(string(res))
 	ui.UI.Update(func() {
 		ui.History.Append(tui.NewHBox(
 			tui.NewLabel(m.Time.Format("3:04 PM")),
@@ -301,9 +317,7 @@ func (ui *UI) onReceiveFriendRequest(m *server.FriendMessage) {
 }
 
 func (ui *UI) onAcceptFriend(displayName string) {
-	ui.UI.Update(func() {
-		ui.List.AddItems(displayName)
-	})
+	ui.List.AddItems(displayName)
 }
 
 func (ui *UI) onReceiveChatMessage(message []byte, friend *db.Friend, time time.Time) {

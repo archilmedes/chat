@@ -26,6 +26,7 @@ func areFriends(username, friendDisplayName string) bool {
 
 // Add friend to the user's friend's table
 func addFriend(username, displayName, macAddress, ipAddress, friendUsername string) bool {
+	Logger.Println("trying to add friend")
 	insertCommand, err := DB.Prepare("INSERT INTO friends VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
 		Logger.Printf("Error creating friends prepared statement for addFriend: %s", err)
@@ -34,6 +35,7 @@ func addFriend(username, displayName, macAddress, ipAddress, friendUsername stri
 	if err != nil {
 		Logger.Panicf("Failed to add friend: %s", err)
 	}
+	Logger.Println("returning from friend")
 	return true
 }
 

@@ -37,14 +37,6 @@ type ChatMessage struct {
 	Text []byte
 }
 
-// Create new message of any type
-func (m *GenericMessage) NewPayload(SourceMAC, SourceIP, SourceUsername, DestUsername string) {
-	(*m).SourceMAC = SourceMAC
-	(*m).SourceIP = SourceIP
-	(*m).SourceUsername = SourceUsername
-	(*m).DestUsername = DestUsername
-}
-
 // Get source-identifying MAC and username info
 func (m *GenericMessage) SourceID() (string, string, string) {
 	return (*m).SourceMAC, (*m).SourceIP, (*m).SourceUsername
