@@ -143,13 +143,18 @@ func (s *Server) handleFriendMessage(msg *FriendMessage) {
 
 // Accepts friend, returns message for the user
 func (s *Server) AcceptedFriend(displayName string) string {
+	logger.Println("In ACCEPTED FRIEND")
 	if strings.ToLower(displayName) == db.Self {
 		return "Error accepting friend: 'me' is a reserved word for talking to yourself"
 	} else if s.User.IsFriendsWith(displayName) {
 		return fmt.Sprintf("You already have a friend named %s", displayName)
 	} else {
-		res, _ := json.Marshal(&s.LastFriend)
-		logger.Println(string(res))
+		logger.Println("TRYING TO PRINT LSATFRIEND")
+		if s.LastFriend != nil {
+			res, _ := json.Marshal(&s.LastFriend)
+			logger.Println(string(res))
+		}
+		logger.Println("ABOUT TO ADD FRIEND")
 		if !s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username) {
 			return "Failed to add friend"
 		}
