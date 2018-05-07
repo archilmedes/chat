@@ -15,7 +15,6 @@ import (
 	"time"
 	"os"
 	"log"
-	"encoding/json"
 )
 
 const (
@@ -100,18 +99,16 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dec := gob.NewDecoder(reader)
-
 	if err = dec.Decode(&msg); err != nil {
 		panic(err)
 	}
-
 	sourceMAC, _, sourceUsername := msg.SourceID()
 	if sourceMAC == "" || sourceUsername == "" {
 		logger.Panicln("Received ill-formatted message")
 	}
 
 	if msg.DestID() != s.User.Username {
-		logger.Panicln("Received a message but it was not for me.")
+		logger.Panicf("Received a message with dest id %s but it was not for me (%s).\n", msg.DestID(), s.User.Username)
 		return
 	}
 	sessions := s.GetSessionsWithFriend(sourceMAC, sourceUsername)
@@ -143,21 +140,15 @@ func (s *Server) handleFriendMessage(msg *FriendMessage) {
 
 // Accepts friend, returns message for the user
 func (s *Server) AcceptedFriend(displayName string) string {
-	logger.Println("In ACCEPTED FRIEND")
 	if strings.ToLower(displayName) == db.Self {
 		return "Error accepting friend: 'me' is a reserved word for talking to yourself"
 	} else if s.User.IsFriendsWith(displayName) {
 		return fmt.Sprintf("You already have a friend named %s", displayName)
 	} else {
-		logger.Println("TRYING TO PRINT LSATFRIEND")
-		if s.LastFriend != nil {
-			res, _ := json.Marshal(&s.LastFriend)
-			logger.Println(string(res))
-		}
-		logger.Println("ABOUT TO ADD FRIEND")
 		if !s.User.AddFriend(displayName, s.LastFriend.MAC, s.LastFriend.IP, s.LastFriend.Username) {
 			return "Failed to add friend"
 		}
+		s.onAcceptFriend(displayName)
 		err := s.SendFriendRequest(s.LastFriend.IP, s.LastFriend.Username)
 		if err != nil {
 			return fmt.Sprintf("Error sending friend request: %s\n", err.Error())
@@ -197,11 +188,8 @@ func (s *Server) handleHandshakeMessage(friend *db.Friend, msg *HandshakeMessage
 		// Send each part of the handshake message back and immediately return
 		for _, stepMessage := range dec {
 			reply := new(HandshakeMessage)
-			sourceIP = s.User.IP
-			if messageYourself {
-				sourceIP = localhost
-			}
-			reply.NewPayload(s.User.MAC, sourceIP, s.User.Username, sourceUsername)
+			s.formulateMessagePayload(&reply.GenericMessage)
+			reply.DestUsername = sourceUsername
 			reply.Secret = stepMessage
 			reply.ProtoType = protoType
 			reply.Round = round + 1
@@ -305,8 +293,6 @@ func (s *Server) sendMessage(destIp string, msg Message) error {
 	if err != nil {
 		return err
 	}
-	res, _ := json.Marshal(&msg)
-	logger.Println(string(res))
 	enc := gob.NewEncoder(w)
 	if err = enc.Encode(&msg); err != nil {
 		return err
@@ -329,6 +315,7 @@ func (s *Server) GetSessionsWithFriend(friendMAC string, friendUsername string) 
 
 // Start a session with a destination IP using a protocol
 func (s *Server) StartOTRSession(displayName string) error {
+	logger.Printf("Starting OTR session with %s\n", displayName)
 	friend := s.User.GetFriendByDisplayName(displayName)
 	if friend == nil {
 		friendDNE := fmt.Sprintf("You do not have a friend named '%s'\n", displayName)
@@ -347,14 +334,9 @@ func (s *Server) StartOTRSession(displayName string) error {
 		return err
 	}
 
-	// If messaging yourself, use your local IP as the sender too
-	sourceIP := s.User.IP
-	if displayName == db.Self {
-		sourceIP = localhost
-	}
-
 	msg := new(HandshakeMessage)
-	msg.NewPayload(s.User.MAC, sourceIP, s.User.Username, friend.Username)
+	s.formulateMessagePayload(&msg.GenericMessage)
+	msg.DestUsername = friend.Username
 	msg.Secret = []byte(firstMessage)
 	msg.ProtoType = proto.ToType()
 	msg.Round = 0
@@ -369,7 +351,9 @@ func (s *Server) StartOTRSession(displayName string) error {
 // Sends a friend request to a specified destUsername@destIP
 func (s *Server) SendFriendRequest(destIP, destUsername string) error {
 	friendRequest := new(FriendMessage)
-	friendRequest.NewPayload(s.User.MAC, s.User.IP, s.User.Username, destUsername)
+
+	s.formulateMessagePayload(&friendRequest.GenericMessage)
+	friendRequest.DestUsername = destUsername
 
 	return s.sendMessage(destIP, friendRequest)
 }
@@ -396,22 +380,29 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 		return err
 	}
 	(*chatMsg).Text = cyp[0]
-
-	sourceIP := s.User.IP
-	// If messaging yourself, use your local IP as the sender too
-	if friend.IP == localhost {
-		sourceIP = localhost
-	}
-
-	chatMsg.NewPayload(s.User.MAC, sourceIP, s.User.Username, friend.Username)
-	bytes := []byte(message)
-	(*chatMsg).Text = bytes
+	(*chatMsg).DestUsername = friend.Username
+	s.formulateMessagePayload(&chatMsg.GenericMessage)
 
 	if err := s.sendMessage(friend.IP, chatMsg); err != nil {
 		// We had an issue with sending a message, so clear our session with the user
 		userSession.EndSession()
 	}
 	// If we didn't have an issue, save the message into the database
-	db.InsertMessage(userSession.Proto.GetSessionID(), bytes, core.GetFormattedTime(time.Now()), db.Sent)
+	db.InsertMessage(userSession.Proto.GetSessionID(), []byte(message), core.GetFormattedTime(time.Now()), db.Sent)
 	return nil
+}
+
+func (s *Server) formulateMessagePayload(msg *GenericMessage) {
+	sourceIP := s.User.IP
+	// Remove HTTP from the url
+	sourceIP = strings.Split(sourceIP, "https://")[1]
+
+	//// If messaging yourself, use your local IP as the sender too
+	//if friend.IP == localhost {
+	//	sourceIP = localhost
+	//}
+
+	(*msg).SourceIP = sourceIP
+	(*msg).SourceMAC = s.User.MAC
+	(*msg).SourceUsername = s.User.Username
 }
