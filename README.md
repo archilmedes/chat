@@ -48,12 +48,11 @@ chmod +x scripts/generate_docs
 
 It starts up a godoc server and downloads the `chat` package html, css, and js relevant to the package.
 
-### Database Migration
+### Database Migration (devs only)
 
-If the database schema changes, run this command to re-generate the database
+If the database schema changes, run chat with the "--reset" or "-r" to re-generate the database. Note that
+this will drop all data from the production database
 
 ```
-mysql -u root -p -e "source scripts/db_setup.sql"
+./chat -r
 ```
-
-Enter your mysql password when it prompts you

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	databaseName      = "otrmessenger" // Constant in execution, can change
+	databaseName      = "otrmessenger"
 	sessionsTableName = "sessions"
 	usersTableName    = "users"
 	messagesTableName = "messages"
@@ -37,7 +37,7 @@ func SetupTestDatabase() {
 // Sets up an empty test database
 func SetupEmptyTestDatabase() {
 	SetupTestDatabase()
-	ClearDatabase()
+	emptyDatabase()
 }
 
 // Runs the command and connects to the database
@@ -61,11 +61,17 @@ func createDatabase(dbName string, cmd *exec.Cmd) {
 }
 
 // Clears all rows in all tables of the database
-func ClearDatabase() {
+func emptyDatabase() {
 	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", usersTableName), "Could not truncate table")
 	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", messagesTableName), "Could not truncate table")
 	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", friendsTableName), "Could not truncate table")
 	ExecuteChangeCommand(fmt.Sprintf("TRUNCATE %s", sessionsTableName), "Could not truncate table")
+}
+
+// Reset both production and test database
+func ClearDatabase() {
+	ExecuteChangeCommand(fmt.Sprintf("DROP DATABASE %s", databaseName), "Could not drop database")
+	ExecuteChangeCommand(fmt.Sprintf("DROP DATABASE %s", testDatabaseName), "Could not drop database")
 }
 
 // Connects to a database

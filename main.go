@@ -17,6 +17,7 @@ func main() {
 	if len(os.Args) == 2 && (os.Args[1] == "--reset" || os.Args[1] == "-r") {
 		db.ClearDatabase()
 		log.Println("Database cleared")
+		db.SetupDatabase()
 	}
 
 	mac, ip, err := core.GetAddresses()
