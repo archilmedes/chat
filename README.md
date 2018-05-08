@@ -1,5 +1,9 @@
 # chat
 
+Chat is an OTR, serverless messaging app that provides end-to-end encrypted and completely secure communciation.
+
+How can this be serverless? We use a reverse-proxy service to open up the port to a specific subdomain with `localtunnel` over the HTTP protocol, and we use websockets to communicate between different IPs.
+
 ## First-time Setup
 
 ```
