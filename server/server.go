@@ -15,6 +15,7 @@ import (
 	"time"
 	"os"
 	"log"
+	"encoding/json"
 )
 
 const (
@@ -24,6 +25,7 @@ const (
 
 var logger *log.Logger
 var f *os.File
+//var myPublicIp string
 
 // Server holds the user and all of his sessions
 type Server struct {
@@ -95,13 +97,16 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 
 	_, reader, err := conn.NextReader()
 	if err != nil {
-		panic(err)
+		logger.Panic(err)
 	}
 
 	dec := gob.NewDecoder(reader)
 	if err = dec.Decode(&msg); err != nil {
-		panic(err)
+		logger.Panic(err)
 	}
+	rawMessage, _ := json.Marshal(&msg)
+	logger.Printf("Received message: %s\n", rawMessage)
+
 	sourceMAC, _, sourceUsername := msg.SourceID()
 	if sourceMAC == "" || sourceUsername == "" {
 		logger.Panicln("Received ill-formatted message")
@@ -111,7 +116,6 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 		logger.Panicf("Received a message with dest id %s but it was not for me (%s).\n", msg.DestID(), s.User.Username)
 		return
 	}
-	sessions := s.GetSessionsWithFriend(sourceMAC, sourceUsername)
 	friend := s.User.GetFriendByUsernameAndMAC(sourceUsername, sourceMAC)
 
 	switch msg.(type) {
@@ -123,7 +127,10 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	case *HandshakeMessage:
 		s.handleHandshakeMessage(friend, msg.(*HandshakeMessage))
 	case *ChatMessage:
+		sessions := s.GetSessionsWithFriend(sourceMAC, sourceUsername)
 		if len(sessions) == 0 {
+			logger.Println("Received a chat message but no active session exists")
+			logger.Printf("Message that invoked the error: %s\n", rawMessage)
 			return
 		}
 		s.handleChatMessage(msg.(*ChatMessage))
@@ -165,6 +172,7 @@ func (s *Server) handleHandshakeMessage(friend *db.Friend, msg *HandshakeMessage
 
 	// We are in a handshake, so the friend should exist already
 	if friend == nil {
+		logger.Println("HandshakeMessage: Friend does not exist")
 		return
 	}
 	var sess *Session
@@ -175,6 +183,7 @@ func (s *Server) handleHandshakeMessage(friend *db.Friend, msg *HandshakeMessage
 	if len(sessions) != 2 && messageYourself || (len(sessions) != 1 && !messageYourself) {
 		sess = NewSessionFromUserAndMessage(s.User, friend, protoType)
 		*(*s).Sessions = append(*(*s).Sessions, sess)
+		logger.Println("Creating session")
 	} else if len(sessions) == 2 && messageYourself {
 		// Communicating between yourself, rotate sessions based on round (even/odd)
 		sess = sessions[round%2]
@@ -193,6 +202,8 @@ func (s *Server) handleHandshakeMessage(friend *db.Friend, msg *HandshakeMessage
 			reply.Secret = stepMessage
 			reply.ProtoType = protoType
 			reply.Round = round + 1
+			res, _ := json.Marshal(&reply)
+			logger.Println(string(res))
 			s.sendMessage(sourceIP, reply)
 		}
 		return
@@ -214,7 +225,7 @@ func (s *Server) handleChatMessage(msg *ChatMessage) {
 	if len(sessions) == 0 || friend == nil {
 		logger.Panicln("No session or no friend from msg")
 	}
-
+	logger.Printf("Message yourself is %v, # sessions is %d\n", messageYourself, len(sessions))
 	var sess *Session
 	// There are two sessions, so grab the one that doesn't have the same timestamp as you
 	if messageYourself {
@@ -223,10 +234,15 @@ func (s *Server) handleChatMessage(msg *ChatMessage) {
 		// There should only be one session between A -> B if you aren't messaging yourself, so grab that
 		sess = sessions[0]
 	}
+	// Save the session if it does not exist already
 	if db.GetSession(sess.Proto.GetSessionID()) == nil {
 		sess.Save()
 	}
-	dec, _ := sess.Proto.Decrypt(msg.Text, s.onInfoReceive)
+	dec, err := sess.Proto.Decrypt(msg.Text, s.onInfoReceive)
+	if err != nil {
+		logger.Panicln(err)
+		s.onInfoReceive(fmt.Sprintf("Error decrypting message: %s\n", err.Error()))
+	}
 	if sess.Proto.IsActive() && dec[0] != nil {
 		// Print the decoded message and IP
 		currTime := time.Now()
@@ -266,7 +282,6 @@ func (s *Server) Start() error {
 
 // End server connection
 func (s *Server) Shutdown() error {
-	logger.Println("Shutting down server...")
 	if (*s).Tunnel != nil {
 		if err := (*s).Tunnel.Process.Kill(); err != nil {
 			return err
@@ -274,6 +289,7 @@ func (s *Server) Shutdown() error {
 		logger.Println("Killed reverse-proxy tunnel")
 	}
 	if (*s).Listener != nil {
+		logger.Println("Shutting down server...")
 		return (*s).Listener.Close()
 	}
 	return nil
@@ -293,6 +309,9 @@ func (s *Server) sendMessage(destIp string, msg Message) error {
 	if err != nil {
 		return err
 	}
+
+	res, _ := json.Marshal(&msg)
+	logger.Println(string(res))
 	enc := gob.NewEncoder(w)
 	if err = enc.Encode(&msg); err != nil {
 		return err
@@ -300,7 +319,7 @@ func (s *Server) sendMessage(destIp string, msg Message) error {
 	return w.Close()
 }
 
-// Get all sessions that a user talks to an IP
+// Get all sessions that a user talks to
 // There are only 2 if a user is talking to himself
 // otherwise only 1 session is returned
 func (s *Server) GetSessionsWithFriend(friendMAC string, friendUsername string) []*Session {
@@ -379,7 +398,9 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 	if err != nil {
 		return err
 	}
+	// TODO eventually we have to actually encrypt it
 	(*chatMsg).Text = cyp[0]
+	(*chatMsg).Text = []byte(message)
 	(*chatMsg).DestUsername = friend.Username
 	s.formulateMessagePayload(&chatMsg.GenericMessage)
 
@@ -393,15 +414,7 @@ func (s *Server) SendChatMessage(friendDisplayName, message string) error {
 }
 
 func (s *Server) formulateMessagePayload(msg *GenericMessage) {
-	sourceIP := s.User.IP
-	// Remove HTTP from the url
-	sourceIP = strings.Split(sourceIP, "https://")[1]
-
-	//// If messaging yourself, use your local IP as the sender too
-	//if friend.IP == localhost {
-	//	sourceIP = localhost
-	//}
-
+	sourceIP := strings.Split(s.User.IP, "https://")[1]
 	(*msg).SourceIP = sourceIP
 	(*msg).SourceMAC = s.User.MAC
 	(*msg).SourceUsername = s.User.Username

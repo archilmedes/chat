@@ -2,11 +2,11 @@ package db
 
 import (
 	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
 	"database/sql"
 	"github.com/wavyllama/chat/config"
 	"time"
+	"crypto/aes"
+	"crypto/cipher"
 )
 
 const (
@@ -27,7 +27,7 @@ func InsertMessage(SSID uint64, message []byte, timestamp string, sentOrReceived
 	if sentOrReceived != Sent && sentOrReceived != Received {
 		Logger.Fatalf("Invalid entry for sent/received - must be 0 or 1. Instead, received a %d", sentOrReceived)
 	}
-	encryptedMessages := AESEncrypt(string(message), []byte(db.AESKey))
+	encryptedMessages := AESEncrypt(message, []byte(db.AESKey))
 	insertCommand, err := DB.Prepare("INSERT INTO messages VALUES (?, ?, ?, ?)")
 	if err != nil {
 		Logger.Printf("Error creating messages prepared statement for InsertMessage: %s", err)
@@ -40,12 +40,12 @@ func InsertMessage(SSID uint64, message []byte, timestamp string, sentOrReceived
 }
 
 // Removes a message from the messages table
-func DeleteMessage(SSID uint64, message string, timestamp string, sentOrReceived int) bool {
+func DeleteMessage(SSID uint64, message []byte, timestamp string, sentOrReceived int) bool {
 	deleteCommand, err := DB.Prepare("DELETE FROM messages WHERE SSID=? AND message=? AND message_timestamp=? AND sent_or_received=?")
 	if err != nil {
 		Logger.Fatalf("Error creating users prepared statement for UpdateUserIP: %s", err)
 	}
-	enc := AESEncrypt(string(message), []byte(db.AESKey))
+	enc := AESEncrypt(message, []byte(db.AESKey))
 	_, err = deleteCommand.Exec(SSID, enc, timestamp, sentOrReceived)
 	if err != nil {
 		Logger.Printf("Failed to delete message: %s", err)
@@ -104,16 +104,12 @@ func ExecuteMessagesQuery(results *sql.Rows) []Message {
 }
 
 // Parts of AES encryption code from https://gist.github.com/saoin/b306746041b48a8366d0f63507a4e7f3
-func AESEncrypt(src string, key []byte) []byte {
+func AESEncrypt(content []byte, key []byte) []byte {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		Logger.Fatalf("Error with key: %s", err.Error())
 	}
-	if src == "" {
-		Logger.Fatalf("plain content empty")
-	}
 	ecb := cipher.NewCBCEncrypter(block, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
-	content := []byte(src)
 	content = pkcs5Padding(content, block.BlockSize())
 	crypted := make([]byte, len(content))
 	ecb.CryptBlocks(crypted, content)

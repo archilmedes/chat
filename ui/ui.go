@@ -12,6 +12,7 @@ import (
 	"time"
 	"os"
 	"log"
+	"encoding/json"
 )
 
 type UI struct {
@@ -291,6 +292,8 @@ func (ui *UI) displayInfoMessage(m *InfoMessage) {
 
 // Write chat message to UI
 func (ui *UI) displayChatMessage(m *ReceiveChat) {
+	res, _ := json.Marshal(&m)
+	logger.Println(string(res))
 	ui.UI.Update(func() {
 		ui.History.Append(tui.NewHBox(
 			tui.NewLabel(m.Time.Format("3:04 PM")),
